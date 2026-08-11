@@ -1,3 +1,6 @@
+# ==========================================
+# Flutter - File per Applicazione
+# ==========================================
 # Miscellaneous
 *.class
 *.log
@@ -43,3 +46,45 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# ==========================================
+# LaTeX - File Temporanei di Compilazione per la Relazione
+# ==========================================
+# Riferimenti incrociati e sezioni
+*.aux
+*.toc
+*.out
+
+# Log e informazioni di build
+*.log
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.synctex(busy)
+
+# Bibliografia e Glossari
+*.bbl
+*.bcf
+*.blg
+*.run.xml
+*.glg
+*.glo
+*.gls
+*.xml
+
+# Indici e liste
+*.idx
+*.ilg
+*.ind
+*.ist
+*.lof
+*.lot
+
+# Beamer (Presentazioni)
+*.nav
+*.snm
+*.vrb
+
+# Cache pacchetti
+/_minted-*/
+*.pdfsync
