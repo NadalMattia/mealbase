@@ -1,0 +1,178 @@
+\documentclass[11pt,a4paper]{article}
+
+% =========================================================
+% PACCHETTI
+% =========================================================
+
+\usepackage[a4paper,margin=2.7cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+\usepackage{mathptmx}
+\let\headingfont\relax
+
+\usepackage{titlesec}
+\usepackage{titletoc}
+\usepackage[table]{xcolor}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{caption}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage[hidelinks,bookmarksnumbered=true]{hyperref}
+
+% =========================================================
+% COLORI
+% =========================================================
+\definecolor{headcolor}{HTML}{1F6F8C}
+\definecolor{rulecolor}{HTML}{1F6F8C}
+\definecolor{codebg}{HTML}{F5F5F5}
+\definecolor{placeholderbg}{HTML}{FAFAFA}
+
+% =========================================================
+% NUMERAZIONE FINO A 4 LIVELLI
+% =========================================================
+\setcounter{secnumdepth}{4}
+\setcounter{tocdepth}{4}
+
+% =========================================================
+% STILE DEI TITOLI
+% =========================================================
+\titleformat{\section}
+  {\Large\bfseries\color{headcolor}}
+  {\thesection}{0.6em}{}
+\titleformat{\subsection}
+  {\large\bfseries\color{headcolor}}
+  {\thesubsection}{0.6em}{}
+\titleformat{\subsubsection}
+  {\normalsize\bfseries\color{headcolor}}
+  {\thesubsubsection}{0.6em}{}
+\titleformat{\paragraph}[hang]
+  {\normalsize\bfseries\itshape\color{headcolor}}
+  {\theparagraph}{0.6em}{}
+\titlespacing*{\paragraph}{0pt}{1.4\baselineskip}{0.6em}
+
+% =========================================================
+% LISTINGS - stile per blocchi di codice SQL / PL/pgSQL
+% =========================================================
+\lstdefinelanguage{plpgsql}[]{SQL}{
+  morekeywords={IMMUTABLE,LANGUAGE,PLPGSQL,RETURNS,TRIGGER,DECLARE,BEGIN,END,%
+    RAISE,EXCEPTION,NEW,OLD,EXISTS,CONSTRAINT,DEFERRABLE,DEFERRED,INITIALLY,%
+    FOR,EACH,ROW,EXECUTE,FUNCTION,RETURN,IF,THEN,ELSE,ELSIF,WITH,OVER,%
+    PARTITION,DENSE_RANK,UNION,ALL,GENERATED,ALWAYS,STORED,CASCADE}
+}
+
+\lstset{
+  language=plpgsql,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{headcolor}\bfseries,
+  commentstyle=\color{gray!70}\itshape,
+  stringstyle=\color{teal!60!black},
+  numberstyle=\tiny\color{gray},
+  showstringspaces=false,
+  breaklines=true,
+  breakatwhitespace=false,
+  backgroundcolor=\color{codebg},
+  frame=lines,
+  rulecolor=\color{rulecolor!60},
+  framesep=4pt,
+  xleftmargin=4pt,
+  xrightmargin=4pt,
+  aboveskip=8pt,
+  belowskip=8pt,
+  tabsize=2,
+  columns=fullflexible,
+  keepspaces=true,
+  literate={à}{{\`a}}1 {è}{{\`e}}1 {é}{{\'e}}1 {ì}{{\`i}}1 {ò}{{\`o}}1 {ù}{{\`u}}1
+}
+\lstnewenvironment{minted}[1]{\lstset{language=plpgsql}}{}
+
+% =========================================================
+% CAPTION STYLE
+% =========================================================
+\captionsetup[table]{labelfont={bf,color=headcolor},font=small,skip=6pt,position=top}
+\captionsetup[figure]{labelfont={bf,color=headcolor},font=small,skip=6pt}
+
+\newcommand{\imagePlaceholderFullPage}[3]{
+  \clearpage
+  \begin{figure}[p]
+    \centering
+    \fbox{%
+      \begin{minipage}[c][0.86\textheight][c]{0.94\textwidth}
+        \centering
+        {\color{gray!70}\Large\ttfamily [ SPAZIO RISERVATO ALL'IMMAGINE ]}\\[1em]
+        {\color{gray!60}\normalsize #3}
+      \end{minipage}%
+    }
+    \caption{#1}
+    \label{#2}
+  \end{figure}
+  \clearpage
+}
+
+\newcommand{\imagePlaceholderSmall}[2]{
+  \fbox{
+    \begin{minipage}[c][3.2cm][c]{4.2cm}
+      \centering
+      {\color{gray!70}\ttfamily\footnotesize [ IMMAGINE ]}\\[0.4em]
+      {\color{gray!60}\footnotesize #2}
+    \end{minipage}%
+  }
+}
+
+% =========================================================
+% METADATI PDF
+% =========================================================
+\hypersetup{
+  pdftitle={Relazione progetto Sviluppo Applicazioni Mobile},
+  pdfauthor={Nadal Mattia},
+  pdfsubject={Progetto Sviluppo Applicazioni Mobile - MealBase},
+}
+
+\setlength{\parskip}{0.5em}
+\setlength{\parindent}{0pt}
+
+\begin{document}
+
+% =========================================================
+% FRONTESPIZIO
+% =========================================================
+\begin{titlepage}
+\centering
+\vspace*{1cm}
+{\headingfont\Large\color{headcolor} Università degli Studi di Udine}\\[0.6em]
+{\headingfont\large\color{headcolor} Dipartimento di Scienze Matematiche, Informatiche e Fisiche}\\[2.5cm]
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.5\textwidth]{Immagini/logoUniUd.pdf} 
+\end{figure}
+
+\vspace{1.5cm}
+{\headingfont\huge\bfseries Relazione Sviluppo Applicazioni Mobile}\\[1cm]
+{\headingfont\LARGE\bfseries Progetto MealBase}\\[2cm]
+
+\begin{tabular}{@{}lll@{}}
+167372 & Nadal Mattia        & \texttt{nadal.mattia@spes.uniud.it} \\
+\end{tabular}
+
+\vfill
+{\large A.A. 2025/2026}
+\vspace*{1cm}
+\end{titlepage}
+
+\tableofcontents
+\clearpage
+
+% =========================================================
+% INTRODUZIONE (non numerata)
+% =========================================================
+\section*{Introduzione}
+\addcontentsline{toc}{section}{Introduzione}
+
+\end{document}
