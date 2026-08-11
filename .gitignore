@@ -50,29 +50,41 @@ app.*.map.json
 # ==========================================
 # LaTeX - File Temporanei di Compilazione per la Relazione
 # ==========================================
-*.aux               # Riferimenti incrociati, citazioni e numeri di sezione
-*.bbl               # Dati bibliografici formattati per le citazioni
-*.bcf               # Configurazione del controllo della bibliografia (Biber)
-*.blg               # Registro di log dell'elaborazione di BibTeX/Biber
-*.fdb_latexmk       # Database di tracciamento modifiche usato da Latexmk
-*.fls               # Elenco dei file di input/output generati durante il run
-*.glg               # Log di compilazione per i glossari
-*.glo               # Definizioni grezze per il glossario
-*.gls               # Glossario formattato pronto per la stampa
-*.idx               # Dati grezzi per la generazione dell'indice analitico
-*.ilg               # Log di generazione dell'indice analitico
-*.ind               # Indice analitico formattato
-*.ist               # Stile del formato dell'indice analitico
-*.lof               # Elenco temporaneo delle figure (List of Figures)
-*.lot               # Elenco temporaneo delle tabelle (List of Tables)
-*.nav               # Mappa di navigazione per le diapositive (Beamer)
-*.out               # Struttura dei segnalibri per la barra laterale del PDF
-*.pdfsync           # Mappatura avanzata tra sorgente .tex e preview PDF
-*.snm               # Nomi delle diapositive e delle sezioni (Beamer)
-*.synctex.gz        # Sincronizzazione bidirezionale tra codice .tex e il PDF
-*.synctex(busy)     # File di blocco mentre la sincronizzazione è in corso
-*.toc               # Struttura e titoli per l'indice generale dei contenuti
-*.vrb               # Gestione del codice formattato nelle slide (Beamer)
-*.xml               # Output XML usato dai motori di gestione bibliografica
-/_minted-*/         # Cache di formattazione del codice generata dal pacchetto minted
-*.run.xml           # File di controllo di esecuzione per la bibliografia Biber
+# Riferimenti incrociati e sezioni
+*.aux
+*.toc
+*.out
+
+# Log e informazioni di build
+*.log
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.synctex(busy)
+
+# Bibliografia e Glossari
+*.bbl
+*.bcf
+*.blg
+*.run.xml
+*.glg
+*.glo
+*.gls
+*.xml
+
+# Indici e liste
+*.idx
+*.ilg
+*.ind
+*.ist
+*.lof
+*.lot
+
+# Beamer (Presentazioni)
+*.nav
+*.snm
+*.vrb
+
+# Cache pacchetti
+/_minted-*/
+*.pdfsync
