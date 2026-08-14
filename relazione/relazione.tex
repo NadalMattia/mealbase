@@ -83,27 +83,160 @@
 \phantomsection
 \addcontentsline{toc}{section}{Introduzione}
 \section*{Introduzione}
-Gestire la dispensa domestica è un compito più complesso di quanto sembri: prodotti dimenticati fino a superarne la scadenza, acquisti duplicati per mancanza di un quadro aggiornato delle scorte, 
-difficoltà nel tenere traccia dei consumi nel tempo. Il risultato è spreco alimentare e inefficienza nella gestione della spesa.
-
-L'applicazione \textbf{MealBase} nasce per rispondere a questa esigenza, permettendo all'utente di tenere traccia in modo semplice dei prodotti alimentari acquistati, delle quantità e delle relative scadenze.
-
-La relazione è divisa in due parti, corrispondenti ai due assignment del corso: nella \textbf{Parte I} viene definita la vision dell'applicazione tramite System Concept Statement, Competitive Assessment e Requirements Brief; 
-nella \textbf{Parte II} viene documentato il processo di prototipazione, da sketch e wireframe fino alla valutazione con utenti e alle conseguenti modifiche di design.
-
+La gestione della dispensa domestica, che varia tra prodotti dimenticati, scadenze superate e acquisti duplicati, è il problema al centro del progetto MealBase, applicazione mobile oggetto di questa relazione.
+\newline
+Il documento è diviso in due parti, corrispondenti ai due assignment del corso: nella Parte I viene definita la vision dell'applicazione tramite System Concept Statement, Competitive Assessment e Requirements Brief; 
+nella Parte II viene documentato il processo di prototipazione, da sketch e wireframe fino alla valutazione con utenti e alle conseguenti modifiche di design.
 
 % =========================================================
-% CONTENUTO DELLA RELAZIONE
+% System Concept Statement
 % =========================================================
 \clearpage
 \section{System Concept Statement}
+Per chi gestisce la spesa e la dispensa di casa, tenere traccia di ciò che si possiede, delle quantità disponibili e delle scadenze dei prodotti alimentari 
+può rivelarsi un compito complesso e dispersivo. Affidarsi alla sola memoria porta spesso ad acquisti duplicati, prodotti dimenticati fino a superarne la 
+data di scadenza e conseguente spreco alimentare.
+\newline
+L'applicazione per piattaforme mobile MealBase permette all'utente di tenere traccia in modo semplice e veloce dei prodotti alimentari acquistati, 
+registrandone quantità, data di acquisto e scadenza, organizzandoli in un'unica dispensa digitale sempre aggiornata.
+\newline
+Grazie a un sistema di notifiche, l'utente riceverà promemoria tempestivi sui prodotti in scadenza, riducendo gli sprechi e semplificando la pianificazione della spesa e dei pasti quotidiani.
 
+% =========================================================
+% Competitive Assessment
+% =========================================================
 \clearpage
 \section{Competitive Assessment}
+
 \subsection{Introduzione all'analisi}
-\subsection{Nome App}
+Per definire con maggiore precisione le funzionalità distintive di MealBase, sono state analizzate cinque applicazioni che gli utenti target potrebbero già conoscere o utilizzare, 
+suddivise in concorrenti diretti e indiretti.
+\newline
+Gli obiettivi principali dell'analisi sono stati:
+\begin{itemize}
+  \item capire come le app esistenti gestiscono il tracciamento di scadenze e scorte alimentari;
+  \item identificare pattern di interazione e convenzioni consolidate (onboarding, inserimento prodotti, notifiche);
+  \item individuare bisogni insoddisfatti e opportunità di differenziazione per MealBase.
+\end{itemize}
+\begin{table}[h]
+\centering
+\caption{Concorrenti selezionati}
+\begin{tabular}{ll}
+\toprule
+\textbf{Tipo} & \textbf{App} \\
+\midrule
+Diretto & NoWaste \\
+Diretto & Fridge Pal \\
+Diretto & Out of Milk \\
+Indiretto & Google Keep (liste/promemoria) \\
+Indiretto & Foglio di calcolo (Excel / Google Sheets) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{NoWaste}
+\textbf{Categoria:} Food tracker, gestione dispensa.
+\newline
+\textbf{Cosa fa:} Permette di registrare prodotti alimentari con data di scadenza, tramite inserimento manuale o scansione del codice a barre. Organizza gli alimenti per posizione (frigo, dispensa, freezer) e invia notifiche di scadenza imminente.
+\newline
+\textbf{Punti di forza:} Scanner barcode efficace, interfaccia visiva con foto prodotto, statistiche su spreco alimentare risparmiato.
+\newline
+\textbf{Punti deboli:} Onboarding con troppi step iniziali; alcune funzioni avanzate (statistiche, categorie custom) sono a pagamento; assenza di integrazione con liste della spesa collaborative.
+
+% \imagePlaceholderSmall{fig:nowaste}{Screenshot NoWaste}
+
+\subsection{Fridge Pal}
+
+\textbf{Categoria:} Food tracker, gestione dispensa.
+
+\textbf{Cosa fa:} Simile a NoWaste, con focus su avvisi di scadenza e gestione multi-frigorifero, utile per famiglie con più elettrodomestici.
+
+\textbf{Punti di forza:} Design pulito, filtri per categoria e per data di scadenza molto rapidi.
+
+\textbf{Punti deboli:} Nessuna funzione di sincronizzazione multi-dispositivo nella versione gratuita; recensioni segnalano bug nella sincronizzazione delle notifiche.
+
+% \imagePlaceholderSmall{fig:fridgepal}{Screenshot Fridge Pal}
+
+\subsection{Out of Milk}
+
+\textbf{Categoria:} Lista della spesa con funzioni di dispensa.
+
+\textbf{Cosa fa:} Nato principalmente come app per la lista della spesa, include anche un modulo ``Pantry'' per tracciare le scorte in casa.
+
+\textbf{Punti di forza:} Ottima gestione della lista della spesa condivisa tra più utenti (famiglia); ampia base utenti e recensioni positive.
+
+\textbf{Punti deboli:} Il modulo dispensa è secondario e poco curato rispetto alla lista della spesa; non gestisce le scadenze in modo dettagliato, non è presente un sistema di notifica per data.
+
+% \imagePlaceholderSmall{fig:outofmilk}{Screenshot Out of Milk}
+
+\subsection{Google Keep (concorrente indiretto)}
+
+\textbf{Categoria:} Note e promemoria generici.
+
+\textbf{Cosa fa:} Molti utenti lo usano in modo improprio come lista della spesa o promemoria di scadenze, creando note testuali manuali con checklist.
+
+\textbf{Punti di forza:} Estrema semplicità, sincronizzazione multi-dispositivo affidabile, nessuna curva di apprendimento.
+
+\textbf{Punti deboli:} Nessuna struttura dati specifica per prodotti alimentari; nessun sistema di notifica automatica legato a una scadenza; richiede aggiornamento manuale costante.
+
+\subsection{Foglio di calcolo -- Excel / Google Sheets (concorrente indiretto)}
+\textbf{Categoria:} Strumento generico di produttività.
+
+\textbf{Cosa fa:} Alcuni utenti, specialmente quelli più esperti in ambito tecnico, creano fogli di calcolo personalizzati per tracciare prodotti, quantità e scadenze.
+
+\textbf{Punti di forza:} Flessibilità totale nella struttura dei dati.
+
+\textbf{Punti deboli:} Nessuna automazione, nessuna notifica, richiede aggiornamento manuale costante e competenze tecniche minime; esperienza mobile scomoda.
 \subsection{Confronti tra applicazioni}
 
+\begin{table}[h]
+\centering
+\caption{Tabella comparativa delle funzionalità}
+\small
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Feature} & \textbf{NoWaste} & \textbf{Fridge Pal} & \textbf{Out of Milk} & \textbf{Google Keep} & \textbf{Excel} \\
+\midrule
+Scanner barcode                        & \checkmark & \checkmark &            &            &            \\
+Notifiche scadenza                     & \checkmark & \checkmark &            &            &            \\
+Lista della spesa integrata            &            &            & \checkmark & (manuale)  &            \\
+Statistiche spreco/spesa               & (a pagam.) &            &            &            & (manuale)  \\
+Sincronizzazione multi-dispositivo     & \checkmark &            & \checkmark & \checkmark & \checkmark \\
+Condivisione familiare                 &            &            & \checkmark & \checkmark & \checkmark \\
+Categorizzazione automatica prodotti   & \checkmark & \checkmark &            &            &            \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Valutazione UX sintetica}
+\small
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+\textbf{Dimensione} & \textbf{Osservazioni} \\
+\midrule
+Discovery \& Onboarding & Le app dirette (NoWaste, Fridge Pal) hanno onboarding lunghi; Out of Milk e Keep sono immediati. \\
+Core Tasks & Inserimento prodotto più rapido con scanner barcode (NoWaste, Fridge Pal); manuale e lento su Keep/Excel. \\
+Notifiche & Solo le app dirette gestiscono notifiche automatiche per scadenza; nessuna le combina con la lista della spesa. \\
+Collaborazione & Out of Milk e Keep gestiscono bene la condivisione familiare; le app di tracciamento dispensa no. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{Sintesi finale e opportunità per MealBase}
+
+L'analisi condotta evidenzia un pattern ricorrente: le applicazioni di tracciamento dispensa (concorrenti diretti) risultano efficaci nella gestione 
+delle notifiche di scadenza ma deboli sul fronte della condivisione familiare, mentre le applicazioni di lista della spesa (concorrenti indiretti) presentano il comportamento opposto.
+\newline
+Il gap identificato riguarda quindi l'assenza, tra i concorrenti analizzati, di una soluzione che unisca in modo efficace \emph{tracciamento scadenze} e \emph{lista della spesa condivisa} 
+in un'unica esperienza fluida. MealBase si posiziona proprio su questo gap, offrendo notifiche di scadenza automatiche e condivisione familiare della dispensa, elemento che nessuna delle applicazioni analizzate copre in modo completo.
+\newline
+Un ulteriore elemento da evitare, emerso dall'analisi, è l'onboarding eccessivamente lungo riscontrato nelle applicazioni dirette: MealBase punterà a un primo inserimento prodotto rapido, idealmente contenuto in una o due schermate.
+
+% =========================================================
+% REQUIREMENTS BRIEF
+% =========================================================
 \clearpage
 \section{Requirements Brief}
 \subsection{Introduzione}
