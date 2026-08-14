@@ -27,9 +27,64 @@
 \usepackage[hidelinks,bookmarksnumbered=true]{hyperref}
   
 % =========================================================
-% COLORI
+% COLORI E STILI CUSTOM PER APP CARDS
 % =========================================================
 \definecolor{headcolor}{RGB}{0,0,0}
+
+% Colori per la scheda App
+\definecolor{cardframe}{RGB}{0,0,0}       % Cornice nera
+\definecolor{cardbg}{RGB}{252,252,252}    % Sfondo quasi bianco
+\definecolor{greenPro}{RGB}{34,139,34}    % Verde per punti di forza
+\definecolor{redCons}{RGB}{200,0,0}       % Rosso per punti deboli
+
+% Comando \appcard
+% Argomenti: #1 Titolo, #2 Categoria, #3 Cosa fa, #4 Punti forza, #5 Punti deboli, #6 Immagini
+\newcommand{\appcard}[6]{%
+\begin{figure}[htbp]
+  \centering
+  \fboxsep=0pt
+  \fboxrule=1pt
+  \fcolorbox{cardframe}{cardbg}{%
+    \begin{minipage}{\textwidth}
+      \vspace{1em}
+      % Titolo e Categoria
+      \hspace{1em}{\LARGE\bfseries\color{cardframe} #1} \hfill {\small\scshape\color{gray} #2}\hspace{1em}
+      \vspace{0.5em}\par
+      \hspace{1em}\rule{0.95\textwidth}{0.5pt}\par
+      \vspace{1em}
+      
+      % Colonna Testo (58%)
+      \hspace{1em}%
+      \begin{minipage}[t]{0.58\textwidth}
+        \small
+        \textbf{Cosa fa:} #3\par
+        \vspace{1em}
+        
+        \textbf{\color{greenPro}Punti di forza:}\par
+        \begin{itemize}[label=\textcolor{greenPro}{$\checkmark$}, leftmargin=1.5em, itemsep=0pt, parsep=2pt]
+          #4
+        \end{itemize}
+        \vspace{0.5em}
+        
+        \textbf{\color{redCons}Punti deboli:}\par
+        \begin{itemize}[label=\textcolor{redCons}{$\times$}, leftmargin=1.5em, itemsep=0pt, parsep=2pt]
+          #5
+        \end{itemize}
+        \vspace{1em}
+      \end{minipage}%
+      \hfill
+      % Colonna Immagini (35%)
+      \begin{minipage}[t]{0.35\textwidth}
+        \centering
+        \vspace{0pt} % Allineamento top
+        #6
+        \vspace{1em}
+      \end{minipage}%
+      \hspace{1em}
+    \end{minipage}
+  }
+\end{figure}
+}
   
 % =========================================================
 % METADATI PDF
@@ -77,7 +132,7 @@
 \clearpage
 
 % =========================================================
-% INTRODUZIONE (non numerata)
+% INTRODUZIONE
 % =========================================================
 \clearpage
 \phantomsection
@@ -118,6 +173,7 @@ Gli obiettivi principali dell'analisi sono stati:
   \item identificare pattern di interazione e convenzioni consolidate (onboarding, inserimento prodotti, notifiche);
   \item individuare bisogni insoddisfatti e opportunità di differenziazione per MealBase.
 \end{itemize}
+
 \begin{table}[h]
 \centering
 \caption{Concorrenti selezionati}
@@ -134,59 +190,84 @@ Indiretto & Foglio di calcolo (Excel / Google Sheets) \\
 \end{tabular}
 \end{table}
 
-\subsection{NoWaste}
-\textbf{Categoria:} Food tracker, gestione dispensa.
-\newline
-\textbf{Cosa fa:} Permette di registrare prodotti alimentari con data di scadenza, tramite inserimento manuale o scansione del codice a barre. Organizza gli alimenti per posizione (frigo, dispensa, freezer) e invia notifiche di scadenza imminente.
-\newline
-\textbf{Punti di forza:} Scanner barcode efficace, interfaccia visiva con foto prodotto, statistiche su spreco alimentare risparmiato.
-\newline
-\textbf{Punti deboli:} Onboarding con troppi step iniziali; alcune funzioni avanzate (statistiche, categorie custom) sono a pagamento; assenza di integrazione con liste della spesa collaborative.
+\subsection{Concorrenti Diretti}
 
-% \imagePlaceholderSmall{fig:nowaste}{Screenshot NoWaste}
+% === SCHEDA 1: NOWASTE (Esempio con 1 Immagine) ===
+\appcard{NoWaste}
+  {Food tracker, gestione dispensa}
+  {Permette di registrare prodotti alimentari con data di scadenza, tramite inserimento manuale o scansione del codice a barre. Organizza gli alimenti per posizione (\textit{frigo, dispensa, freezer}) e invia notifiche di scadenza imminente.}
+  {
+    \item Scanner barcode efficace.
+    \item Interfaccia visiva con foto prodotto.
+    \item Statistiche su spreco alimentare risparmiato.
+  }
+  {
+    \item Onboarding con troppi step iniziali.
+    \item Alcune funzioni avanzate a pagamento.
+    \item Assenza di integrazione con liste collaborative.
+  }
+  {
+    % --- INSERIMENTO 1 IMMAGINE ---
+    % \includegraphics[width=0.9\linewidth, height=6.5cm, keepaspectratio]{Immagini/nowaste.png}
+    \rule{0.8\linewidth}{5cm} % Placeholder
+  }
 
-\subsection{Fridge Pal}
+% === SCHEDA 2: FRIDGE PAL (Esempio con 2 Immagini) ===
+\appcard{Fridge Pal}
+  {Food tracker, gestione dispensa}
+  {Simile a NoWaste, con un focus particolare sugli avvisi di scadenza e la gestione multi-frigorifero, risultando utile per famiglie con più elettrodomestici dedicati alla conservazione.}
+  {
+    \item Design pulito e minimale.
+    \item Filtri per categoria e data molto rapidi.
+    \item Gestione inventari multipli.
+  }
+  {
+    \item Nessuna sincronizzazione multi-dispositivo (free).
+    \item Bug segnalati nella gestione delle notifiche.
+    \item Inserimento manuale a volte macchinoso.
+  }
+  {
+    % --- INSERIMENTO 2 IMMAGINI AFFIANCATE ---
+    % Usa il 45% della larghezza per immagine, separandole con \hfill
+    % \includegraphics[width=0.48\linewidth, height=6cm, keepaspectratio]{Immagini/fridge1.png}\hfill
+    % \includegraphics[width=0.48\linewidth, height=6cm, keepaspectratio]{Immagini/fridge2.png}
+    
+    \rule{0.45\linewidth}{5cm}\hfill\rule{0.45\linewidth}{5cm} % Placeholder per 2 immagini
+  }
 
-\textbf{Categoria:} Food tracker, gestione dispensa.
+% \clearpage % Scommenta se vuoi mandare Out of Milk nella pagina successiva
 
-\textbf{Cosa fa:} Simile a NoWaste, con focus su avvisi di scadenza e gestione multi-frigorifero, utile per famiglie con più elettrodomestici.
+% === SCHEDA 3: OUT OF MILK ===
+\appcard{Out of Milk}
+  {Lista della spesa, tracciamento base}
+  {Nato principalmente come app per la lista della spesa, include un modulo ``Pantry'' per tracciare le scorte. Ottimo per gli acquisti ma basilare per la gestione a lungo termine della dispensa.}
+  {
+    \item Ottima gestione lista della spesa condivisa.
+    \item Ampia base utenti e recensioni positive.
+    \item Sincronizzazione affidabile per famiglie.
+  }
+  {
+    \item Modulo dispensa secondario e poco curato.
+    \item Non gestisce le scadenze in modo dettagliato.
+    \item Assente un sistema di notifiche per data.
+  }
+  {
+    % Inserisci qui l'immagine di Out Of Milk
+    % \includegraphics[width=0.9\linewidth, height=6.5cm, keepaspectratio]{Immagini/outofmilk.png}
+    \rule{0.8\linewidth}{5cm} % Placeholder
+  }
 
-\textbf{Punti di forza:} Design pulito, filtri per categoria e per data di scadenza molto rapidi.
 
-\textbf{Punti deboli:} Nessuna funzione di sincronizzazione multi-dispositivo nella versione gratuita; recensioni segnalano bug nella sincronizzazione delle notifiche.
+\subsection{Concorrenti Indiretti}
 
-% \imagePlaceholderSmall{fig:fridgepal}{Screenshot Fridge Pal}
+\textbf{Google Keep (Note e promemoria generici)}\\
+Molti utenti lo usano in modo improprio come lista della spesa o promemoria di scadenze, creando note testuali manuali con checklist. Offre un'estrema semplicità e sincronizzazione multi-dispositivo affidabile, ma manca di una struttura dati specifica per prodotti alimentari e di un sistema di notifica automatica legato alle scadenze reali dei prodotti.
 
-\subsection{Out of Milk}
+\vspace{1em}
 
-\textbf{Categoria:} Lista della spesa con funzioni di dispensa.
+\textbf{Foglio di calcolo -- Excel / Google Sheets}\\
+Alcuni utenti creano fogli di calcolo personalizzati per tracciare prodotti, quantità e scadenze. Offre flessibilità totale nella struttura dei dati, ma manca di automazione e notifiche, richiede aggiornamento manuale costante e l'esperienza d'uso su smartphone risulta spesso scomoda e macchinosa.
 
-\textbf{Cosa fa:} Nato principalmente come app per la lista della spesa, include anche un modulo ``Pantry'' per tracciare le scorte in casa.
-
-\textbf{Punti di forza:} Ottima gestione della lista della spesa condivisa tra più utenti (famiglia); ampia base utenti e recensioni positive.
-
-\textbf{Punti deboli:} Il modulo dispensa è secondario e poco curato rispetto alla lista della spesa; non gestisce le scadenze in modo dettagliato, non è presente un sistema di notifica per data.
-
-% \imagePlaceholderSmall{fig:outofmilk}{Screenshot Out of Milk}
-
-\subsection{Google Keep (concorrente indiretto)}
-
-\textbf{Categoria:} Note e promemoria generici.
-
-\textbf{Cosa fa:} Molti utenti lo usano in modo improprio come lista della spesa o promemoria di scadenze, creando note testuali manuali con checklist.
-
-\textbf{Punti di forza:} Estrema semplicità, sincronizzazione multi-dispositivo affidabile, nessuna curva di apprendimento.
-
-\textbf{Punti deboli:} Nessuna struttura dati specifica per prodotti alimentari; nessun sistema di notifica automatica legato a una scadenza; richiede aggiornamento manuale costante.
-
-\subsection{Foglio di calcolo -- Excel / Google Sheets (concorrente indiretto)}
-\textbf{Categoria:} Strumento generico di produttività.
-
-\textbf{Cosa fa:} Alcuni utenti, specialmente quelli più esperti in ambito tecnico, creano fogli di calcolo personalizzati per tracciare prodotti, quantità e scadenze.
-
-\textbf{Punti di forza:} Flessibilità totale nella struttura dei dati.
-
-\textbf{Punti deboli:} Nessuna automazione, nessuna notifica, richiede aggiornamento manuale costante e competenze tecniche minime; esperienza mobile scomoda.
 \subsection{Confronti tra applicazioni}
 
 \begin{table}[h]
@@ -225,7 +306,6 @@ Collaborazione & Out of Milk e Keep gestiscono bene la condivisione familiare; l
 \end{table}
 
 \paragraph{Sintesi finale e opportunità per MealBase}
-
 L'analisi condotta evidenzia un pattern ricorrente: le applicazioni di tracciamento dispensa (concorrenti diretti) risultano efficaci nella gestione 
 delle notifiche di scadenza ma deboli sul fronte della condivisione familiare, mentre le applicazioni di lista della spesa (concorrenti indiretti) presentano il comportamento opposto.
 \newline
@@ -256,7 +336,7 @@ Un ulteriore elemento da evitare, emerso dall'analisi, è l'onboarding eccessiva
 \section{Conseguenze sul design}
 
 % =========================================================
-% CONCLUSIONE (non numerata)
+% CONCLUSIONE
 % =========================================================
 \clearpage
 \phantomsection
