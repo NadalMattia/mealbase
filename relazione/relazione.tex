@@ -347,31 +347,62 @@ Un ulteriore elemento da evitare, emerso dall'analisi, è la ricategorizzazione 
 \section{Requirements Brief}
 
 \subsection{Introduzione}
-La presente sezione definisce la lista completa dei requisiti funzionali ed esperienziali dell'applicazione. In linea con la metodologia orientata all'utente, i requisiti si focalizzano su \textit{cosa} l'utente intende fare ed ottenere tramite l'applicazione, prescindendo dalle scelte di implementazione tecnica.
+La presente sezione definisce la lista completa dei requisiti funzionali ed esperienziali dell'applicazione MealBase. In linea con la metodologia orientata all'utente, i requisiti si focalizzano su \textit{cosa} l'utente intende fare ed ottenere tramite l'applicazione, prescindendo dalle scelte di implementazione tecnica.
+\newline
+I requisiti sono stati derivati incrociando tre fonti: (1) il System Concept Statement, che definisce il bisogno primario a cui MealBase risponde; (2) i pattern di interazione consolidati emersi dalla Competitive Assessment (es. scanner barcode, notifiche, condivisione familiare); (3) i \textit{gap} e i pain point ricorrenti individuati nelle recensioni reali dei concorrenti diretti, che rappresentano funzionalità da includere ma implementare in modo più affidabile.
 
-Per garantire una corretta pianificazione dello sviluppo e la definizione del Minimal Viable Product (MVP), ciascun requisito è stato analizzato e prioritizzato secondo una scala qualitativa a tre livelli:
+\subsection{Metodologia di prioritizzazione}
+Ogni requisito è stato analizzato e prioritizzato secondo una scala qualitativa a tre livelli, in linea con l'approccio visto a lezione:
 \begin{itemize}
-    \item \textbf{Priorità ALTA}: Requisiti core essenziali per la User Experience (UX) e indispensabili per soddisfare i bisogni primari delle Personas. La loro assenza compromette l'utilità stessa dell'applicazione.
-    \item \textbf{Priorità MEDIA}: Requisiti di completamento che arricchiscono l'esperienza d'uso e migliorano l'usabilità complessiva, pur non essendo strettamente bloccanti per i flussi principali.
-    \item \textbf{Priorità BASSA}: Requisiti accessori o funzionalità secondarie che offrono un valore aggiunto marginale e possono essere posposte a release successive.
+    \item \textbf{Priorità ALTA}: Requisiti \textit{must-have}, essenziali per la User Experience (UX) e indispensabili per soddisfare il bisogno primario individuato nel System Concept Statement. La loro assenza compromette l'utilità stessa dell'applicazione o riproduce i pain point già osservati nei concorrenti (es. scanner inaffidabile, notifiche assenti).
+    \item \textbf{Priorità MEDIA}: Requisiti di tipo \textit{performance}, che arricchiscono l'esperienza d'uso e migliorano l'usabilità complessiva in modo proporzionale allo sforzo investito, pur non essendo strettamente bloccanti per i flussi principali.
+    \item \textbf{Priorità BASSA}: Requisiti accessori, assimilabili a funzionalità \textit{delighter} o secondarie, che offrono un valore aggiunto marginale o rivolto a una nicchia di utenti, e che possono essere posposte a release successive senza impattare l'MVP.
 \end{itemize}
+La classificazione ALTA/MEDIA/BASSA è stata assegnata valutando per ciascun requisito: (a) quanto la sua assenza impedirebbe all'utente di raggiungere il goal primario (ridurre lo spreco alimentare e la spesa duplicata); (b) se il requisito corrisponde a un punto debole ricorrente riscontrato nei concorrenti diretti, e quindi a un elemento su cui MealBase deve necessariamente differenziarsi fin dal lancio; (c) il rapporto tra impatto percepito dall'utente e complessità di implementazione, in un'ottica di definizione del Minimal Viable Product (MVP).
 
 \subsection{Feature List}
 Di seguito sono descritti i requisiti principali dell'applicazione, la relativa priorità e la motivazione d'uso.
 
-\begin{table}[h!]
-\centering
-\small
-\begin{tabular}{|c|p{3.2cm}|p{4.5cm}|c|p{4.2cm}|}
+{\small
+\begin{longtable}{|c|p{2.7cm}|p{4.7cm}|c|p{3.6cm}|}
 \hline
 \textbf{ID} & \textbf{Requisito} & \textbf{Descrizione} & \textbf{Priorità} & \textbf{Motivazione UX} \\ \hline
-REQ-01 & Autenticazione e Profilo Utente & L'utente può registrarsi, effettuare il login e gestire le proprie informazioni personali. & \textcolor{red}{\textbf{ALTA}} & Fondamentale per identificare l'utente e consentire il salvataggio personalizzato dei dati. \\ \hline
-REQ-02 & Ricerca e Filtraggio Contenuti & L'utente può cercare elementi specifici applicando filtri per categoria, data e pertinenza. & \textcolor{red}{\textbf{ALTA}} & Impatta direttamente sul goal primario della Persona, riducendo i tempi di ricerca. \\ \hline
-REQ-03 & Notifiche Push di Promemoria & L'app invia avvisi e promemoria automatici relativi ad attività imminenti o scadenze. & \textcolor{orange}{\textbf{MEDIA}} & Arricchisce la UX mantenendo l'utente ingaggiato; non è bloccante per l'uso base. \\ \hline
-REQ-04 & Modalità Scura (Dark Mode) & Possibilità di cambiare il tema dell'interfaccia da chiaro a scuro. & \textcolor{blue}{\textbf{BASSA}} & Migliora il comfort visivo al buio, ma non altera le funzionalità core. \\ \hline
-\end{tabular}
+\endfirsthead
+\hline
+\textbf{ID} & \textbf{Requisito} & \textbf{Descrizione} & \textbf{Priorità} & \textbf{Motivazione UX} \\ \hline
+\endhead
+
+REQ-01 & Autenticazione e Profilo Utente & L'utente può registrarsi, effettuare il login e gestire le proprie informazioni personali, condizione necessaria per salvare la dispensa in cloud e condividerla con il proprio nucleo familiare. & \textcolor{red}{\textbf{ALTA}} & Fondamentale per identificare l'utente e abilitare la persistenza e la condivisione dei dati; senza account non è possibile garantire sincronizzazione né recupero della dispensa in caso di cambio dispositivo. \\ \hline
+
+REQ-02 & Inserimento Prodotto tramite Scanner Barcode & L'utente può aggiungere un prodotto alla dispensa inquadrando il codice a barre, con riconoscimento automatico di nome e categoria dal database prodotti. & \textcolor{red}{\textbf{ALTA}} & È la funzionalità più attesa dagli utenti (emerso dall'analisi dei concorrenti) e il principale acceleratore dell'inserimento; deve essere affidabile fin dal lancio, poiché l'inaffidabilità dello scanner è la causa di abbandono più citata per KitchenPal e NoWaste. \\ \hline
+
+REQ-03 & Correzione Manuale Immediata del Match & Se lo scanner riconosce erroneamente un prodotto, l'utente può correggere nome, categoria e posizione in modo permanente, senza dover ripetere la scansione. & \textcolor{red}{\textbf{ALTA}} & Risponde direttamente al pain point più critico riscontrato in KitchenPal, dove le correzioni spesso non venivano salvate; senza questa funzione la fiducia nello scanner crolla rapidamente. \\ \hline
+
+REQ-04 & Inserimento Manuale/Fotografico del Prodotto & L'utente può aggiungere un prodotto senza scanner, inserendo manualmente nome e scadenza oppure fotografando l'etichetta. & \textcolor{red}{\textbf{ALTA}} & Garantisce che l'app resti utilizzabile anche per prodotti sfusi o privi di barcode leggibile, evitando il principale motivo di disinstallazione di BestBefore (assenza totale di scanner) nella direzione opposta. \\ \hline
+
+REQ-05 & Gestione della Dispensa Digitale & L'utente visualizza tutti i prodotti registrati con quantità, data di acquisto, data di scadenza, categoria e posizione (dispensa/frigo/freezer), in un'unica lista sempre aggiornata. & \textcolor{red}{\textbf{ALTA}} & È il cuore del System Concept Statement: senza una dispensa digitale affidabile e centralizzata l'app non risolve il problema primario del progetto. \\ \hline
+
+REQ-06 & Modifica Manuale di Categoria e Posizione & L'utente può in qualsiasi momento modificare manualmente la categoria e la posizione assegnate a un prodotto, con la garanzia che la modifica venga mantenuta nel tempo. & \textcolor{red}{\textbf{ALTA}} & Evita la ricategorizzazione automatica e silenziosa riscontrata in KitchenPal (es. maionese spostata in ``spezie''), individuata come elemento da evitare fin dalla Competitive Assessment. \\ \hline
+
+REQ-07 & Notifiche Push di Scadenza Verificabili & L'app invia promemoria automatici quando un prodotto si avvicina o supera la data di scadenza; l'utente può consultare uno storico delle notifiche inviate per verificarne il corretto funzionamento. & \textcolor{red}{\textbf{ALTA}} & È il secondo pilastro del System Concept Statement (riduzione dello spreco); la sua assenza o inaffidabilità è il pain point più ricorrente tra KitchenPal e NoWaste, per cui va garantita fin dall'MVP. \\ \hline
+
+REQ-08 & Sincronizzazione Multi-dispositivo & I dati della dispensa restano coerenti e aggiornati su tutti i dispositivi collegati allo stesso account, in tempo reale. & \textcolor{red}{\textbf{ALTA}} & Precondizione tecnica indispensabile per la condivisione familiare (REQ-09) e per l'affidabilità percepita dell'app; una perdita di sincronizzazione, come segnalato per NoWaste, mina irrimediabilmente la fiducia dell'utente. \\ \hline
+
+REQ-09 & Condivisione Familiare della Dispensa e della Lista & Più utenti dello stesso nucleo familiare possono accedere, consultare e modificare la stessa dispensa e la stessa lista della spesa. & \textcolor{orange}{\textbf{MEDIA}} & Funzionalità distintiva rispetto a NoWaste e coerente con l'uso reale della dispensa domestica (condivisa tra più persone), ma l'app resta pienamente utilizzabile anche da un singolo utente in assenza di questa funzione. \\ \hline
+
+REQ-10 & Lista della Spesa Integrata & L'utente può creare e consultare una lista della spesa collegata alla dispensa, aggiungendo manualmente voci o prodotti in esaurimento. & \textcolor{orange}{\textbf{MEDIA}} & Completa il flusso ``dispensa $\rightarrow$ spesa'' riducendo gli acquisti duplicati citati nel System Concept Statement, ma rappresenta un completamento e non un blocco per il valore primario dell'app. \\ \hline
+
+REQ-11 & Ricerca e Filtraggio Prodotti in Dispensa & L'utente può cercare un prodotto specifico e filtrare la dispensa per categoria, posizione o prossimità alla scadenza. & \textcolor{orange}{\textbf{MEDIA}} & Migliora l'usabilità al crescere del numero di prodotti registrati, ma con dispense di dimensioni contenute (uso tipico all'avvio) una semplice lista ordinata per scadenza è già sufficiente. \\ \hline
+
+REQ-12 & Monetizzazione senza Vincoli sulle Funzionalità Core & Le funzionalità di tracciamento, scanner, notifiche e condivisione familiare sono sempre disponibili, indipendentemente dall'eventuale acquisto una tantum di funzionalità accessorie. & \textcolor{red}{\textbf{ALTA}} & Dall'analisi dei concorrenti emerge che il modello ad abbonamento legato a funzionalità core (NoWaste) genera il sentiment peggiore in assoluto; garantire fin dal lancio un accesso libero alle funzioni essenziali è un requisito di fiducia, non solo di business. \\ \hline
+
+REQ-13 & Suggerimento Ricette dagli Ingredienti Disponibili & L'app propone ricette realizzabili sulla base dei prodotti effettivamente presenti in dispensa, con priorità agli ingredienti in scadenza. & \textcolor{blue}{\textbf{BASSA}} & Funzione molto apprezzata in KitchenPal come elemento di fidelizzazione, ma richiede un database ricette e un motore di matching non essenziali per il goal primario di riduzione dello spreco basato sul tracciamento delle scadenze. \\ \hline
+
+REQ-14 & Modalità Scura (Dark Mode) & Possibilità di cambiare il tema dell'interfaccia da chiaro a scuro. & \textcolor{blue}{\textbf{BASSA}} & Migliora il comfort visivo in condizioni di scarsa illuminazione, ma non altera in alcun modo le funzionalità core dell'applicazione. \\ \hline
+
 \caption{Feature List di progetto e prioritizzazione.}
-\end{table}
+\end{longtable}
+}
 
 \subsection{Feature List – Possible Extensions}
 In questa sezione sono raccolte le funzionalità estese e le idee evolutive identificate durante la fase di progettazione, ma escluse dal perimetro iniziale per limiti di risorse o complessità.
@@ -379,11 +410,12 @@ In questa sezione sono raccolte le funzionalità estese e le idee evolutive iden
 \begin{table}[h!]
 \centering
 \small
-\begin{tabular}{|c|p{3.5cm}|p{4.8cm}|c|p{4.2cm}|}
+\begin{tabular}{|c|p{3.1cm}|p{4.4cm}|c|p{3.8cm}|}
 \hline
 \textbf{ID} & \textbf{Estensione Futura} & \textbf{Descrizione} & \textbf{Priorità} & \textbf{Motivazione dell'Esclusione} \\ \hline
-EXT-01 & Integrazione con Assistenti Vocali & Comandi all'applicazione tramite integrazione vocale (es. Siri / Google Assistant). & \textcolor{blue}{\textbf{BASSA}} & Alto valore d'innovazione, ma richiede un effort tecnologico non prioritario per il lancio. \\ \hline
-EXT-02 & Condivisione Social e Collaborazione & Funzionalità per condividere contenuti e collaborare in tempo reale con altri utenti. & \textcolor{blue}{\textbf{BASSA}} & Funzionalità secondaria destinata ad ampliare il bacino di utenza in una fase successiva. \\ \hline
+EXT-01 & Integrazione con Assistenti Vocali & Comandi all'applicazione tramite integrazione vocale (es. Siri / Google Assistant) per aggiungere prodotti o consultare le scadenze a mani libere. & \textcolor{blue}{\textbf{BASSA}} & Alto valore d'innovazione, ma richiede un effort tecnologico non prioritario rispetto al consolidamento delle funzionalità core (scanner, notifiche). \\ \hline
+EXT-02 & Statistiche di Riduzione dello Spreco & Dashboard con indicatori su quantità e valore economico dei prodotti salvati dallo spreco grazie alle notifiche. & \textcolor{blue}{\textbf{BASSA}} & Funzionalità motivazionale di rinforzo, utile a lungo termine ma non necessaria per validare il valore primario dell'app all'MVP. \\ \hline
+EXT-03 & Condivisione Social e Collaborazione & Funzionalità per condividere contenuti (es. ricette realizzate) e collaborare in tempo reale con altri utenti al di fuori del proprio nucleo familiare. & \textcolor{blue}{\textbf{BASSA}} & Funzionalità secondaria destinata ad ampliare il bacino di utenza in una fase successiva, non richiesta dalle Personas primarie individuate. \\ \hline
 \end{tabular}
 \caption{Estensioni di prodotto per rilasci futuri.}
 \end{table}
