@@ -345,9 +345,48 @@ Un ulteriore elemento da evitare, emerso dall'analisi, è la ricategorizzazione 
 % =========================================================
 \clearpage
 \section{Requirements Brief}
+
 \subsection{Introduzione}
+La presente sezione definisce la lista completa dei requisiti funzionali ed esperienziali dell'applicazione. In linea con la metodologia orientata all'utente, i requisiti si focalizzano su \textit{cosa} l'utente intende fare ed ottenere tramite l'applicazione, prescindendo dalle scelte di implementazione tecnica.
+
+Per garantire una corretta pianificazione dello sviluppo e la definizione del Minimal Viable Product (MVP), ciascun requisito è stato analizzato e prioritizzato secondo una scala qualitativa a tre livelli:
+\begin{itemize}
+    \item \textbf{Priorità ALTA}: Requisiti core essenziali per la User Experience (UX) e indispensabili per soddisfare i bisogni primari delle Personas. La loro assenza compromette l'utilità stessa dell'applicazione.
+    \item \textbf{Priorità MEDIA}: Requisiti di completamento che arricchiscono l'esperienza d'uso e migliorano l'usabilità complessiva, pur non essendo strettamente bloccanti per i flussi principali.
+    \item \textbf{Priorità BASSA}: Requisiti accessori o funzionalità secondarie che offrono un valore aggiunto marginale e possono essere posposte a release successive.
+\end{itemize}
+
 \subsection{Feature List}
+Di seguito sono descritti i requisiti principali dell'applicazione, la relativa priorità e la motivazione d'uso.
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{|c|p{3.2cm}|p{4.5cm}|c|p{4.2cm}|}
+\hline
+\textbf{ID} & \textbf{Requisito} & \textbf{Descrizione} & \textbf{Priorità} & \textbf{Motivazione UX} \\ \hline
+REQ-01 & Autenticazione e Profilo Utente & L'utente può registrarsi, effettuare il login e gestire le proprie informazioni personali. & \textcolor{red}{\textbf{ALTA}} & Fondamentale per identificare l'utente e consentire il salvataggio personalizzato dei dati. \\ \hline
+REQ-02 & Ricerca e Filtraggio Contenuti & L'utente può cercare elementi specifici applicando filtri per categoria, data e pertinenza. & \textcolor{red}{\textbf{ALTA}} & Impatta direttamente sul goal primario della Persona, riducendo i tempi di ricerca. \\ \hline
+REQ-03 & Notifiche Push di Promemoria & L'app invia avvisi e promemoria automatici relativi ad attività imminenti o scadenze. & \textcolor{orange}{\textbf{MEDIA}} & Arricchisce la UX mantenendo l'utente ingaggiato; non è bloccante per l'uso base. \\ \hline
+REQ-04 & Modalità Scura (Dark Mode) & Possibilità di cambiare il tema dell'interfaccia da chiaro a scuro. & \textcolor{blue}{\textbf{BASSA}} & Migliora il comfort visivo al buio, ma non altera le funzionalità core. \\ \hline
+\end{tabular}
+\caption{Feature List di progetto e prioritizzazione.}
+\end{table}
+
 \subsection{Feature List – Possible Extensions}
+In questa sezione sono raccolte le funzionalità estese e le idee evolutive identificate durante la fase di progettazione, ma escluse dal perimetro iniziale per limiti di risorse o complessità.
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{|c|p{3.5cm}|p{4.8cm}|c|p{4.2cm}|}
+\hline
+\textbf{ID} & \textbf{Estensione Futura} & \textbf{Descrizione} & \textbf{Priorità} & \textbf{Motivazione dell'Esclusione} \\ \hline
+EXT-01 & Integrazione con Assistenti Vocali & Comandi all'applicazione tramite integrazione vocale (es. Siri / Google Assistant). & \textcolor{blue}{\textbf{BASSA}} & Alto valore d'innovazione, ma richiede un effort tecnologico non prioritario per il lancio. \\ \hline
+EXT-02 & Condivisione Social e Collaborazione & Funzionalità per condividere contenuti e collaborare in tempo reale con altri utenti. & \textcolor{blue}{\textbf{BASSA}} & Funzionalità secondaria destinata ad ampliare il bacino di utenza in una fase successiva. \\ \hline
+\end{tabular}
+\caption{Estensioni di prodotto per rilasci futuri.}
+\end{table}
 
 \clearpage
 \section{Sketching}
