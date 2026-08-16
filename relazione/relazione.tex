@@ -14,6 +14,7 @@
 \usepackage{titlesec}
 \usepackage{titletoc}
 \usepackage[table]{xcolor}
+\usepackage{float}
 \usepackage{booktabs}
 \usepackage{tabularx}
 \usepackage{longtable}
@@ -24,6 +25,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{listings}
+\usepackage{comment}
 \usepackage[hidelinks,bookmarksnumbered=true]{hyperref}
   
 % =========================================================
@@ -38,10 +40,10 @@
 \definecolor{redCons}{RGB}{200,0,0}       % Rosso per punti deboli
 
 % Comando \appcard
-% Argomenti: #1 Titolo, #2 Categoria, #3 Cosa fa, #4 Punti forza, #5 Punti deboli, #6 Immagini
-\newcommand{\appcard}[6]{%
-\begin{figure}[htbp]
-  \centering
+% Argomenti: #1 Titolo, #2 Categoria, #3 Cosa fa, #4 Punti forza, #5 Punti deboli, #6 Immagini, #7 Info rapide (sviluppatore/download/rating)
+\newcommand{\appcard}[7]{%
+\par\vspace{1em}
+\begin{center}
   \fboxsep=0pt
   \fboxrule=1pt
   \fcolorbox{cardframe}{cardbg}{%
@@ -49,6 +51,8 @@
       \vspace{1em}
       % Titolo e Categoria
       \hspace{1em}{\LARGE\bfseries\color{cardframe} #1} \hfill {\small\scshape\color{gray} #2}\hspace{1em}
+      \vspace{0.3em}\par
+      \hspace{1em}{\footnotesize\color{gray} #7}\hspace{1em}
       \vspace{0.5em}\par
       \hspace{1em}\rule{0.95\textwidth}{0.5pt}\par
       \vspace{1em}
@@ -83,7 +87,8 @@
       \hspace{1em}
     \end{minipage}
   }
-\end{figure}
+\end{center}
+\vspace{1em}\par
 }
   
 % =========================================================
@@ -174,122 +179,144 @@ Gli obiettivi principali dell'analisi sono stati:
   \item individuare bisogni insoddisfatti e opportunità di differenziazione per MealBase.
 \end{itemize}
 
-\begin{table}[h]
+\begin{comment}
+\begin{table}[H]
 \centering
 \caption{Concorrenti selezionati}
 \begin{tabular}{ll}
 \toprule
 \textbf{Tipo} & \textbf{App} \\
 \midrule
+Diretto & KitchenPal \\
 Diretto & NoWaste \\
-Diretto & Fridge Pal \\
-Diretto & Out of Milk \\
+Diretto & BestBefore \\
 Indiretto & Google Keep (liste/promemoria) \\
 Indiretto & Foglio di calcolo (Excel / Google Sheets) \\
 \bottomrule
 \end{tabular}
 \end{table}
+\end{comment}
 
 \subsection{Concorrenti Diretti}
+\appcard{KitchenPal}
+  {Gestione dispensa e cucina con suggerimenti ricette}
+  {
+  KitchenPal è un'app di gestione dispensa/frigo/freezer che integra scanner barcode, tracciamento per posizione e un motore di suggerimento ricette basato sugli ingredienti effettivamente disponibili. Include lista della spesa, condivisione "kitchen" familiare e un modello di acquisto Lifetime/Family Plan oltre alla versione gratuita.
+  }
+  {
+    \item Suggerimento ricette dagli ingredienti disponibili: funzione più citata come motivo di fidelizzazione, specialmente da utenti che pianificano pasti settimanali
+    \item Database scanner ampio rispetto ai competitor diretti: più recensioni segnalano un tasso di riconoscimento prodotti superiore alla media
+    \item Assistenza clienti reattiva: più utenti riportano risoluzione rapida di problemi di abbonamento tramite supporto diretto
+  }
+  {
+    \item Correzione dei match errati dello scanner spesso non salvata, costringendo l'utente a rifare la scansione più volte
+    \item Ricategorizzazione automatica errata degli articoli (es. maionese spostata in ``spezie'' invece che in frigo) anche dopo l'acquisto della versione premium
+    \item Notifiche di scadenza segnalate come assenti da utenti italiani nonostante i permessi concessi, con conseguente percezione di inutilità della funzione
+  }
+  {
+    \rule{0.8\linewidth}{5cm} % Placeholder per screenshot
+  }
+  {Sviluppatore: iCuisto Pte Ltd \;\textbullet\; Download: 100.000+ \;\textbullet\; Rating store: 4,4 (6\,394 recensioni)}
 
-% === SCHEDA 1: NOWASTE (Esempio con 1 Immagine) ===
 \appcard{NoWaste}
-  {Food tracker, gestione dispensa}
-  {Permette di registrare prodotti alimentari con data di scadenza, tramite inserimento manuale o scansione del codice a barre. Organizza gli alimenti per posizione (\textit{frigo, dispensa, freezer}) e invia notifiche di scadenza imminente.}
+  {Food inventory tracker per frigo, dispensa e freezer}
   {
-    \item Scanner barcode efficace.
-    \item Interfaccia visiva con foto prodotto.
-    \item Statistiche su spreco alimentare risparmiato.
+  NoWaste organizza gli alimenti in liste separate per frigo, dispensa e freezer, con scansione barcode, notifiche di scadenza e sincronizzazione multi-dispositivo. Il riconoscimento prodotto tramite barcode è legato a un database in abbonamento separato rispetto alla licenza base dell'app.
   }
   {
-    \item Onboarding con troppi step iniziali.
-    \item Alcune funzioni avanzate a pagamento.
-    \item Assenza di integrazione con liste collaborative.
+    \item Interfaccia percepita come pulita e semplice da alcuni utenti, con categorie personalizzabili
+    \item Sistema di notifiche apprezzato quando funzionante, in particolare per la separazione tra le tre liste di conservazione
+    \item Supporto sviluppatore attivo sulle recensioni, con conferma pubblica della risoluzione di un bug sulle notifiche
   }
   {
-    % --- INSERIMENTO 1 IMMAGINE ---
-    % \includegraphics[width=0.9\linewidth, height=6.5cm, keepaspectratio]{Immagini/nowaste.png}
-    \rule{0.8\linewidth}{5cm} % Placeholder
+    \item Scanner barcode segnalato come inaffidabile in modo ricorrente, con tassi di riconoscimento stimati dagli utenti tra il 10\% e il 50\%
+    \item Abbonamento al database scanner che, secondo più recensioni, smette di funzionare subito dopo il pagamento, senza possibilità di rimborso
+    \item Perdita di dati segnalata da un utente con oltre 350 articoli registrati, non più visualizzabili nella lista dopo un problema di sincronizzazione
   }
+  {
+    \rule{0.8\linewidth}{5cm} % Placeholder per screenshot
+  }
+  {Sviluppatore: KH Creations ApS \;\textbullet\; Download: 50.000+ \;\textbullet\; Rating store: 3,8 (265 recensioni)}
 
-% === SCHEDA 2: FRIDGE PAL (Esempio con 2 Immagini) ===
-\appcard{Fridge Pal}
-  {Food tracker, gestione dispensa}
-  {Simile a NoWaste, con un focus particolare sugli avvisi di scadenza e la gestione multi-frigorifero, risultando utile per famiglie con più elettrodomestici dedicati alla conservazione.}
+\appcard{BestBefore}
+  {Tracciamento scadenze tramite inserimento manuale/fotografico}
   {
-    \item Design pulito e minimale.
-    \item Filtri per categoria e data molto rapidi.
-    \item Gestione inventari multipli.
+  BestBefore consente di tracciare i prodotti tramite foto dell'etichetta e inserimento manuale della data di scadenza, senza scanner barcode nativo. Offre categorie e posizioni interamente personalizzabili, sincronizzazione cloud per la condivisione familiare della lista e un modello di monetizzazione basato su pubblicità leggera, rimovibile con acquisto una tantum a basso costo.
   }
   {
-    \item Nessuna sincronizzazione multi-dispositivo (free).
-    \item Bug segnalati nella gestione delle notifiche.
-    \item Inserimento manuale a volte macchinoso.
+    \item Sincronizzazione cloud e condivisione familiare della lista funzionanti e ampiamente apprezzate, citate come punto distintivo rispetto ai competitor
+    \item Memorizzazione automatica dei campi per prodotti riacquistati, che riduce il tempo di reinserimento
+    \item Modello di monetizzazione one-time a basso costo per la rimozione degli ads, percepito molto positivamente rispetto ad abbonamenti ricorrenti
   }
   {
-    % --- INSERIMENTO 2 IMMAGINI AFFIANCATE ---
-    % Usa il 45% della larghezza per immagine, separandole con \hfill
-    % \includegraphics[width=0.48\linewidth, height=6cm, keepaspectratio]{Immagini/fridge1.png}\hfill
-    % \includegraphics[width=0.48\linewidth, height=6cm, keepaspectratio]{Immagini/fridge2.png}
-    
-    \rule{0.45\linewidth}{5cm}\hfill\rule{0.45\linewidth}{5cm} % Placeholder per 2 immagini
-  }
-
-% \clearpage % Scommenta se vuoi mandare Out of Milk nella pagina successiva
-
-% === SCHEDA 3: OUT OF MILK ===
-\appcard{Out of Milk}
-  {Lista della spesa, tracciamento base}
-  {Nato principalmente come app per la lista della spesa, include un modulo ``Pantry'' per tracciare le scorte. Ottimo per gli acquisti ma basilare per la gestione a lungo termine della dispensa.}
-  {
-    \item Ottima gestione lista della spesa condivisa.
-    \item Ampia base utenti e recensioni positive.
-    \item Sincronizzazione affidabile per famiglie.
+    \item Assenza di uno scanner barcode nativo: pain point più ricorrente in assoluto, citato esplicitamente come motivo di disinstallazione da più utenti
+    \item Il conteggio dei giorni di notifica per articoli ``aperti'' non viene mantenuto in alcune condizioni, secondo una recensione dettagliata
+    \item Le foto prodotto non risultano sempre visibili correttamente agli altri membri con cui la lista è condivisa
   }
   {
-    \item Modulo dispensa secondario e poco curato.
-    \item Non gestisce le scadenze in modo dettagliato.
-    \item Assente un sistema di notifiche per data.
+    \rule{0.8\linewidth}{5cm} % Placeholder per screenshot
   }
-  {
-    % Inserisci qui l'immagine di Out Of Milk
-    % \includegraphics[width=0.9\linewidth, height=6.5cm, keepaspectratio]{Immagini/outofmilk.png}
-    \rule{0.8\linewidth}{5cm} % Placeholder
-  }
+  {Sviluppatore: PeytuApp \;\textbullet\; Download: 50.000+ \;\textbullet\; Rating store: 3,7 (947 recensioni)}
 
 
 \subsection{Concorrenti Indiretti}
 
-\textbf{Google Keep (Note e promemoria generici)}\\
-Molti utenti lo usano in modo improprio come lista della spesa o promemoria di scadenze, creando note testuali manuali con checklist. Offre un'estrema semplicità e sincronizzazione multi-dispositivo affidabile, ma manca di una struttura dati specifica per prodotti alimentari e di un sistema di notifica automatica legato alle scadenze reali dei prodotti.
-
-\vspace{1em}
-
-\textbf{Foglio di calcolo -- Excel / Google Sheets}\\
-Alcuni utenti creano fogli di calcolo personalizzati per tracciare prodotti, quantità e scadenze. Offre flessibilità totale nella struttura dei dati, ma manca di automazione e notifiche, richiede aggiornamento manuale costante e l'esperienza d'uso su smartphone risulta spesso scomoda e macchinosa.
+Oltre ai tre concorrenti diretti, sono stati brevemente considerati anche due strumenti generici spesso adottati in alternativa a un'app dedicata: \textbf{Google Keep}, usato da alcuni utenti come lista della spesa o promemoria di scadenze tramite note testuali manuali, e i \textbf{fogli di calcolo} (Excel/Google Sheets), utilizzati da utenti più esperti per tracciare prodotti e scadenze con la massima flessibilità. Entrambi offrono sincronizzazione affidabile ma mancano di una struttura dati specifica per prodotti alimentari, di notifiche automatiche legate alle scadenze reali e di un'esperienza pensata per l'uso da smartphone, risultando adatti solo come soluzioni di ripiego rispetto a un'app dedicata.
 
 \subsection{Confronti tra applicazioni}
 
-\begin{table}[h]
+L'analisi dei concorrenti diretti è stata approfondita tramite lo studio di un dataset di recensioni reali raccolte dal Google Play Store (1226 recensioni complessive: 1015 per KitchenPal, 163 per BestBefore, 48 per NoWaste) e dei metadati ufficiali di ciascuna scheda applicativa, che hanno permesso di affiancare ai dati qualitativi anche un benchmark quantitativo.
+
+\begin{table}[H]
 \centering
-\caption{Tabella comparativa delle funzionalità}
+\caption{Informazioni di base dei concorrenti diretti (fonte: Google Play Store)}
 \small
-\begin{tabular}{lccccc}
+\begin{tabularx}{\textwidth}{lXccc}
 \toprule
-\textbf{Feature} & \textbf{NoWaste} & \textbf{Fridge Pal} & \textbf{Out of Milk} & \textbf{Google Keep} & \textbf{Excel} \\
+\textbf{App} & \textbf{Sviluppatore} & \textbf{Download} & \textbf{Rating store} & \textbf{N. recensioni store} \\
 \midrule
-Scanner barcode                        & \checkmark & \checkmark &            &            &            \\
-Notifiche scadenza                     & \checkmark & \checkmark &            &            &            \\
-Lista della spesa integrata            &            &            & \checkmark & (manuale)  &            \\
-Statistiche spreco/spesa               & (a pagam.) &            &            &            & (manuale)  \\
-Sincronizzazione multi-dispositivo     & \checkmark &            & \checkmark & \checkmark & \checkmark \\
-Condivisione familiare                 &            &            & \checkmark & \checkmark & \checkmark \\
-Categorizzazione automatica prodotti   & \checkmark & \checkmark &            &            &            \\
+KitchenPal  & iCuisto Pte Ltd   & 100.000+ & 4,4 & 6\,394 \\
+NoWaste     & KH Creations ApS  & 50.000+  & 3,8 & 265   \\
+BestBefore  & PeytuApp          & 50.000+  & 3,7 & 947   \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Benchmark del campione analizzato (dataset recensioni raccolte)}
+\small
+\begin{tabular}{lccl}
+\toprule
+\textbf{App} & \textbf{N. recensioni} & \textbf{Rating medio} & \textbf{Modello di business} \\
+\midrule
+KitchenPal  & 1015 & 3,68 & Freemium + acquisto Lifetime/Family \\
+NoWaste     & 48   & 2,08 & Freemium + abbonamento per database scanner \\
+BestBefore  & 163  & 4,00 & Ads leggeri, rimozione one-time (no subscription) \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[H]
+\centering
+\caption{Tabella comparativa delle funzionalità (concorrenti diretti)}
+\small
+\begin{tabular}{lccc}
+\toprule
+\textbf{Feature} & \textbf{KitchenPal} & \textbf{NoWaste} & \textbf{BestBefore} \\
+\midrule
+Scanner barcode                        & \checkmark (instabile) & \checkmark (instabile) &            \\
+Notifiche scadenza                     & (segnalate assenti)    & \checkmark (instabile) & \checkmark \\
+Suggerimento ricette                   & \checkmark             &            &            \\
+Lista della spesa integrata            & \checkmark             &            &            \\
+Sincronizzazione multi-dispositivo     & \checkmark             & \checkmark & \checkmark \\
+Condivisione familiare                 & \checkmark             &            & \checkmark \\
+Monetizzazione senza abbonamento       &                        &            & \checkmark \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
 \centering
 \caption{Valutazione UX sintetica}
 \small
@@ -297,22 +324,21 @@ Categorizzazione automatica prodotti   & \checkmark & \checkmark &            & 
 \toprule
 \textbf{Dimensione} & \textbf{Osservazioni} \\
 \midrule
-Discovery \& Onboarding & Le app dirette (NoWaste, Fridge Pal) hanno onboarding lunghi; Out of Milk e Keep sono immediati. \\
-Core Tasks & Inserimento prodotto più rapido con scanner barcode (NoWaste, Fridge Pal); manuale e lento su Keep/Excel. \\
-Notifiche & Solo le app dirette gestiscono notifiche automatiche per scadenza; nessuna le combina con la lista della spesa. \\
-Collaborazione & Out of Milk e Keep gestiscono bene la condivisione familiare; le app di tracciamento dispensa no. \\
+Discovery \& Onboarding & Tutte e tre le app richiedono alcuni step per il primo inserimento prodotto; KitchenPal e NoWaste risultano leggermente più lunghi a causa del flusso di scansione. \\
+Core Tasks (inserimento prodotto) & Lo scanner barcode è il punto più critico trasversalmente: inaffidabile in KitchenPal e NoWaste, del tutto assente in BestBefore, che richiede inserimento manuale/fotografico. \\
+Notifiche & Funzione centrale ma spesso instabile: assente in KitchenPal (utenti IT), buggata in NoWaste; solo BestBefore la offre in modo affidabile e apprezzato. \\
+Monetizzazione & I modelli ad abbonamento legati a funzionalità core (NoWaste) generano il sentiment peggiore; il modello one-time di BestBefore è associato al rating più alto. \\
+Collaborazione & KitchenPal e BestBefore gestiscono bene la condivisione familiare della lista/dispensa; NoWaste ne è privo. \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
 \paragraph{Sintesi finale e opportunità per MealBase}
-L'analisi condotta evidenzia un pattern ricorrente: le applicazioni di tracciamento dispensa (concorrenti diretti) risultano efficaci nella gestione 
-delle notifiche di scadenza ma deboli sul fronte della condivisione familiare, mentre le applicazioni di lista della spesa (concorrenti indiretti) presentano il comportamento opposto.
+L'analisi delle recensioni reali evidenzia un pattern ricorrente: lo scanner barcode, pur essendo la funzionalità più attesa dagli utenti, è anche la causa principale di abbandono quando risulta inaffidabile (KitchenPal, NoWaste). Al contrario, BestBefore -- pur senza scanner nativo -- ottiene il rating medio più alto tra i concorrenti diretti, grazie a notifiche di scadenza affidabili, condivisione familiare solida e un modello di monetizzazione one-time percepito molto positivamente rispetto agli abbonamenti ricorrenti.
 \newline
-Il gap identificato riguarda quindi l'assenza, tra i concorrenti analizzati, di una soluzione che unisca in modo efficace \emph{tracciamento scadenze} e \emph{lista della spesa condivisa} 
-in un'unica esperienza fluida. MealBase si posiziona proprio su questo gap, offrendo notifiche di scadenza automatiche e condivisione familiare della dispensa, elemento che nessuna delle applicazioni analizzate copre in modo completo.
+Il gap identificato riguarda quindi l'assenza, tra i concorrenti analizzati, di una soluzione che unisca uno scanner barcode realmente affidabile a un sistema di notifiche stabile e a un modello di monetizzazione non vincolato a funzionalità core. MealBase si posiziona proprio su questo gap, puntando su: (1) uno scanner barcode nativo con possibilità di correzione manuale immediata del match, (2) un sistema di notifiche verificabile dall'utente, (3) condivisione familiare della dispensa e della lista della spesa in un'unica esperienza fluida, (4) un modello di monetizzazione one-time che non comprometta le funzionalità essenziali.
 \newline
-Un ulteriore elemento da evitare, emerso dall'analisi, è l'onboarding eccessivamente lungo riscontrato nelle applicazioni dirette: MealBase punterà a un primo inserimento prodotto rapido, idealmente contenuto in una o due schermate.
+Un ulteriore elemento da evitare, emerso dall'analisi, è la ricategorizzazione automatica e silenziosa degli articoli riscontrata in KitchenPal: MealBase manterrà sempre editabili manualmente categorie e posizioni dei prodotti.
 
 % =========================================================
 % REQUIREMENTS BRIEF
