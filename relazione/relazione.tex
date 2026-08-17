@@ -26,6 +26,7 @@
 \usepackage{amssymb}
 \usepackage{listings}
 \usepackage{comment}
+\usepackage{tikz}
 \usepackage[hidelinks,bookmarksnumbered=true]{hyperref}
   
 % =========================================================
@@ -116,7 +117,7 @@
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.5\textwidth]{Immagini/logoUniUd.pdf} 
+  \includegraphics[width=0.5\textwidth]{immagini/logoUniUd.pdf} 
 \end{figure}
 
 \vspace{1.5cm}
@@ -352,13 +353,29 @@ La presente sezione definisce la lista completa dei requisiti funzionali ed espe
 I requisiti sono stati derivati incrociando tre fonti: (1) il System Concept Statement, che definisce il bisogno primario a cui MealBase risponde; (2) i pattern di interazione consolidati emersi dalla Competitive Assessment (es. scanner barcode, notifiche, condivisione familiare); (3) i \textit{gap} e i pain point ricorrenti individuati nelle recensioni reali dei concorrenti diretti, che rappresentano funzionalità da includere ma implementare in modo più affidabile.
 
 \subsection{Metodologia di prioritizzazione}
-Ogni requisito è stato analizzato e prioritizzato secondo una scala qualitativa a tre livelli, in linea con l'approccio visto a lezione:
+Ogni requisito è stato analizzato e prioritizzato secondo una scala qualitativa a tre livelli. La scala non è arbitraria: è stata costruita facendo riferimento al \textbf{Kano Model} visto a lezione, che classifica le funzionalità in base a come la loro presenza/assenza influisce sulla soddisfazione dell'utente:
 \begin{itemize}
-    \item \textbf{Priorità ALTA}: Requisiti \textit{must-have}, essenziali per la User Experience (UX) e indispensabili per soddisfare il bisogno primario individuato nel System Concept Statement. La loro assenza compromette l'utilità stessa dell'applicazione o riproduce i pain point già osservati nei concorrenti (es. scanner inaffidabile, notifiche assenti).
-    \item \textbf{Priorità MEDIA}: Requisiti di tipo \textit{performance}, che arricchiscono l'esperienza d'uso e migliorano l'usabilità complessiva in modo proporzionale allo sforzo investito, pur non essendo strettamente bloccanti per i flussi principali.
-    \item \textbf{Priorità BASSA}: Requisiti accessori, assimilabili a funzionalità \textit{delighter} o secondarie, che offrono un valore aggiunto marginale o rivolto a una nicchia di utenti, e che possono essere posposte a release successive senza impattare l'MVP.
+    \item \textbf{Priorità ALTA} $\equiv$ requisiti \textit{Must-have} (Kano): funzionalità di base la cui assenza genera insoddisfazione totale, mentre la loro presenza viene data per scontata dall'utente. Sono essenziali per la User Experience (UX) e indispensabili per soddisfare il bisogno primario individuato nel System Concept Statement. La loro assenza compromette l'utilità stessa dell'applicazione o riproduce i pain point già osservati nei concorrenti (es. scanner inaffidabile, notifiche assenti).
+    \item \textbf{Priorità MEDIA} $\equiv$ requisiti \textit{Performance} (Kano): la soddisfazione dell'utente cresce in modo proporzionale a quanto bene la funzionalità è implementata. Arricchiscono l'esperienza d'uso e migliorano l'usabilità complessiva, pur non essendo strettamente bloccanti per i flussi principali.
+    \item \textbf{Priorità BASSA} $\equiv$ requisiti \textit{Delighter} (Kano): funzionalità inattese la cui assenza non viene notata, ma la cui presenza genera un valore aggiunto marginale o un ``effetto wow'' per una nicchia di utenti. Possono essere posposte a release successive senza impattare l'MVP.
 \end{itemize}
 La classificazione ALTA/MEDIA/BASSA è stata assegnata valutando per ciascun requisito: (a) quanto la sua assenza impedirebbe all'utente di raggiungere il goal primario (ridurre lo spreco alimentare e la spesa duplicata); (b) se il requisito corrisponde a un punto debole ricorrente riscontrato nei concorrenti diretti, e quindi a un elemento su cui MealBase deve necessariamente differenziarsi fin dal lancio; (c) il rapporto tra impatto percepito dall'utente e complessità di implementazione, in un'ottica di definizione del Minimal Viable Product (MVP).
+\newline
+È importante sottolineare che, dove il Kano Model ``da manuale'' sarebbe in contrasto con l'evidenza empirica raccolta nella Competitive Assessment, si è data priorità a quest'ultima: lo scanner barcode, ad esempio, sarebbe genericamente un requisito \textit{Performance}, ma il dataset di recensioni reali (1226 recensioni analizzate) mostra che la sua inaffidabilità è la causa di abbandono più citata per KitchenPal e NoWaste; è stato quindi trattato come requisito ALTA/Must-have per il mercato specifico di MealBase.
+
+\paragraph{Validazione tramite Bang vs Buck Chart}
+Come ulteriore verifica della roadmap, i 14 requisiti individuati sono stati collocati su un \textbf{Bang vs Buck Chart} (Figura~\ref{fig:bangbuck}), che incrocia l'impatto percepito dall'utente (\textit{Bang}, asse verticale) con lo sforzo di sviluppo stimato (\textit{Buck}, asse orizzontale). Il grafico conferma la bontà della maggior parte delle priorità assegnate: gran parte dei requisiti ALTA (REQ-02\,--\,07, REQ-12) si colloca nei quadranti ad alto impatto, con REQ-03 e REQ-06 in particolare come veri e propri \textit{quick win} a basso costo che risolvono direttamente i pain point dei concorrenti; REQ-13 (suggerimento ricette) ricade invece nel quadrante ad alto costo e impatto moderato, confermandone la classificazione BASSA.
+\newline
+Fanno volutamente eccezione i requisiti abilitanti REQ-01 (Autenticazione) e REQ-08 (Sincronizzazione multi-dispositivo): nel grafico ricadono entrambi in quadranti a basso impatto diretto (rispettivamente ``Bassa priorità'' ed ``Evitare/rimandare''), perché da soli non producono alcun beneficio visibile per l'utente. Applicando il Bang vs Buck Chart in modo acritico questi due requisiti verrebbero erroneamente rimandati; restano invece ALTA perché sono precondizioni tecniche indispensabili per altri requisiti ad alto impatto (REQ-05, REQ-09) e la loro assenza renderebbe impossibile l'intera esperienza. È lo stesso tipo di correzione già applicato al Kano Model per lo scanner barcode: il framework resta un supporto alla decisione, non un sostituto della valutazione basata sui dati e sulla vision di prodotto.
+
+\begin{figure}[H]
+  \centering
+  \makebox[\textwidth][c]{%
+    \includegraphics[width=1.15\textwidth]{immagini/BuckVsBang.pdf}%
+  }
+  \caption{Bang vs Buck Chart dei requisiti di MealBase. La maggior parte dei requisiti ALTA si colloca nei quadranti ad alto impatto; REQ-01 e REQ-08 sono eccezioni volute (requisiti abilitanti, si veda testo); REQ-13 e REQ-14, a basso rapporto impatto/costo, confermano la priorità BASSA.}
+  \label{fig:buclbang}
+\end{figure}
 
 \subsection{Feature List}
 Di seguito sono descritti i requisiti principali dell'applicazione, la relativa priorità e la motivazione d'uso.
