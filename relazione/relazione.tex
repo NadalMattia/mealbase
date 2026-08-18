@@ -44,48 +44,50 @@
 % Argomenti: #1 Titolo, #2 Categoria, #3 Cosa fa, #4 Punti forza, #5 Punti deboli, #6 Immagini, #7 Info rapide (sviluppatore/download/rating)
 \newcommand{\appcard}[7]{%
 \par\vspace{1em}
+\noindent
 \begin{center}
   \fboxsep=0pt
   \fboxrule=1pt
   \fcolorbox{cardframe}{cardbg}{%
-    \begin{minipage}{\textwidth}
-      \vspace{1em}
+    \begin{minipage}{\dimexpr\textwidth-2pt\relax}
+      \vspace{0.8em}
       % Titolo e Categoria
       \hspace{1em}{\LARGE\bfseries\color{cardframe} #1} \hfill {\small\scshape\color{gray} #2}\hspace{1em}
       \vspace{0.3em}\par
       \hspace{1em}{\footnotesize\color{gray} #7}\hspace{1em}
       \vspace{0.5em}\par
-      \hspace{1em}\rule{0.95\textwidth}{0.5pt}\par
-      \vspace{1em}
+      \centering\rule{0.95\textwidth}{0.5pt}\par
+      \vspace{0.8em}
       
-      % Colonna Testo (58%)
-      \hspace{1em}%
-      \begin{minipage}[t]{0.58\textwidth}
+      \noindent
+      \hspace{0.8em}%
+      % Colonna Testo (RIDOTTA AL 45%)
+      \begin{minipage}[t]{0.45\textwidth}
         \small
         \textbf{Cosa fa:} #3\par
-        \vspace{1em}
+        \vspace{0.8em}
         
         \textbf{\color{greenPro}Punti di forza:}\par
-        \begin{itemize}[label=\textcolor{greenPro}{$\checkmark$}, leftmargin=1.5em, itemsep=0pt, parsep=2pt]
+        \begin{itemize}[label=\textcolor{greenPro}{$\checkmark$}, leftmargin=1.2em, itemsep=0pt, parsep=2pt]
           #4
         \end{itemize}
         \vspace{0.5em}
         
         \textbf{\color{redCons}Punti deboli:}\par
-        \begin{itemize}[label=\textcolor{redCons}{$\times$}, leftmargin=1.5em, itemsep=0pt, parsep=2pt]
+        \begin{itemize}[label=\textcolor{redCons}{$\times$}, leftmargin=1.2em, itemsep=0pt, parsep=2pt]
           #5
         \end{itemize}
-        \vspace{1em}
+        \vspace{0.8em}
       \end{minipage}%
       \hfill
-      % Colonna Immagini (35%)
-      \begin{minipage}[t]{0.35\textwidth}
+      % Colonna Immagini (AUMENTATA AL 48%)
+      \begin{minipage}[t]{0.48\textwidth}
         \centering
-        \vspace{0pt} % Allineamento top
+        \vspace{0pt}%
         #6
-        \vspace{1em}
       \end{minipage}%
-      \hspace{1em}
+      \hspace{0.8em}
+      \vspace{0.8em}
     \end{minipage}
   }
 \end{center}
@@ -152,7 +154,7 @@ nella Parte II viene documentato il processo di prototipazione, da sketch e wire
 % =========================================================
 % System Concept Statement
 % =========================================================
-\clearpage
+%\clearpage
 \section{System Concept Statement}
 Per chi gestisce la spesa e la dispensa di casa, tenere traccia di ciò che si possiede, delle quantità disponibili e delle scadenze dei prodotti alimentari 
 può rivelarsi un compito complesso e dispersivo. Affidarsi alla sola memoria porta spesso ad acquisti duplicati, prodotti dimenticati fino a superarne la 
@@ -166,7 +168,7 @@ Grazie a un sistema di notifiche, l'utente riceverà promemoria tempestivi sui p
 % =========================================================
 % Competitive Assessment
 % =========================================================
-\clearpage
+%\clearpage
 \section{Competitive Assessment}
 
 \subsection{Introduzione all'analisi}
@@ -215,7 +217,11 @@ Indiretto & Foglio di calcolo (Excel / Google Sheets) \\
     \item Notifiche di scadenza segnalate come assenti da utenti italiani nonostante i permessi concessi, con conseguente percezione di inutilità della funzione
   }
   {
-    \rule{0.8\linewidth}{5cm} % Placeholder per screenshot
+    \centering
+    \includegraphics[height=7cm]{immagini/kitchenPal1.pdf}\hspace{0.4em}%
+    \includegraphics[height=7cm]{immagini/kitchenPal2.pdf}\\[0.4em]
+    \includegraphics[height=7cm]{immagini/kitchenPal3.pdf}\hspace{0.4em}%
+    \includegraphics[height=7cm]{immagini/kitchenPal4.pdf}%
   }
   {Sviluppatore: iCuisto Pte Ltd \;\textbullet\; Download: 100.000+ \;\textbullet\; Rating store: 4,4 (6\,394 recensioni)}
 
@@ -235,7 +241,11 @@ Indiretto & Foglio di calcolo (Excel / Google Sheets) \\
     \item Perdita di dati segnalata da un utente con oltre 350 articoli registrati, non più visualizzabili nella lista dopo un problema di sincronizzazione
   }
   {
-    \rule{0.8\linewidth}{5cm} % Placeholder per screenshot
+    \centering
+    \includegraphics[height=7cm]{immagini/noWaste1.pdf}\hspace{0.4em}%
+    \includegraphics[height=7cm]{immagini/noWaste2.pdf}\\[0.4em]
+    \includegraphics[height=7cm]{immagini/noWaste3.pdf}\hspace{0.4em}%
+    \includegraphics[height=7cm]{immagini/noWaste4.pdf}%
   }
   {Sviluppatore: KH Creations ApS \;\textbullet\; Download: 50.000+ \;\textbullet\; Rating store: 3,8 (265 recensioni)}
 
@@ -255,7 +265,11 @@ Indiretto & Foglio di calcolo (Excel / Google Sheets) \\
     \item Le foto prodotto non risultano sempre visibili correttamente agli altri membri con cui la lista è condivisa
   }
   {
-    \rule{0.8\linewidth}{5cm} % Placeholder per screenshot
+    \centering
+    \includegraphics[height=6.5cm]{immagini/bestBefore1.pdf}\hspace{0.4em}%
+    \includegraphics[height=6.5cm]{immagini/bestBefore2.pdf}\\[0.4em]
+    \includegraphics[height=6.5cm]{immagini/bestBefore3.pdf}\hspace{0.4em}%
+    \includegraphics[height=6.5cm]{immagini/bestBefore4.pdf}%
   }
   {Sviluppatore: PeytuApp \;\textbullet\; Download: 50.000+ \;\textbullet\; Rating store: 3,7 (947 recensioni)}
 
