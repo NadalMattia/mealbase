@@ -182,23 +182,6 @@ Gli obiettivi principali dell'analisi sono stati:
   \item individuare bisogni insoddisfatti e opportunità di differenziazione per MealBase.
 \end{itemize}
 
-\begin{comment}
-\begin{table}[H]
-\centering
-\caption{Concorrenti selezionati}
-\begin{tabular}{ll}
-\toprule
-\textbf{Tipo} & \textbf{App} \\
-\midrule
-Diretto & KitchenPal \\
-Diretto & NoWaste \\
-Diretto & BestBefore \\
-Indiretto & Google Keep (liste/promemoria) \\
-Indiretto & Foglio di calcolo (Excel / Google Sheets) \\
-\bottomrule
-\end{tabular}
-\end{table}
-\end{comment}
 
 \subsection{Concorrenti Diretti}
 \appcard{KitchenPal}
@@ -218,10 +201,10 @@ Indiretto & Foglio di calcolo (Excel / Google Sheets) \\
   }
   {
     \centering
-    \includegraphics[height=7cm]{immagini/kitchenPal1.pdf}\hspace{0.4em}%
-    \includegraphics[height=7cm]{immagini/kitchenPal2.pdf}\\[0.4em]
-    \includegraphics[height=7cm]{immagini/kitchenPal3.pdf}\hspace{0.4em}%
-    \includegraphics[height=7cm]{immagini/kitchenPal4.pdf}%
+    \includegraphics[height=7cm]{immagini/kitchenPalApp/kitchenPal1.pdf}\hspace{0.4em}%
+    \includegraphics[height=7cm]{immagini/kitchenPalApp/kitchenPal2.pdf}\\[0.4em]
+    \includegraphics[height=7cm]{immagini/kitchenPalApp/kitchenPal3.pdf}\hspace{0.4em}%
+    \includegraphics[height=7cm]{immagini/kitchenPalApp/kitchenPal4.pdf}%
   }
   {Sviluppatore: iCuisto Pte Ltd \;\textbullet\; Download: 100.000+ \;\textbullet\; Rating store: 4,4 (6\,394 recensioni)}
 
@@ -242,10 +225,10 @@ Indiretto & Foglio di calcolo (Excel / Google Sheets) \\
   }
   {
     \centering
-    \includegraphics[height=7cm]{immagini/noWaste1.pdf}\hspace{0.4em}%
-    \includegraphics[height=7cm]{immagini/noWaste2.pdf}\\[0.4em]
-    \includegraphics[height=7cm]{immagini/noWaste3.pdf}\hspace{0.4em}%
-    \includegraphics[height=7cm]{immagini/noWaste4.pdf}%
+    \includegraphics[height=7cm]{immagini/noWasteApp/noWaste1.pdf}\hspace{0.4em}%
+    \includegraphics[height=7cm]{immagini/noWasteApp/noWaste2.pdf}\\[0.4em]
+    \includegraphics[height=7cm]{immagini/noWasteApp/noWaste3.pdf}\hspace{0.4em}%
+    \includegraphics[height=7cm]{immagini/noWasteApp/noWaste4.pdf}%
   }
   {Sviluppatore: KH Creations ApS \;\textbullet\; Download: 50.000+ \;\textbullet\; Rating store: 3,8 (265 recensioni)}
 
@@ -266,10 +249,10 @@ Indiretto & Foglio di calcolo (Excel / Google Sheets) \\
   }
   {
     \centering
-    \includegraphics[height=6.5cm]{immagini/bestBefore1.pdf}\hspace{0.4em}%
-    \includegraphics[height=6.5cm]{immagini/bestBefore2.pdf}\\[0.4em]
-    \includegraphics[height=6.5cm]{immagini/bestBefore3.pdf}\hspace{0.4em}%
-    \includegraphics[height=6.5cm]{immagini/bestBefore4.pdf}%
+    \includegraphics[height=6.5cm]{immagini/bestBeforeApp/bestBefore1.pdf}\hspace{0.4em}%
+    \includegraphics[height=6.5cm]{immagini/bestBeforeApp/bestBefore2.pdf}\\[0.4em]
+    \includegraphics[height=6.5cm]{immagini/bestBeforeApp/bestBefore3.pdf}\hspace{0.4em}%
+    \includegraphics[height=6.5cm]{immagini/bestBeforeApp/bestBefore4.pdf}%
   }
   {Sviluppatore: PeytuApp \;\textbullet\; Download: 50.000+ \;\textbullet\; Rating store: 3,7 (947 recensioni)}
 
@@ -395,7 +378,7 @@ Fanno volutamente eccezione i requisiti abilitanti REQ-01 (Autenticazione) e REQ
 Di seguito sono descritti i requisiti principali dell'applicazione, la relativa priorità e la motivazione d'uso.
 
 {\small
-\renewcommand{\arraystretch}{1.3} % Aumenta lo spazio verticale tra le righe
+\renewcommand{\arraystretch}{1.3}
 \begin{longtable}{
   c 
   >{\raggedright\arraybackslash}p{0.18\textwidth} 
@@ -403,6 +386,7 @@ Di seguito sono descritti i requisiti principali dell'applicazione, la relativa 
   c 
   >{\raggedright\arraybackslash}p{0.26\textwidth}
 }
+\caption{Feature List di progetto e prioritizzazione.} \label{tab:featurelist} \\
 \toprule
 \textbf{ID} & \textbf{Requisito} & \textbf{Descrizione} & \textbf{Priorità} & \textbf{Motivazione UX} \\ 
 \midrule
@@ -417,7 +401,6 @@ Di seguito sono descritti i requisiti principali dell'applicazione, la relativa 
 \endfoot
 
 \bottomrule
-\caption{Feature List di progetto e prioritizzazione.}
 \endlastfoot
 
 REQ-01 & Autenticazione e Profilo Utente & L'utente può registrarsi, effettuare il login e gestire le proprie informazioni personali, condizione necessaria per salvare la dispensa in cloud e condividerla con il proprio nucleo familiare. & \textcolor{red}{\textbf{ALTA}} & Fondamentale per identificare l'utente e abilitare la persistenza e la condivisione dei dati; senza account non è possibile garantire sincronizzazione né recupero della dispensa in caso di cambio dispositivo. \\ \addlinespace[0.6em]
@@ -469,8 +452,71 @@ EXT-03 & Condivisione Social e Collaborazione & Funzionalità per condividere co
 \caption{Estensioni di prodotto per rilasci futuri.}
 \end{table}
 
+% =========================================================
+% SKETCHING
+% =========================================================
 \clearpage
 \section{Sketching}
+
+\subsection{Introduzione e Metodologia}
+La fase di \textit{Sketching} rappresenta il primo passo del processo di prototipazione a basso livello (\textit{Low-Fidelity Prototyping}). L'obiettivo principale è esplorare rapidamente le strutture di layout e la sequenza delle interazioni (\textit{Task Flow}), focalizzandosi sui requisiti ad \textbf{Priorità ALTA (Must-have)} definiti nel Requirements Brief e risolvendo i principali \textit{pain point} emersi dall'analisi dei concorrenti.
+
+In linea con le direttive del corso, gli sketch sono stati realizzati a mano libera per mantenere un elevato grado di astrazione visuale, concentrando l'attenzione sull'architettura dell'informazione e sulle dinamiche d'uso piuttosto che sui dettagli estetici.
+
+\subsection{Flusso Principale e Mappa delle Interazioni (Soluzione Proposta)}
+La mappa concettuale completa delle schermate e dei flussi di navigazione della \textbf{soluzione di design proposta per l'applicazione} è illustrata nella Figura~\ref{fig:sketch_main}. Lo schema organizza l'esperienza d'uso attraverso una sequenza logica di 9 schermate interconnesse, che costituisce l'ossatura di riferimento per la successiva fase di wireframing.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.95\textwidth]{immagini/sketch/Sketch.pdf}
+  \caption{Mappa delle schermate e Task Flow concettuale proposto per MealBase.}
+  \label{fig:sketch_main}
+\end{figure}
+
+Le scelte di design e i pattern d'interazione integrati nel flusso principale comprendono:
+\begin{itemize}
+  \item \textbf{Gestione Multi-Dispensa e Autenticazione (\texttt{REQ-01}, \texttt{REQ-09}):} L'accesso iniziale tramite la selezione del nucleo domestico (\textit{Casa 1}, \textit{Casa 2}) stabilisce il contesto di condivisione familiare della dispensa.
+  \item \textbf{Dashboard Dispensa Digitale (\texttt{REQ-05}):} Vista principale organizzata con tab superiori per la selezione della posizione (\textit{Tutto}, \textit{Frigo}, \textit{Dispensa}), barra di ricerca rapida, filtri per data di scadenza e pulsante dedicato per la rimozione rapida degli elementi.
+  \item \textbf{Scanner Barcode con Correzione Immediata (\texttt{REQ-02}, \texttt{REQ-03}):} La schermata di scansione inquadra il codice a barre e conduce direttamente a un form di riepilogo in cui l'utente può verificare e correggere manualmente nome, quantità, posizione e data di scadenza prima del salvataggio definitivo. Questo flusso risolve direttamente la criticità riscontrata nei competitor (es. KitchenPal), dove le modifiche non venivano memorizzate.
+  \item \textbf{Lista della Spesa e Carrello su Schermo Unico (\texttt{REQ-10}):} Layout diviso verticalmente per gestire in un'unica schermata sia l'elenco degli articoli da acquistare (\textit{Spesa}, in alto) sia quelli già prelevati (\textit{Carrello}, in basso), consentendo il passaggio immediato dei prodotti da una sezione all'altra.
+  \item \textbf{Pannello Impostazioni e Condivisione Nucleo (\texttt{REQ-09}):} Sezione dedicata alla gestione degli account associati, con funzionalità per la generazione di link di invito alla lista e disconnessione o eliminazione della casa condivisa.
+  \item \textbf{Consistency nella Navigation Bar:} Utilizzo standardizzato della \textit{Bottom Navigation Bar} su tutte le schermate primarie per garantire accessibilità ergonomica con una sola mano.
+\end{itemize}
+
+\subsection{Esplorazione di Design Alternativi (Alternative Designs)}
+In conformità con la metodologia di prototipazione, prima di confermare la struttura finale sono state esplorate soluzioni di layout e pattern d'interazione alternativi per valutare differenti \textit{trade-off} di usabilità.
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{immagini/sketch/SketchVar1.pdf}
+    \caption{Variante 1: Dispensa a sezioni verticali (\textit{Accordion}).}
+    \label{fig:sketch_var1}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{immagini/sketch/SketchVar2.pdf}
+    \caption{Variante 2: Lista Spesa con Tab Switch orizzontali.}
+    \label{fig:sketch_var2}
+  \end{minipage}
+\end{figure}
+
+\subsubsection{Variante 1: Layout Dispensa ad Accordion su Lista Verticale (Figura~\ref{fig:sketch_var1})}
+Rispetto al design proposto (Figura~\ref{fig:sketch_main}) che impiega schede/tab orizzontali in alto, questa variante organizza le posizioni della dispensa (\textit{Frigo}, \textit{Dispensa}) in sezioni verticali espandibili e comprimibili (\textit{Accordion}) lungo un'unica pagina scrollabile.
+\begin{itemize}
+  \item \textbf{Analisi e Trade-off:} Consente di aggiungere o rimuovere dinamicamente posizioni personalizzate (\texttt{+ AGGIUNGI LOCAZIONE}), offrendo una vista globale delle scorte. Tuttavia, in presenza di molti prodotti, genera un eccessivo allungamento verticale della pagina e costringe l'utente a un continuo scorrimento.
+\end{itemize}
+
+\subsubsection{Variante 2: Lista Spesa con Schede/Tab Orizzontali (Figura~\ref{fig:sketch_var2})}
+Diversamente dalla soluzione proposta nello sketch principale (Figura~\ref{fig:sketch_main}), che divide lo schermo unico in due riquadri sovrapposti verticalmente, questa variante separa \textit{Spesa} e \textit{Carrello} in due tab orizzontali posizionati in alto, commutabili al tocco.
+\begin{itemize}
+  \item \textbf{Analisi e Trade-off:} Dedica l'intero schermo agli articoli di una singola sezione, aumentando lo spazio visivo per la griglia degli elementi. Di contro, nasconde i prodotti già riposti nel carrello, impedendo di avere la visione d'insieme contemporanea e richiedendo un cambio scheda continuo durante gli acquisti.
+\end{itemize}
+
+\subsubsection{Motivazione della Scelta Finale}
+In base all'analisi dei trade-off d'interazione, \textbf{è stato confermato lo sketch principale (Figura~\ref{fig:sketch_main}) come soluzione di design definitiva da digitalizzare nei wireframe}. La suddivisione della schermata della spesa in due riquadri sovrapposti verticalmente garantisce un'eccellente usabilità immediata: l'utente può spostare i prodotti nel carrello ed avere sempre sotto controllo sia ciò che deve ancora acquistare sia ciò che ha già preso, senza nascondere informazioni dietro tab o schede separate. Contemporaneamente, i tab orizzontali superiori scelti per la dispensa garantiscono una consultazione immediata e pulita delle scorte, evitando il carico visivo e lo scorrimento continuo causato dal layout a sezioni verticali espandibili.
 
 \clearpage
 \section{Wireframes}
