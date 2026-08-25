@@ -481,6 +481,7 @@ Le scelte di design e i pattern d'interazione integrati nel flusso principale co
   \item \textbf{Consistency nella Navigation Bar:} Utilizzo standardizzato della \textit{Bottom Navigation Bar} su tutte le schermate primarie per garantire accessibilità ergonomica con una sola mano.
 \end{itemize}
 
+\newpage
 \subsection{Esplorazione di Design Alternativi}
 In conformità con la metodologia di prototipazione, prima di confermare la struttura finale sono state esplorate soluzioni di layout e pattern d'interazione alternativi per valutare differenti \textit{trade-off} di usabilità.
 
@@ -516,7 +517,63 @@ Diversamente dalla soluzione proposta nello sketch principale (Figura~\ref{fig:s
 \subsubsection{Motivazione della Scelta Finale}
 In base all'analisi dei trade-off d'interazione, \textbf{è stato confermato lo sketch principale (Figura~\ref{fig:sketch_main}) come soluzione di design definitiva da digitalizzare nei wireframe}. La suddivisione della schermata della spesa in due riquadri sovrapposti verticalmente garantisce un'eccellente usabilità immediata: l'utente può spostare i prodotti nel carrello ed avere sempre sotto controllo sia ciò che deve ancora acquistare sia ciò che ha già preso, senza nascondere informazioni dietro tab o schede separate. Contemporaneamente, i tab orizzontali superiori scelti per la dispensa garantiscono una consultazione immediata e pulita delle scorte, evitando il carico visivo e lo scorrimento continuo causato dal layout a sezioni verticali espandibili.
 
+\newpage
 \section{Wireframes}
+A partire dagli sketch definiti nella Sezione~4 e dalla struttura confermata in \S4.3.3, gli sketch sono stati digitalizzati in wireframe a bassa/media fedeltà, mantenendo l'impostazione in bianco e nero e concentrando l'attenzione sulla struttura delle schermate, sul posizionamento degli elementi e sui collegamenti di navigazione, senza approfondire aspetti estetici quali colori, font o iconografia definitiva.
+La Figura~\ref{fig:wireframe} riporta il flusso completo digitalizzato, comprendente le schermate relative a: selezione della casa (REQ-01, REQ-09),
+dispensa digitale con tab Tutto/Frigo/Dispensa (REQ-05), scansione barcode e conferma/correzione del prodotto (REQ-02, REQ-03), inserimento manuale
+del prodotto (REQ-04) e lista della spesa con relativo carrello (REQ-10).
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.85\textwidth]{immagini/wireframe/Wireframe.pdf}
+    \caption{Flusso completo dei wireframe.}
+    \label{fig:wireframe}
+\end{figure}
+
+\subsection{Dalla schermata Home alla Dispensa}
+
+La schermata iniziale (\emph{Le tue case}) rispetto allo sketch presentaun affinamento della gestione delle case multiple: viene reso esplicito il
+pulsante \texttt{AGGIUNGI UNA NUOVA CASA}, mentre nello sketch questa azioneera è solo accennata tramite icona. La bottom navigation bar (\emph{Menu},
+\emph{Profilo}) viene introdotta in modo coerente fin da questa schermata,anticipando il pattern di \emph{consistency} descritto in \S4.2.
+
+Selezionata una casa, l'utente accede alla Dispensa, organizzata secondola struttura a tab orizzontali (\emph{Tutto}, \emph{Frigo}, \emph{Dispensa})
+confermata come soluzione finale in \S4.3.3, con barra di ricerca superioree due azioni primarie in fondo allo schermo: \texttt{INSERISCI} (inserimento manuale, REQ-04) e \texttt{SCANSIONA} (scanner barcode, REQ-02).
+
+\subsection{Scanner barcode e correzione del match}
+
+Il flusso di scansione rappresenta l'evoluzione più significativa rispettoallo sketch di Figura~2. Nello sketch, il suggerimento di elementi dal
+carrello era indicato solo come nota testuale (``consiglia elementi del carrello per costruzione parola''); nel wireframe questa idea è stata
+tradotta in una schermata intermedia esplicita, in cui un pannello a comparsa (\emph{Carrello}) propone tre prodotti suggeriti prima di
+procedere al form di riepilogo. Tale form consente sempre la correzione manuale di nome, scadenza, quantità, categoria e posizione del prodotto
+riconosciuto, in linea con REQ-03: questo garantisce che l'esito della scansione non sia mai definitivo senza un passaggio di verifica da parte
+dell'utente, risolvendo così la criticità osservata in KitchenPal, dove le correzioni post-scansione non venivano salvate (\S2.2).
+
+\subsection{Inserimento manuale e Lista della Spesa}
+
+Il form di inserimento prodotto è stato declinato in due varianti, a seconda del contesto di accesso:
+
+\begin{itemize}
+    \item dal flusso \emph{Dispensa}, il form include tutti i campi previsti da REQ-05/REQ-06 (nome, scadenza, quantità, categoria, posizione),
+    poiché il prodotto deve essere immediatamente collocabile in Frigo/Dispensa/Freezer;
+    \item dal flusso \emph{Lista della Spesa}, il form è volutamente ridotto al solo nome del prodotto e al pulsante \texttt{AGGIUNGI},
+    poiché un articolo ancora da acquistare non necessita di categoria o posizione, che verranno assegnate solo al momento dell'effettivo
+    inserimento in dispensa.
+\end{itemize}
+
+Questa differenziazione, non presente esplicitamente nello sketch originale, riduce l'attrito nell'aggiunta rapida di voci alla lista della
+spesa, mantenendo però la completezza dei dati richiesta per la dispensa vera e propria.
+
+La schermata \emph{Spesa/Carrello} conferma il layout a due riquadri sovrapposti verticalmente scelto in \S4.3.3: gli articoli da acquistare
+restano visibili nella sezione superiore, mentre quelli già prelevati compaiono nella sezione \emph{Carrello} in basso, permettendo lo
+spostamento diretto degli elementi tra le due liste senza cambio di schermata.
+
+\subsection{Elementi non ancora digitalizzati}
+
+La schermata \emph{Impostazioni}, presente nello sketch di Figura~2 per la gestione degli account condivisi e la generazione del link di invito
+(REQ-09), [non è stata inclusa in questa iterazione dei wireframe / è stata rimandata a una versione successiva] poiché [MOTIVO --- es.
+considerata secondaria rispetto ai flussi core valutati con gli utenti, oppure semplicemente non ancora completata]. Verrà digitalizzata nella
+prossima iterazione, mantenendo la struttura già definita in fase di sketching.
 
 \clearpage
 \section{Evaluation}
