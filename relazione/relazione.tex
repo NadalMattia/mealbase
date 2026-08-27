@@ -168,7 +168,6 @@ Grazie a un sistema di notifiche, l'utente riceverà promemoria tempestivi sui p
 % =========================================================
 % Competitive Assessment
 % =========================================================
-%\clearpage
 \section{Competitive Assessment}
 
 \subsection{Introduzione all'analisi}
@@ -582,12 +581,156 @@ La schermata \emph{Impostazioni}, presente nello sketch di Figura~\ref{fig:sketc
 sottoposti a valutazione con gli utenti nella Sezione~\ref{sec:evaluation}. La schermata verrà digitalizzata in un'iterazione successiva,
 mantenendo la struttura già definita in fase di sketching.
 
-\clearpage
-\section{Evaluation}
-\label{sec:evaluation}
 
-\clearpage
-\section{Conseguenze sul design}
+% =========================================================
+% EVALUATION
+% =========================================================
+\section{Evaluation}
+
+\subsection{Obiettivo e tempistica della valutazione}
+Coerentemente con la metodologia del corso, secondo cui non è opportuno attendere un prototipo completo prima di raccogliere feedback dagli utenti, la valutazione è stata condotta sui wireframe descritti nella Sezione~\ref{sec:wireframes}, in una fase in cui eventuali problemi di design possono ancora essere corretti a basso costo, prima del passaggio a mockup ad alta fedeltà e allo sviluppo dell'applicazione.
+
+\subsection{Metodologia e utenti coinvolti}
+\label{subsec:eval_metodologia}
+I wireframe sono stati resi navigabili tramite prototipo interattivo cliccabile (collegamenti tra frame su Figma), mantenendo la fedeltà grafica bassa/media già definita in Sezione~\ref{sec:wireframes}. Ogni sessione è stata condotta con la presenza diretta del valutatore, che ha spiegato ciascun task con il minor numero di parole possibile, lasciando che l'utente esplorasse autonomamente l'interfaccia secondo il protocollo \textit{think-aloud}: il comportamento spontaneo è stato osservato per primo, mentre le domande di chiarimento sono state poste solo in un secondo momento, evitando domande guidate.
+\newline
+Sono stati coinvolti \textbf{3 utenti}, scelti per rappresentare profili diversi rispetto al target dell'applicazione:
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{c >{\raggedright\arraybackslash}p{3.6cm} c >{\raggedright\arraybackslash}p{3cm} >{\raggedright\arraybackslash}X}
+\toprule
+\textbf{ID} & \textbf{Profilo} & \textbf{Età} & \textbf{Familiarità} & \textbf{Rilevanza rispetto al target} \\
+\midrule
+U1 & Utente giovane, non userebbe questa tipologia di app & 20--25 & Bassa/nulla & Fuori target primario; utile per verificare la scopribilità dell'interfaccia in condizioni di scarsa motivazione \\ \addlinespace[0.4em]
+U2 & Utente esperta di KitchenPal (concorrente diretto) & 31 & Alta & Target primario; utile per confronto diretto con un competitor già analizzato in Sezione~2 \\ \addlinespace[0.4em]
+U3 & Utente che gestisce dispensa/spesa su block notes cartaceo & 52 & Nulla (nessuna app dedicata) & Target primario ``digital skeptical''; utile per validare se l'app riesce a sostituire un sistema cartaceo consolidato \\
+\bottomrule
+\end{tabularx}
+\caption{Partecipanti alla valutazione dei wireframe.}
+\label{tab:eval_users}
+\end{table}
+
+\textit{Limiti del campione:} il numero ridotto di partecipanti (3) e la presenza di un profilo volutamente fuori target (U1) non consentono di generalizzare statisticamente i risultati; la valutazione va intesa come diagnostica e qualitativa, coerente con l'obiettivo di individuare problemi di usabilità in una fase di prototipazione a bassa fedeltà.
+
+\subsection{Task assegnati}
+Ad ogni utente sono stati assegnati gli stessi 5 task, presentati come obiettivo e non come sequenza di istruzioni:
+\begin{itemize}
+    \item \textbf{T1} -- Aggiunta prodotto tramite scanner con match errato (\texttt{REQ-02}, \texttt{REQ-03})
+    \item \textbf{T2} -- Inserimento manuale di un prodotto senza barcode (\texttt{REQ-04})
+    \item \textbf{T3} -- Modifica di categoria/posizione di un prodotto in Dispensa (\texttt{REQ-06})
+    \item \textbf{T4} -- Spostamento prodotti tra lista Spesa e Carrello (\texttt{REQ-10})
+    \item \textbf{T5} -- Consultazione dispensa e individuazione prodotti in scadenza (\texttt{REQ-05}, \texttt{REQ-07})
+\end{itemize}
+
+\subsection{Risultati per utente}
+\label{subsec:eval_risultati}
+In linea con l'indicazione di documentare prima i risultati per singolo utente e poi raggrupparli, di seguito sono riportati gli esiti dettagliati.
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.2cm} c >{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Task} & \textbf{Esito} & \textbf{Osservazioni} \\
+\midrule
+T1/T2 -- Form prodotto & {\color{redCons}$\times$} & Non riconosce l'azione di modifica immagine prodotto: manca un simbolo/icona dedicata. Il campo ``Quantità'' risulta ambiguo, senza indicazione se si tratti di kg, pezzi o barattoli. \\ \addlinespace[0.4em]
+T2 -- Inserimento manuale & {\color{redCons}$\times$} & Non individua un'azione \texttt{INSERISCI} o \texttt{SCANSIONA} sufficientemente visibile in Dispensa; non capisce dove accedere per aggiungere un prodotto. \\ \addlinespace[0.4em]
+T3 -- Eliminazione/modifica prodotto (Dispensa) & {\color{redCons}$\times$} & Non trova un modo chiaro per eliminare un prodotto in Dispensa; nota discrepanza con la schermata Spesa, dove l'azione è invece riconoscibile, e suggerisce di uniformare i due pattern. \\ \addlinespace[0.4em]
+T4 -- Spesa/Carrello & {\color{redCons}$\times$} & Non comprende la differenza funzionale tra le due zone ``Spesa'' e ``Carrello'' nella stessa schermata. \\ \addlinespace[0.4em]
+T5 -- Prodotti in scadenza & --- & Task non testato per esaurimento del tempo di sessione. \\
+\bottomrule
+\end{tabularx}
+\caption{Risultati -- U1 (utente giovane, fuori target).}
+\label{tab:eval_u1}
+\end{table}
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.2cm} c >{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Task} & \textbf{Esito} & \textbf{Osservazioni} \\
+\midrule
+T1 -- Scanner con match errato & {\color{greenPro}$\checkmark$} & Corregge subito i campi errati senza esitazione, apprezzando la possibilità di correggere senza dover riscansionare (problema ricorrente su KitchenPal). Segnala però l'assenza di un feedback esplicito di conferma dopo il salvataggio. \\ \addlinespace[0.4em]
+T2 -- Inserimento manuale & {\color{greenPro}$\checkmark$} & Nessuna difficoltà, task abituale su app simili. \\ \addlinespace[0.4em]
+T3 -- Modifica categoria/posizione & {\color{greenPro}$\checkmark$} & Completa rapidamente, ma chiede rassicurazione sulla permanenza della modifica, riferendosi al difetto di ricategorizzazione automatica di KitchenPal. \\ \addlinespace[0.4em]
+T4 -- Spesa/Carrello & {\color{greenPro}$\checkmark$} & Trova il layout più chiaro rispetto a KitchenPal, che non integra un carrello nella stessa vista. \\ \addlinespace[0.4em]
+T5 -- Prodotti in scadenza & {\color{greenPro}$\checkmark$} & Individua il filtro senza problemi; chiede se sia previsto un suggerimento ricette (funzione presente su KitchenPal, già pianificata come \texttt{REQ-13}, priorità BASSA). \\
+\bottomrule
+\end{tabularx}
+\caption{Risultati -- U2 (esperta di KitchenPal).}
+\label{tab:eval_u2}
+\end{table}
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.2cm} c >{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Task} & \textbf{Esito} & \textbf{Osservazioni} \\
+\midrule
+T1 -- Scanner con match errato & {\color{redCons}$\times$} (recuperato con aiuto) & Diffida dello scanner; davanti al match errato si blocca e chiede conferma prima di correggere un dato ``generato dalla macchina''. \\ \addlinespace[0.4em]
+T2 -- Inserimento manuale & {\color{greenPro}$\checkmark$} (con esitazione) & Preferisce nettamente questo flusso, ma esita sui menu a tendina per categoria/posizione, poco abituata a selezionare da liste. \\ \addlinespace[0.4em]
+T3 -- Modifica categoria/posizione & {\color{greenPro}$\checkmark$} & Riuscito, ma nota che il numero di tap richiesti è superiore rispetto a ``cancellare e riscrivere'' sul block notes. \\ \addlinespace[0.4em]
+T4 -- Spesa/Carrello & {\color{redCons}$\times$} & Non comprende il significato di ``Carrello'' come sezione dell'app (lo associa al carrello fisico del supermercato); non capisce che il tap sul prodotto sposta l'elemento tra le due liste. \\ \addlinespace[0.4em]
+T5 -- Prodotti in scadenza & {\color{greenPro}$\checkmark$} (con esitazione) & Trova l'informazione ma si fiderebbe di più di una lista testuale esplicita oltre agli indicatori visivi/colorati. \\
+\bottomrule
+\end{tabularx}
+\caption{Risultati -- U3 (utente ``block notes'').}
+\label{tab:eval_u3}
+\end{table}
+
+\subsection{Raggruppamento dei problemi comuni}
+I risultati individuali sono stati aggregati per tema ricorrente, come indicato dalla metodologia del corso.
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{c >{\raggedright\arraybackslash}p{5.5cm} c >{\raggedright\arraybackslash}X}
+\toprule
+\textbf{\#} & \textbf{Problema} & \textbf{Utenti} & \textbf{Task/schermata} \\
+\midrule
+P1 & Azione di modifica immagine prodotto non riconoscibile (icona assente) & U1 & Schermata Prodotto \\ \addlinespace[0.3em]
+P2 & Campo ``Quantità'' ambiguo, priva di unità di misura esplicita & U1 & Schermata Prodotto \\ \addlinespace[0.3em]
+P3 & Azioni \texttt{INSERISCI}/\texttt{SCANSIONA} poco visibili in Dispensa & U1 & Schermata Dispensa \\ \addlinespace[0.3em]
+P4 & Eliminazione prodotto incoerente tra Dispensa e Spesa & U1 & Schermata Dispensa \\ \addlinespace[0.3em]
+P5 & Distinzione poco chiara tra ``Spesa'' e ``Carrello'' & U1, U3 & Schermata Spesa \\ \addlinespace[0.3em]
+P6 & Assenza di feedback di conferma dopo modifica/salvataggio & U2, U3 & Form prodotto \\ \addlinespace[0.3em]
+P7 & Timore che le correzioni manuali non siano permanenti & U2 & Modifica categoria/posizione \\ \addlinespace[0.3em]
+P8 & Diffidenza verso azioni ``automatiche'' (scanner) senza conferma esplicita & U3 & Scanner \\ \addlinespace[0.3em]
+P9 & Etichetta ``Carrello'' richiama il carrello fisico, generando confusione semantica & U3 & Schermata Spesa \\
+\bottomrule
+\end{tabularx}
+\caption{Problemi rilevati, raggruppati per tema ricorrente.}
+\label{tab:eval_issues}
+\end{table}
+
+I problemi \textbf{P5} e \textbf{P6} risultano i più trasversali, essendo segnalati da più di un utente con profili diversi (uno fuori target e uno target esperto/scettico), e vanno considerati prioritari in fase di revisione.
+
+\subsection{Conseguenze sul design}
+\label{subsec:eval_conseguenze}
+Sulla base dei problemi aggregati in Tabella~\ref{tab:eval_issues}, sono state pianificate le seguenti modifiche ai wireframe, da integrare prima del passaggio alla fase di hi-fi prototyping:
+
+\begin{itemize}
+    \item \textbf{[P1]} Aggiunta di un'icona esplicita (matita/fotocamera) sovrapposta all'immagine placeholder nella schermata Prodotto, per segnalarne l'editabilità.
+    \item \textbf{[P2]} Affiancamento di un selettore di unità di misura (pz/g/kg/l) al campo Quantità, per rimuovere l'ambiguità rilevata.
+    \item \textbf{[P3]} Aumento della prominenza visiva delle azioni \texttt{INSERISCI}/\texttt{SCANSIONA} in Dispensa (es. pulsante fisso e più grande in fondo allo schermo).
+    \item \textbf{[P4]} Uniformazione del pattern di eliminazione prodotto tra Dispensa e Spesa, adottando ovunque l'icona cestino già presente e riconosciuta in Spesa.
+    \item \textbf{[P5]/[P9]} Ridisegno delle due zone della schermata Spesa: sostituzione dell'etichetta ``Carrello'' con una meno ambigua (es. ``Già preso''), con intestazioni di sezione più marcate e colore di sfondo differenziato tra le due zone.
+    \item \textbf{[P6]} Introduzione di un feedback di conferma esplicito (messaggio o micro-animazione) dopo ogni azione di salvataggio/modifica, sia nel form prodotto sia nelle altre schermate con azioni distruttive o di modifica.
+    \item \textbf{[P7]} Aggiunta di un micro-testo informativo al primo utilizzo della modifica manuale (``Le modifiche non vengono mai sovrascritte automaticamente''), per rassicurare gli utenti con esperienza pregressa negativa su app concorrenti.
+    \item \textbf{[P8]} Valutazione di un passaggio di conferma esplicito dopo la scansione barcode, prima del salvataggio definitivo, per aumentare la fiducia degli utenti meno inclini a fidarsi di dati ``automatici''.
+\end{itemize}
+
+Non sono emerse invece criticità sul flusso di inserimento manuale in sé (T2, completato da tutti e tre gli utenti) né sulla struttura generale della dispensa a tab Tutto/Frigo/Dispensa, confermando le scelte strutturali discusse in \S4.3.3.
+
 
 % =========================================================
 % CONCLUSIONE
