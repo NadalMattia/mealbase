@@ -3,10 +3,19 @@ import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import '../models/product.dart';
 import '../providers/pantry_provider.dart';
+import '../providers/location_provider.dart';
 
 class ProductFormScreen extends StatefulWidget {
   final Product? existingProduct;
-  const ProductFormScreen({super.key, this.existingProduct});
+  final String? prefilledNome;
+  final String? prefilledCategoria;
+
+  const ProductFormScreen({
+    super.key,
+    this.existingProduct,
+    this.prefilledNome,
+    this.prefilledCategoria,
+  });
 
   @override
   State<ProductFormScreen> createState() => _ProductFormScreenState();
@@ -24,7 +33,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
   final List<String> _unita_options = ['pz', 'g', 'kg', 'l'];
   final List<String> _categorie = ['Latticini', 'Verdura', 'Carne', 'Altro'];
-  final List<String> _posizioni = ['Frigo', 'Dispensa', 'Freezer'];
 
   bool get _isEditing => widget.existingProduct != null;
 
@@ -32,14 +40,21 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   void initState() {
     super.initState();
     final p = widget.existingProduct;
-    _nomeController = TextEditingController(text: p?.nome ?? '');
+
+    _nomeController = TextEditingController(
+      text: p?.nome ?? widget.prefilledNome ?? '',
+    );
     _quantitaController =
         TextEditingController(text: p?.quantita.toString() ?? '1');
+
     if (p != null) {
       _unita = p.unita;
       _categoria = p.categoria;
       _posizione = p.posizione;
       _dataScadenza = p.dataScadenza;
+    } else if (widget.prefilledCategoria != null &&
+        _categorie.contains(widget.prefilledCategoria)) {
+      _categoria = widget.prefilledCategoria!;
     }
   }
 
@@ -122,7 +137,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                       keyboardType: TextInputType.number,
                       decoration:
                       const InputDecoration(labelText: 'Quantità'),
-                      validator: (v) => (v == null || double.tryParse(v) == null)
+                      validator: (v) =>
+                      (v == null || double.tryParse(v) == null)
                           ? 'Numero non valido'
                           : null,
                     ),
@@ -133,7 +149,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                       value: _unita,
                       decoration: const InputDecoration(labelText: 'Unità'),
                       items: _unita_options
-                          .map((u) => DropdownMenuItem(value: u, child: Text(u)))
+                          .map((u) =>
+                          DropdownMenuItem(value: u, child: Text(u)))
                           .toList(),
                       onChanged: (v) => setState(() => _unita = v!),
                     ),
@@ -148,13 +165,39 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                     .toList(),
                 onChanged: (v) => setState(() => _categoria = v!),
               ),
-              DropdownButtonFormField<String>(
-                value: _posizione,
-                decoration: const InputDecoration(labelText: 'Posizione'),
-                items: _posizioni
-                    .map((p) => DropdownMenuItem(value: p, child: Text(p)))
-                    .toList(),
-                onChanged: (v) => setState(() => _posizione = v!),
+              Consumer<LocationProvider>(
+                builder: (context, locationProvider, _) {
+                  final posizioniDisponibili =
+                  locationProvider.locations.map((l) => l.nome).toList();
+
+                  if (posizioniDisponibili.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Text(
+                        'Nessuno spazio disponibile: creane uno dalla '
+                            'schermata "Gestisci spazi".',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    );
+                  }
+
+                  if (!posizioniDisponibili.contains(_posizione)) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      setState(() => _posizione = posizioniDisponibili.first);
+                    });
+                  }
+
+                  return DropdownButtonFormField<String>(
+                    value: posizioniDisponibili.contains(_posizione)
+                        ? _posizione
+                        : null,
+                    decoration: const InputDecoration(labelText: 'Posizione'),
+                    items: posizioniDisponibili
+                        .map((p) => DropdownMenuItem(value: p, child: Text(p)))
+                        .toList(),
+                    onChanged: (v) => setState(() => _posizione = v!),
+                  );
+                },
               ),
               const SizedBox(height: 12),
               ListTile(

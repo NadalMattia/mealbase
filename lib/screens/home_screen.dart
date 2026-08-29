@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'main_screen.dart';
 import 'pantry_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -17,7 +18,7 @@ class HomeScreen extends StatelessWidget {
               trailing: const Icon(Icons.arrow_forward_ios),
               onTap: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const PantryScreen()),
+                MaterialPageRoute(builder: (_) => const MainScreen()),
               ),
             ),
           ),

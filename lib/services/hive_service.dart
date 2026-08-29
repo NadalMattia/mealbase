@@ -5,7 +5,6 @@ class HiveService {
   static const String boxName = 'products';
 
   static Future<void> init() async {
-    await Hive.initFlutter();
     Hive.registerAdapter(ProductAdapter());
     await Hive.openBox<Product>(boxName);
   }
