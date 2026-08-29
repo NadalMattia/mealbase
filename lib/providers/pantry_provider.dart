@@ -9,6 +9,11 @@ class PantryProvider extends ChangeNotifier {
   List<Product> get products => _products;
 
   PantryProvider() {
+    // Rimosso loadProducts() dal costruttore per caricare i dati solo dopo il tap
+  }
+
+  Future<void> switchHouse(String houseName) async {
+    await _hiveService.switchHouse(houseName);
     loadProducts();
   }
 

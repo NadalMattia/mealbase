@@ -9,14 +9,15 @@ import 'manage_locations_screen.dart';
 import 'house_settings_screen.dart';
 
 class PantryScreen extends StatefulWidget {
-  const PantryScreen({super.key});
+  // Aggiungi la variabile per il nome della casa
+  final String houseName;
+
+  const PantryScreen({super.key, required this.houseName});
 
   @override
   State<PantryScreen> createState() => _PantryScreenState();
 }
 
-// NOTA: TickerProviderStateMixin (non "Single") perché il TabController
-// viene ricreato ogni volta che cambia il numero di spazi/posizioni.
 class _PantryScreenState extends State<PantryScreen>
     with TickerProviderStateMixin {
   TabController? _tabController;
@@ -53,11 +54,12 @@ class _PantryScreenState extends State<PantryScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dispensa'),
+        // Usa il nome della casa anziché "Dispensa" statico[cite: 7]
+        title: Text(widget.houseName),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
-            tooltip: 'Impostazioni Casa 1',
+            tooltip: 'Impostazioni ${widget.houseName}', // Aggiornato anche il tooltip
             onPressed: () {
               Navigator.push(
                 context,
