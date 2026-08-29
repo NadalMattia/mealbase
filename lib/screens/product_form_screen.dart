@@ -45,7 +45,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       text: p?.nome ?? widget.prefilledNome ?? '',
     );
     _quantitaController =
-        TextEditingController(text: p?.quantita.toString() ?? '1');
+        TextEditingController(text: p?.quantita.toInt().toString() ?? '1');
 
     if (p != null) {
       _unita = p.unita;
@@ -105,117 +105,240 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       provider.addProduct(newProduct);
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Prodotto salvato')),
-    );
     Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(_isEditing ? 'Modifica prodotto' : 'Nuovo prodotto'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: const SizedBox.shrink(),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.close, color: Colors.black),
+            onPressed: () => Navigator.pop(context),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: ListView(
+      body: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Placeholder Immagine
+              Center(
+                child: Container(
+                  width: 140,
+                  height: 140,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(32),
+                    border: Border.all(color: Colors.black87, width: 1.5),
+                  ),
+                  child: Center(
+                    child: CircleAvatar(
+                      radius: 40,
+                      backgroundColor: Colors.white,
+                      child: Icon(Icons.image, size: 40, color: Colors.grey.shade300),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 40),
+
+              // Nome Prodotto
               TextFormField(
                 controller: _nomeController,
-                decoration: const InputDecoration(labelText: 'Nome prodotto'),
-                validator: (v) =>
-                (v == null || v.isEmpty) ? 'Inserisci un nome' : null,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 2.0,
+                  fontSize: 14,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'NOME PRODOTTO',
+                  contentPadding: const EdgeInsets.symmetric(vertical: 18),
+                  border: const OutlineInputBorder(
+                    borderRadius: BorderRadius.zero,
+                    borderSide: BorderSide(color: Colors.black87, width: 1.5),
+                  ),
+                  enabledBorder: const OutlineInputBorder(
+                    borderRadius: BorderRadius.zero,
+                    borderSide: BorderSide(color: Colors.black87, width: 1.5),
+                  ),
+                  focusedBorder: const OutlineInputBorder(
+                    borderRadius: BorderRadius.zero,
+                    borderSide: BorderSide(color: Colors.black87, width: 2.0),
+                  ),
+                ),
+                validator: (v) => (v == null || v.trim().isEmpty) ? 'Obbligatorio' : null,
               ),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _quantitaController,
-                      keyboardType: TextInputType.number,
-                      decoration:
-                      const InputDecoration(labelText: 'Quantità'),
-                      validator: (v) =>
-                      (v == null || double.tryParse(v) == null)
-                          ? 'Numero non valido'
-                          : null,
+              const SizedBox(height: 40),
+
+              // Scadenza
+              _buildFormRow(
+                'SCADENZA',
+                InkWell(
+                  onTap: _pickDate,
+                  child: Container(
+                    height: 48,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.black87, width: 1),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      _formatDate(_dataScadenza),
+                      style: const TextStyle(fontWeight: FontWeight.w500, letterSpacing: 1.5),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      value: _unita,
-                      decoration: const InputDecoration(labelText: 'Unità'),
-                      items: _unita_options
-                          .map((u) =>
-                          DropdownMenuItem(value: u, child: Text(u)))
-                          .toList(),
-                      onChanged: (v) => setState(() => _unita = v!),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Quantità e Unità
+              _buildFormRow(
+                'QUANTITÀ',
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: TextFormField(
+                        controller: _quantitaController,
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        decoration: const InputDecoration(
+                          contentPadding: EdgeInsets.symmetric(vertical: 14),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.zero),
+                        ),
+                        validator: (v) => (v == null || double.tryParse(v) == null) ? '!' : null,
+                      ),
                     ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 3,
+                      child: DropdownButtonFormField<String>(
+                        value: _unita,
+                        icon: const Icon(Icons.keyboard_arrow_down, size: 18),
+                        decoration: const InputDecoration(
+                          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.zero),
+                        ),
+                        items: _unita_options
+                            .map((u) => DropdownMenuItem(value: u, child: Text(u)))
+                            .toList(),
+                        onChanged: (v) => setState(() => _unita = v!),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Categoria
+              _buildFormRow(
+                'CATEGORIA',
+                DropdownButtonFormField<String>(
+                  value: _categoria,
+                  icon: const Icon(Icons.keyboard_arrow_down, size: 18),
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.zero),
                   ),
-                ],
+                  items: _categorie
+                      .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                      .toList(),
+                  onChanged: (v) => setState(() => _categoria = v!),
+                ),
               ),
-              DropdownButtonFormField<String>(
-                value: _categoria,
-                decoration: const InputDecoration(labelText: 'Categoria'),
-                items: _categorie
-                    .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                    .toList(),
-                onChanged: (v) => setState(() => _categoria = v!),
-              ),
+              const SizedBox(height: 24),
+
+              // Alloca in (Posizione)
               Consumer<LocationProvider>(
                 builder: (context, locationProvider, _) {
-                  final posizioniDisponibili =
-                  locationProvider.locations.map((l) => l.nome).toList();
+                  final posizioniDisponibili = locationProvider.locations.map((l) => l.nome).toList();
 
-                  if (posizioniDisponibili.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                      child: Text(
-                        'Nessuno spazio disponibile: creane uno dalla '
-                            'schermata "Gestisci spazi".',
-                        style: TextStyle(color: Colors.red),
-                      ),
-                    );
-                  }
-
-                  if (!posizioniDisponibili.contains(_posizione)) {
+                  if (!posizioniDisponibili.contains(_posizione) && posizioniDisponibili.isNotEmpty) {
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       setState(() => _posizione = posizioniDisponibili.first);
                     });
                   }
 
-                  return DropdownButtonFormField<String>(
-                    value: posizioniDisponibili.contains(_posizione)
-                        ? _posizione
-                        : null,
-                    decoration: const InputDecoration(labelText: 'Posizione'),
-                    items: posizioniDisponibili
-                        .map((p) => DropdownMenuItem(value: p, child: Text(p)))
-                        .toList(),
-                    onChanged: (v) => setState(() => _posizione = v!),
+                  return _buildFormRow(
+                    'ALLOCA IN',
+                    DropdownButtonFormField<String>(
+                      value: posizioniDisponibili.contains(_posizione) ? _posizione : null,
+                      icon: const Icon(Icons.keyboard_arrow_down, size: 18),
+                      decoration: const InputDecoration(
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.zero),
+                      ),
+                      items: posizioniDisponibili
+                          .map((p) => DropdownMenuItem(value: p, child: Text(p)))
+                          .toList(),
+                      onChanged: (v) => setState(() => _posizione = v!),
+                    ),
                   );
                 },
               ),
-              const SizedBox(height: 12),
-              ListTile(
-                title: Text(_dataScadenza == null
-                    ? 'Nessuna data di scadenza'
-                    : 'Scadenza: ${_dataScadenza!.day}/${_dataScadenza!.month}/${_dataScadenza!.year}'),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: _pickDate,
+              const SizedBox(height: 48),
+
+              // Tasto finale Modifica/Inserisci
+              InkWell(
+                onTap: _save,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.black87, width: 2),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    _isEditing ? 'MODIFICA' : 'INSERISCI',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 2.0,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
               ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _save,
-                child: const Text('Salva'),
-              ),
+              const SizedBox(height: 40),
             ],
           ),
         ),
       ),
     );
+  }
+
+  // Costruttore righe con label a sinistra e input a destra
+  Widget _buildFormRow(String label, Widget inputWidget) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.0,
+            fontSize: 12,
+          ),
+        ),
+        SizedBox(
+          width: 160,
+          child: inputWidget,
+        ),
+      ],
+    );
+  }
+
+  String _formatDate(DateTime? date) {
+    if (date == null) return '- / - / -';
+    return '${date.day.toString().padLeft(2, '0')} / ${date.month.toString().padLeft(2, '0')} / ${date.year.toString().substring(2)}';
   }
 }
