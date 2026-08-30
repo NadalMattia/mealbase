@@ -66,14 +66,35 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
     });
   }
 
-  // Elimina tutti i prodotti selezionati e chiude la modalità
   void _deleteSelected() {
     if (_selectedProducts.isEmpty) return;
+
+    final count = _selectedProducts.length;
     final provider = context.read<PantryProvider>();
+
     for (final id in _selectedProducts) {
       provider.deleteProduct(id);
     }
+
     _toggleSelectionMode();
+
+    // Feedback eliminazione multipla
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.delete_outline, color: Colors.white),
+            const SizedBox(width: 12),
+            Text('$count prodotti eliminati'),
+          ],
+        ),
+        backgroundColor: Colors.black87,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        margin: const EdgeInsets.only(bottom: 90, left: 16, right: 16), // Più alto per non coprire la bottom bar
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   void _showComingSoon(String feature) {
@@ -327,6 +348,24 @@ class _ProductList extends StatelessWidget {
           },
           onDelete: () {
             context.read<PantryProvider>().deleteProduct(p.id);
+
+            // Feedback eliminazione singola
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.delete_outline, color: Colors.white),
+                    const SizedBox(width: 12),
+                    Text('${p.nome} eliminato'),
+                  ],
+                ),
+                backgroundColor: Colors.black87,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                margin: const EdgeInsets.only(bottom: 90, left: 16, right: 16),
+                duration: const Duration(seconds: 2),
+              ),
+            );
           },
         );
       },

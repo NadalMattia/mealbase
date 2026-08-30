@@ -23,12 +23,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: IndexedStack(index: _currentIndex, children: _tabs),
       bottomNavigationBar: AppBottomNav(
-        items: const [
-          AppBottomNavItem(icon: Icons.menu, label: 'Menu'),
-          AppBottomNavItem(icon: Icons.person, label: 'Profilo'),
-        ],
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
+        items: const [
+          AppBottomNavItem(icon: Icons.menu, label: 'Menu'),
+          AppBottomNavItem(icon: Icons.person_outline, label: 'Profilo'),
+        ],
       ),
     );
   }

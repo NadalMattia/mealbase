@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/shopping_list_provider.dart';
 import '../models/shopping_item.dart';
+import '../widgets/product_card.dart';
+import 'shopping_item_edit_screen.dart';
+import 'shopping_scanner_screen.dart';
 
 class ShoppingListScreen extends StatefulWidget {
   const ShoppingListScreen({super.key});
@@ -11,17 +14,84 @@ class ShoppingListScreen extends StatefulWidget {
 }
 
 class _ShoppingListScreenState extends State<ShoppingListScreen> {
-  final _controller = TextEditingController();
+  bool _isSelectionMode = false;
+  final Set<String> _selectedItems = {};
 
-  void _addItem() {
-    context.read<ShoppingListProvider>().addItem(_controller.text);
-    _controller.clear();
+  void _toggleSelectionMode() {
+    setState(() {
+      _isSelectionMode = !_isSelectionMode;
+      _selectedItems.clear();
+    });
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  void _toggleItemSelection(String id) {
+    setState(() {
+      if (_selectedItems.contains(id)) {
+        _selectedItems.remove(id);
+      } else {
+        _selectedItems.add(id);
+      }
+    });
+  }
+
+  void _deleteSelected() {
+    if (_selectedItems.isEmpty) return;
+
+    final count = _selectedItems.length;
+    final provider = context.read<ShoppingListProvider>();
+
+    for (final id in _selectedItems) {
+      provider.deleteItem(id);
+    }
+
+    _toggleSelectionMode();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.delete_outline, color: Colors.white),
+            const SizedBox(width: 12),
+            Text('$count elementi eliminati'),
+          ],
+        ),
+        backgroundColor: Colors.black87,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        margin: const EdgeInsets.only(bottom: 90, left: 16, right: 16),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showAddItemDialog() {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Aggiungi alla spesa'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: 'Nome prodotto'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Annulla'),
+          ),
+          TextButton(
+            onPressed: () {
+              if (controller.text.trim().isNotEmpty) {
+                context.read<ShoppingListProvider>().addItem(controller.text.trim());
+              }
+              Navigator.pop(dialogContext);
+            },
+            child: const Text('Aggiungi'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -31,107 +101,226 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     final giaPreso = provider.giaPreso;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Lista della spesa')),
-      body: Column(
+      backgroundColor: Colors.white,
+      body: Stack(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: const InputDecoration(
-                      labelText: 'Aggiungi prodotto',
-                      border: OutlineInputBorder(),
-                    ),
-                    onSubmitted: (_) => _addItem(),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: _addItem,
-                  child: const Text('Aggiungi'),
-                ),
+          SafeArea(
+            child: CustomScrollView(
+              slivers: [
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                _buildSectionHeader('LISTA DELLA SPESA'),
+                _buildGrid(daAcquistare, provider),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 32)),
+                _buildSectionHeader('NEL CARRELLO'),
+                _buildGrid(giaPreso, provider),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 120)),
               ],
             ),
           ),
-          _SectionHeader(title: 'Spesa', color: Colors.orange.shade100),
-          Expanded(
-            child: _ItemList(
-              items: daAcquistare,
-              emptyText: 'Nessun prodotto da acquistare',
-              onTapItem: (item) => provider.toggleItem(item),
-              onDeleteItem: (item) => provider.deleteItem(item.id),
+
+          if (_isSelectionMode)
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 20,
+              child: _DeleteSelectionBar(
+                selectedCount: _selectedItems.length,
+                onDelete: _deleteSelected,
+                onCancel: _toggleSelectionMode,
+              ),
             ),
-          ),
-          const Divider(height: 1, thickness: 2),
-          _SectionHeader(title: 'Già preso', color: Colors.green.shade100),
-          Expanded(
-            child: _ItemList(
-              items: giaPreso,
-              emptyText: 'Nessun prodotto ancora preso',
-              onTapItem: (item) => provider.toggleItem(item),
-              onDeleteItem: (item) => provider.deleteItem(item.id),
-            ),
-          ),
         ],
+      ),
+      floatingActionButton: !_isSelectionMode
+          ? FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              fullscreenDialog: true, // Apre con animazione dal basso
+              builder: (_) => const ShoppingScannerScreen(),
+            ),
+          );
+        },
+        backgroundColor: Colors.black,
+        child: const Icon(Icons.add, color: Colors.white, size: 28),
+      )
+          : null,
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 2.0,
+              ),
+            ),
+            InkWell(
+              onTap: _toggleSelectionMode,
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.delete_outline,
+                  size: 18,
+                  color: _isSelectionMode ? Colors.black : Colors.grey.shade400,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGrid(List<ShoppingItem> items, ShoppingListProvider provider) {
+    if (items.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          child: Text('Nessun prodotto', style: TextStyle(color: Colors.grey.shade400)),
+        ),
+      );
+    }
+
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      sliver: SliverGrid(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 16,
+          childAspectRatio: 0.8,
+        ),
+        delegate: SliverChildBuilderDelegate(
+              (context, index) {
+            final item = items[index];
+            return ProductCard(
+              name: item.nome,
+              isSelectable: _isSelectionMode,
+              isSelected: _selectedItems.contains(item.id),
+              onTap: () {
+                if (_isSelectionMode) {
+                  _toggleItemSelection(item.id);
+                } else {
+                  // Con un tocco si sposta tra Carrello e Spesa
+                  provider.toggleItem(item);
+                }
+              },
+              onLongPress: () {
+                if (!_isSelectionMode) {
+                  // Tenendo premuto si apre il form per modificare
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      fullscreenDialog: true,
+                      builder: (_) => ShoppingItemEditScreen(item: item),
+                    ),
+                  );
+                }
+              },
+              onDelete: () {
+                provider.deleteItem(item.id);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        const Icon(Icons.delete_outline, color: Colors.white),
+                        const SizedBox(width: 12),
+                        Text('${item.nome} eliminato'),
+                      ],
+                    ),
+                    backgroundColor: Colors.black87,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    margin: const EdgeInsets.only(bottom: 90, left: 16, right: 16),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              },
+            );
+          },
+          childCount: items.length,
+        ),
       ),
     );
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  final Color color;
+class _DeleteSelectionBar extends StatelessWidget {
+  final int selectedCount;
+  final VoidCallback onDelete;
+  final VoidCallback onCancel;
 
-  const _SectionHeader({required this.title, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      color: color,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-    );
-  }
-}
-
-class _ItemList extends StatelessWidget {
-  final List<ShoppingItem> items;
-  final String emptyText;
-  final void Function(ShoppingItem) onTapItem;
-  final void Function(ShoppingItem) onDeleteItem;
-
-  const _ItemList({
-    required this.items,
-    required this.emptyText,
-    required this.onTapItem,
-    required this.onDeleteItem,
+  const _DeleteSelectionBar({
+    required this.selectedCount,
+    required this.onDelete,
+    required this.onCancel,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (items.isEmpty) {
-      return Center(child: Text(emptyText));
-    }
-    return ListView.builder(
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        final item = items[index];
-        return ListTile(
-          leading: Icon(
-            item.inCarrello ? Icons.check_circle : Icons.radio_button_unchecked,
-          ),
-          title: Text(item.nome),
-          trailing: IconButton(
-            icon: const Icon(Icons.delete_outline),
-            onPressed: () => onDeleteItem(item),
-          ),
-          onTap: () => onTapItem(item),
-        );
-      },
+    return Material(
+      elevation: 8,
+      borderRadius: BorderRadius.circular(32),
+      color: Colors.black,
+      child: SizedBox(
+        height: 56,
+        child: Row(
+          children: [
+            Expanded(
+              child: InkWell(
+                onTap: onCancel,
+                borderRadius: const BorderRadius.horizontal(left: Radius.circular(32)),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(Icons.close, color: Colors.white, size: 16),
+                    SizedBox(width: 8),
+                    Text(
+                      'ANNULLA',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1.0),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Container(width: 1, height: 28, color: Colors.white38),
+            Expanded(
+              child: InkWell(
+                onTap: onDelete,
+                borderRadius: const BorderRadius.horizontal(right: Radius.circular(32)),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.delete, color: Colors.redAccent, size: 16),
+                    const SizedBox(width: 8),
+                    Text(
+                      'ELIMINA ($selectedCount)',
+                      style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1.0),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

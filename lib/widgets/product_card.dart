@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class ProductCard extends StatelessWidget {
   final String name;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
   final VoidCallback? onDelete;
   final bool isSelectable;
   final bool isSelected;
@@ -11,6 +12,7 @@ class ProductCard extends StatelessWidget {
     super.key,
     required this.name,
     required this.onTap,
+    this.onLongPress,
     this.onDelete,
     this.isSelectable = false,
     this.isSelected = false,
@@ -19,12 +21,10 @@ class ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      // Spazio "invisibile" esterno per far uscire la spunta senza essere tagliata
       padding: const EdgeInsets.only(top: 8, right: 8),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // 1. La card base che riempie lo spazio disponibile
           Container(
             decoration: BoxDecoration(
               color: Colors.grey.shade100,
@@ -35,6 +35,7 @@ class ProductCard extends StatelessWidget {
               child: InkWell(
                 borderRadius: BorderRadius.circular(16),
                 onTap: onTap,
+                onLongPress: onLongPress, // Utilizzato per rilevare la pressione prolungata
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -75,11 +76,10 @@ class ProductCard extends StatelessWidget {
             ),
           ),
 
-          // 2. Modalità Selezione Multipla (Checkbox)
           if (isSelectable)
             Positioned(
-              top: -8, // Sale in negativo per sormontare il bordo alto
-              right: -8, // Esce in negativo per sormontare il bordo destro
+              top: -8,
+              right: -8,
               child: InkWell(
                 onTap: onTap,
                 child: Container(
@@ -104,7 +104,6 @@ class ProductCard extends StatelessWidget {
                 ),
               ),
             )
-          // 3. Modalità Normale (X per eliminazione singola)
           else if (onDelete != null)
             Positioned(
               top: -8,

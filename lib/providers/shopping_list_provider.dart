@@ -8,7 +8,7 @@ class ShoppingListProvider extends ChangeNotifier {
   List<ShoppingItem> _items = [];
 
   ShoppingListProvider() {
-    // Rimosso loadItems() dal costruttore
+    // Il caricamento avviene dopo lo switch della casa
   }
 
   List<ShoppingItem> get daAcquistare =>
@@ -31,6 +31,12 @@ class ShoppingListProvider extends ChangeNotifier {
     if (nome.trim().isEmpty) return;
     final item = ShoppingItem(id: const Uuid().v4(), nome: nome.trim());
     await _service.addItem(item);
+    loadItems();
+  }
+
+  // --- NUOVO METODO AGGIUNTO PER LA MODIFICA ---
+  Future<void> updateItem(ShoppingItem item) async {
+    await _service.updateItem(item);
     loadItems();
   }
 

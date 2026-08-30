@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import '../models/product.dart';
+import '../models/shopping_item.dart';
 import '../providers/pantry_provider.dart';
 import '../providers/location_provider.dart';
+import '../providers/shopping_list_provider.dart';
 
 class ProductFormScreen extends StatefulWidget {
   final Product? existingProduct;
@@ -36,6 +38,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
   bool get _isEditing => widget.existingProduct != null;
 
+  // Lista locale per i suggerimenti pescati dal carrello
+  List<ShoppingItem> _suggestions = [];
+
   @override
   void initState() {
     super.initState();
@@ -56,10 +61,34 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         _categorie.contains(widget.prefilledCategoria)) {
       _categoria = widget.prefilledCategoria!;
     }
+
+    _nomeController.addListener(_onNameChanged);
+  }
+
+  void _onNameChanged() {
+    final query = _nomeController.text.trim().toLowerCase();
+    if (query.isEmpty || _isEditing) {
+      setState(() => _suggestions = []);
+      return;
+    }
+
+    // Pescati direttamente dal carrello (elementi inCarrello == true)
+    final shoppingProvider = context.read<ShoppingListProvider>();
+    final cartItems = shoppingProvider.giaPreso;
+
+    // Filtra gli elementi del carrello in base alle lettere digitate
+    final matches = cartItems
+        .where((item) => item.nome.toLowerCase().contains(query))
+        .toList();
+
+    setState(() {
+      _suggestions = matches;
+    });
   }
 
   @override
   void dispose() {
+    _nomeController.removeListener(_onNameChanged);
     _nomeController.dispose();
     _quantitaController.dispose();
     super.dispose();
@@ -77,24 +106,34 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     }
   }
 
+  void _pickImage() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Selezione immagine in arrivo!')),
+    );
+  }
+
   void _save() {
     if (!_formKey.currentState!.validate()) return;
 
-    final provider = context.read<PantryProvider>();
+    final pantryProvider = context.read<PantryProvider>();
+    final shoppingProvider = context.read<ShoppingListProvider>();
+
+    final insertedName = _nomeController.text.trim();
 
     if (_isEditing) {
       final p = widget.existingProduct!;
-      p.nome = _nomeController.text;
+      p.nome = insertedName;
       p.quantita = double.parse(_quantitaController.text);
       p.unita = _unita;
       p.categoria = _categoria;
       p.posizione = _posizione;
       p.dataScadenza = _dataScadenza;
-      provider.updateProduct(p);
+      pantryProvider.updateProduct(p);
     } else {
+      // 1. Aggiunge il prodotto alla dispensa
       final newProduct = Product(
         id: const Uuid().v4(),
-        nome: _nomeController.text,
+        nome: insertedName,
         quantita: double.parse(_quantitaController.text),
         unita: _unita,
         categoria: _categoria,
@@ -102,8 +141,35 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         dataAcquisto: DateTime.now(),
         dataScadenza: _dataScadenza,
       );
-      provider.addProduct(newProduct);
+      pantryProvider.addProduct(newProduct);
+
+      // 2. Rimuove automaticamente il prodotto dal carrello se era presente
+      final matchingCartItems = shoppingProvider.giaPreso
+          .where((item) => item.nome.toLowerCase() == insertedName.toLowerCase())
+          .toList();
+
+      for (final cartItem in matchingCartItems) {
+        shoppingProvider.deleteItem(cartItem.id);
+      }
     }
+
+    // Feedback visivo di conferma
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle_outline, color: Colors.white),
+            const SizedBox(width: 12),
+            Text(_isEditing ? 'Prodotto modificato' : 'Prodotto inserito in dispensa'),
+          ],
+        ),
+        backgroundColor: Colors.black87,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        margin: const EdgeInsets.only(bottom: 24, left: 16, right: 16),
+        duration: const Duration(seconds: 2),
+      ),
+    );
 
     Navigator.pop(context);
   }
@@ -131,53 +197,146 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Placeholder Immagine
+              // Immagine Prodotto e Fotocamera
               Center(
-                child: Container(
-                  width: 140,
-                  height: 140,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
-                    borderRadius: BorderRadius.circular(32),
-                    border: Border.all(color: Colors.black87, width: 1.5),
-                  ),
-                  child: Center(
-                    child: CircleAvatar(
-                      radius: 40,
-                      backgroundColor: Colors.white,
-                      child: Icon(Icons.image, size: 40, color: Colors.grey.shade300),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      width: 140,
+                      height: 140,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(32),
+                        border: Border.all(color: Colors.black87, width: 1.5),
+                      ),
+                      child: Center(
+                        child: CircleAvatar(
+                          radius: 40,
+                          backgroundColor: Colors.white,
+                          child: Icon(Icons.image, size: 40, color: Colors.grey.shade300),
+                        ),
+                      ),
                     ),
-                  ),
+                    Positioned(
+                      bottom: -8,
+                      right: -8,
+                      child: InkWell(
+                        onTap: _pickImage,
+                        borderRadius: BorderRadius.circular(24),
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.black,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.15),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 40),
 
-              // Nome Prodotto
-              TextFormField(
-                controller: _nomeController,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 2.0,
-                  fontSize: 14,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'NOME PRODOTTO',
-                  contentPadding: const EdgeInsets.symmetric(vertical: 18),
-                  border: const OutlineInputBorder(
-                    borderRadius: BorderRadius.zero,
-                    borderSide: BorderSide(color: Colors.black87, width: 1.5),
+              // Sezione Nome Prodotto con menu a cascata dai prodotti del carrello
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TextFormField(
+                    controller: _nomeController,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 2.0,
+                      fontSize: 14,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'NOME PRODOTTO',
+                      contentPadding: const EdgeInsets.symmetric(vertical: 18),
+                      border: const OutlineInputBorder(
+                        borderRadius: BorderRadius.zero,
+                        borderSide: BorderSide(color: Colors.black87, width: 1.5),
+                      ),
+                      enabledBorder: const OutlineInputBorder(
+                        borderRadius: BorderRadius.zero,
+                        borderSide: BorderSide(color: Colors.black87, width: 1.5),
+                      ),
+                      focusedBorder: const OutlineInputBorder(
+                        borderRadius: BorderRadius.zero,
+                        borderSide: BorderSide(color: Colors.black87, width: 2.0),
+                      ),
+                    ),
+                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Obbligatorio' : null,
                   ),
-                  enabledBorder: const OutlineInputBorder(
-                    borderRadius: BorderRadius.zero,
-                    borderSide: BorderSide(color: Colors.black87, width: 1.5),
-                  ),
-                  focusedBorder: const OutlineInputBorder(
-                    borderRadius: BorderRadius.zero,
-                    borderSide: BorderSide(color: Colors.black87, width: 2.0),
-                  ),
-                ),
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Obbligatorio' : null,
+
+                  // Menu a cascata con i prodotti pescati dal carrello (Nome a sx, Immagine a dx)
+                  if (_suggestions.isNotEmpty)
+                    Container(
+                      margin: const EdgeInsets.only(top: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: Colors.black87, width: 1),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _suggestions.length,
+                        itemBuilder: (context, index) {
+                          final item = _suggestions[index];
+                          return InkWell(
+                            onTap: () {
+                              setState(() {
+                                _nomeController.text = item.nome;
+                                _suggestions = []; // Chiude il menu a cascata
+                              });
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  // Nome a sinistra
+                                  Text(
+                                    item.nome,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  // Immagine/Icona a destra
+                                  Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade100,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Icon(Icons.image, size: 16, color: Colors.grey),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(height: 40),
 
@@ -315,7 +474,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     );
   }
 
-  // Costruttore righe con label a sinistra e input a destra
   Widget _buildFormRow(String label, Widget inputWidget) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
