@@ -3,6 +3,9 @@ import 'package:provider/provider.dart';
 import '../providers/pantry_provider.dart';
 import '../providers/location_provider.dart';
 import '../models/product.dart';
+import '../theme/app_theme.dart';
+import '../utils/app_snackbar.dart';
+import '../widgets/pill_action_bar.dart';
 import 'scanner_screen.dart';
 import 'product_form_screen.dart';
 import 'manage_locations_screen.dart';
@@ -77,30 +80,7 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
     }
 
     _toggleSelectionMode();
-
-    // Feedback eliminazione multipla
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.delete_outline, color: Colors.white),
-            const SizedBox(width: 12),
-            Text('$count prodotti eliminati'),
-          ],
-        ),
-        backgroundColor: Colors.black87,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        margin: const EdgeInsets.only(bottom: 90, left: 16, right: 16), // Più alto per non coprire la bottom bar
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
-
-  void _showComingSoon(String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$feature in arrivo!')),
-    );
+    AppSnackbar.showDeleted(context, message: '$count prodotti eliminati');
   }
 
   @override
@@ -110,21 +90,19 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
     _rebuildTabController(tabs);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
         title: Text(
           widget.houseName.toUpperCase(),
-          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+          style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.black),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.people_outline, color: Colors.grey),
-            onPressed: () => _showComingSoon('Condivisione coinquilini'),
+            icon: Icon(Icons.people_outline, color: AppColors.grey400),
+            onPressed: () => AppSnackbar.showComingSoon(context, 'Condivisione coinquilini'),
           ),
           IconButton(
-            icon: const Icon(Icons.settings, color: Colors.grey),
+            icon: Icon(Icons.settings, color: AppColors.grey400),
             onPressed: () {
               Navigator.push(
                 context,
@@ -144,11 +122,11 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
                       controller: _tabController,
                       isScrollable: true,
                       indicator: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        color: Colors.black,
+                        borderRadius: BorderRadius.circular(AppRadius.xl),
+                        color: AppColors.black,
                       ),
-                      labelColor: Colors.white,
-                      unselectedLabelColor: Colors.grey.shade400,
+                      labelColor: AppColors.white,
+                      unselectedLabelColor: AppColors.grey400,
                       labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                       tabs: tabs.map((t) => Tab(
                         height: 32,
@@ -160,7 +138,7 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
                     ),
                   ),
                   IconButton(
-                    icon: Icon(Icons.add_circle_outline, color: Colors.grey.shade300),
+                    icon: Icon(Icons.add_circle_outline, color: AppColors.grey300),
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -180,15 +158,15 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
                       child: Container(
                         height: 44,
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
-                          borderRadius: BorderRadius.circular(16),
+                          color: AppColors.grey50,
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
                         ),
                         child: TextField(
                           onChanged: (value) => setState(() => _searchQuery = value),
                           decoration: InputDecoration(
                             hintText: 'Cerca ingredienti',
-                            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-                            prefixIcon: Icon(Icons.search, color: Colors.grey.shade400),
+                            hintStyle: AppTextStyles.hint,
+                            prefixIcon: Icon(Icons.search, color: AppColors.grey400),
                             border: InputBorder.none,
                             contentPadding: const EdgeInsets.symmetric(vertical: 12),
                           ),
@@ -206,7 +184,7 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
                     _SquareButton(
                       icon: Icons.tune,
                       isActive: false,
-                      onTap: () => _showComingSoon('Filtri avanzati'),
+                      onTap: () => AppSnackbar.showComingSoon(context, 'Filtri avanzati'),
                     ),
                   ],
                 ),
@@ -235,21 +213,31 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
             right: 16,
             bottom: 20,
             child: _isSelectionMode
-                ? _DeleteSelectionBar(
-              selectedCount: _selectedProducts.length,
-              onDelete: _deleteSelected,
-              onCancel: _toggleSelectionMode,
-            )
-                : _ScanInsertBar(
-              onInsert: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ProductFormScreen()),
-              ),
-              onScan: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ScannerScreen()),
-              ),
-            ),
+                ? DeleteSelectionBar(
+                    selectedCount: _selectedProducts.length,
+                    onDelete: _deleteSelected,
+                    onCancel: _toggleSelectionMode,
+                  )
+                : PillActionBar(
+                    actions: [
+                      PillBarAction(
+                        icon: Icons.edit,
+                        label: 'INSERISCI',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const ProductFormScreen()),
+                        ),
+                      ),
+                      PillBarAction(
+                        icon: Icons.crop_free,
+                        label: 'SCANSIONA',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const ScannerScreen()),
+                        ),
+                      ),
+                    ],
+                  ),
           ),
         ],
       ),
@@ -267,16 +255,16 @@ class _SquareButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       onTap: onTap,
       child: Container(
         height: 44,
         width: 44,
         decoration: BoxDecoration(
-          color: isActive ? Colors.black : Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(12),
+          color: isActive ? AppColors.black : AppColors.grey50,
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
-        child: Icon(icon, color: isActive ? Colors.white : Colors.grey.shade400, size: 20),
+        child: Icon(icon, color: isActive ? AppColors.white : AppColors.grey400, size: 20),
       ),
     );
   }
@@ -312,7 +300,7 @@ class _ProductList extends StatelessWidget {
       return Center(
           child: Text(
             searchQuery.isEmpty ? 'Nessun prodotto qui' : 'Nessun risultato',
-            style: TextStyle(color: Colors.grey.shade400),
+            style: AppTextStyles.emptyState,
           )
       );
     }
@@ -331,6 +319,7 @@ class _ProductList extends StatelessWidget {
 
         return ProductCard(
           name: p.nome,
+          imageUrl: p.imagePath,
           isSelectable: isSelectionMode,
           isSelected: selectedProducts.contains(p.id),
           onTap: () {
@@ -348,166 +337,10 @@ class _ProductList extends StatelessWidget {
           },
           onDelete: () {
             context.read<PantryProvider>().deleteProduct(p.id);
-
-            // Feedback eliminazione singola
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Row(
-                  children: [
-                    const Icon(Icons.delete_outline, color: Colors.white),
-                    const SizedBox(width: 12),
-                    Text('${p.nome} eliminato'),
-                  ],
-                ),
-                backgroundColor: Colors.black87,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                margin: const EdgeInsets.only(bottom: 90, left: 16, right: 16),
-                duration: const Duration(seconds: 2),
-              ),
-            );
+            AppSnackbar.showDeleted(context, message: '${p.nome} eliminato');
           },
         );
       },
-    );
-  }
-}
-
-// Nuova barra inferiore che appare durante l'eliminazione multipla
-class _DeleteSelectionBar extends StatelessWidget {
-  final int selectedCount;
-  final VoidCallback onDelete;
-  final VoidCallback onCancel;
-
-  const _DeleteSelectionBar({
-    required this.selectedCount,
-    required this.onDelete,
-    required this.onCancel,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      elevation: 8,
-      borderRadius: BorderRadius.circular(32),
-      color: Colors.black,
-      child: SizedBox(
-        height: 56,
-        child: Row(
-          children: [
-            Expanded(
-              child: _BarButton(
-                icon: Icons.close,
-                label: 'ANNULLA',
-                onTap: onCancel,
-                borderRadius: const BorderRadius.horizontal(left: Radius.circular(32)),
-              ),
-            ),
-            Container(width: 1, height: 28, color: Colors.white38),
-            Expanded(
-              child: InkWell(
-                onTap: onDelete,
-                borderRadius: const BorderRadius.horizontal(right: Radius.circular(32)),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.delete, color: Colors.redAccent, size: 16),
-                    const SizedBox(width: 8),
-                    Text(
-                      'ELIMINA ($selectedCount)',
-                      style: const TextStyle(
-                        color: Colors.redAccent,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                        letterSpacing: 1.0,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// Barra standard
-class _ScanInsertBar extends StatelessWidget {
-  final VoidCallback onInsert;
-  final VoidCallback onScan;
-
-  const _ScanInsertBar({required this.onInsert, required this.onScan});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      elevation: 8,
-      borderRadius: BorderRadius.circular(32),
-      color: Colors.black,
-      child: SizedBox(
-        height: 56,
-        child: Row(
-          children: [
-            Expanded(
-              child: _BarButton(
-                icon: Icons.edit,
-                label: 'INSERISCI',
-                onTap: onInsert,
-                borderRadius: const BorderRadius.horizontal(left: Radius.circular(32)),
-              ),
-            ),
-            Container(width: 1, height: 28, color: Colors.white38),
-            Expanded(
-              child: _BarButton(
-                icon: Icons.crop_free,
-                label: 'SCANSIONA',
-                onTap: onScan,
-                borderRadius: const BorderRadius.horizontal(right: Radius.circular(32)),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BarButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final BorderRadius borderRadius;
-
-  const _BarButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    required this.borderRadius,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: borderRadius,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: Colors.white, size: 16),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-              letterSpacing: 1.0,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

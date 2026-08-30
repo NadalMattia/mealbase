@@ -47,8 +47,17 @@ dependencies:
   # Id Univoco Prodotto
   uuid: ^4.5.1
 
-  # Chiamate HTTP (lookup barcode su Open Food Facts)
-  http: ^1.2.2
+  # Lookup barcode su Open Food Facts (pacchetto ufficiale, sostituisce
+  # le chiamate HTTP dirette fatte a mano)
+  openfoodfacts: ^3.30.2
+
+  # Gestione permesso fotocamera (necessario per mobile_scanner):
+  # permette di rilevare il diniego permanente e aprire le impostazioni
+  # di sistema invece di lasciare l'utente bloccato su uno schermo nero
+  permission_handler: ^11.3.1
+
+  # Bordo tratteggiato
+  dotted_border: ^2.1.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

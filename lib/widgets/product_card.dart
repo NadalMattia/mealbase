@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 class ProductCard extends StatelessWidget {
   final String name;
@@ -7,6 +8,7 @@ class ProductCard extends StatelessWidget {
   final VoidCallback? onDelete;
   final bool isSelectable;
   final bool isSelected;
+  final String? imageUrl;
 
   const ProductCard({
     super.key,
@@ -16,6 +18,7 @@ class ProductCard extends StatelessWidget {
     this.onDelete,
     this.isSelectable = false,
     this.isSelected = false,
+    this.imageUrl,
   });
 
   @override
@@ -27,23 +30,31 @@ class ProductCard extends StatelessWidget {
         children: [
           Container(
             decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(16),
+              color: AppColors.grey100,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
             ),
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 onTap: onTap,
                 onLongPress: onLongPress, // Utilizzato per rilevare la pressione prolungata
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const CircleAvatar(
+                    CircleAvatar(
                       radius: 28,
-                      backgroundColor: Colors.white,
-                      child: Icon(Icons.image, color: Colors.black12, size: 28),
+                      backgroundColor: AppColors.white,
+                      backgroundImage: (imageUrl != null && imageUrl!.isNotEmpty)
+                          ? NetworkImage(imageUrl!)
+                          : null,
+                      onBackgroundImageError: (imageUrl != null && imageUrl!.isNotEmpty)
+                          ? (_, __) {}
+                          : null,
+                      child: (imageUrl == null || imageUrl!.isEmpty)
+                          ? Icon(Icons.image, color: Colors.black12, size: 28)
+                          : null,
                     ),
                     const SizedBox(height: 12),
                     Padding(
@@ -51,10 +62,7 @@ class ProductCard extends StatelessWidget {
                       child: Text(
                         name,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                        ),
+                        style: AppTextStyles.cardTitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -65,7 +73,7 @@ class ProductCard extends StatelessWidget {
                         width: 24,
                         height: 3,
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade300,
+                          color: AppColors.grey300,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -85,7 +93,7 @@ class ProductCard extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: isSelected ? Colors.black : Colors.white,
+                    color: isSelected ? AppColors.black : AppColors.white,
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.black12),
                     boxShadow: [
@@ -99,7 +107,7 @@ class ProductCard extends StatelessWidget {
                   child: Icon(
                     Icons.check,
                     size: 14,
-                    color: isSelected ? Colors.white : Colors.transparent,
+                    color: isSelected ? AppColors.white : Colors.transparent,
                   ),
                 ),
               ),
@@ -113,7 +121,7 @@ class ProductCard extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.white,
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.black12),
                     boxShadow: [
@@ -124,7 +132,7 @@ class ProductCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: const Icon(Icons.close, size: 14, color: Colors.grey),
+                  child: Icon(Icons.close, size: 14, color: AppColors.grey500),
                 ),
               ),
             ),

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/shopping_item.dart';
 import '../providers/shopping_list_provider.dart';
+import '../theme/app_theme.dart';
+import '../utils/app_snackbar.dart';
 
 class ShoppingItemEditScreen extends StatefulWidget {
   final ShoppingItem item;
@@ -34,22 +36,7 @@ class _ShoppingItemEditScreenState extends State<ShoppingItemEditScreen> {
     widget.item.nome = _nomeController.text.trim();
     provider.updateItem(widget.item);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: const [
-            Icon(Icons.check_circle_outline, color: Colors.white),
-            SizedBox(width: 12),
-            Text('Prodotto aggiornato'),
-          ],
-        ),
-        backgroundColor: Colors.black87,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        margin: const EdgeInsets.only(bottom: 24, left: 16, right: 16),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    AppSnackbar.show(context, message: 'Prodotto aggiornato');
 
     Navigator.pop(context);
   }
@@ -99,11 +86,7 @@ class _ShoppingItemEditScreenState extends State<ShoppingItemEditScreen> {
                     bottom: -8,
                     right: -8,
                     child: InkWell(
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Selezione immagine in arrivo!')),
-                        );
-                      },
+                      onTap: () => AppSnackbar.showComingSoon(context, 'Selezione immagine'),
                       borderRadius: BorderRadius.circular(24),
                       child: Container(
                         padding: const EdgeInsets.all(10),

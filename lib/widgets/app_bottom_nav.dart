@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 class AppBottomNavItem {
   final IconData icon;
@@ -23,8 +24,8 @@ class AppBottomNav extends StatelessWidget {
     return SafeArea(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppColors.white,
           border: Border(top: BorderSide(color: Colors.black12, width: 0.5)),
         ),
         child: Row(
@@ -40,22 +41,22 @@ class AppBottomNav extends StatelessWidget {
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                 decoration: BoxDecoration(
-                  color: isSelected ? Colors.black : Colors.transparent,
-                  borderRadius: BorderRadius.circular(20),
+                  color: isSelected ? AppColors.black : Colors.transparent,
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
                       item.icon,
-                      color: isSelected ? Colors.white : Colors.grey.shade400,
+                      color: isSelected ? AppColors.white : AppColors.grey400,
                       size: 24,
                     ),
                     const SizedBox(height: 4),
                     Text(
                       item.label.toUpperCase(),
                       style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.grey.shade400,
+                        color: isSelected ? AppColors.white : AppColors.grey400,
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 0.5,

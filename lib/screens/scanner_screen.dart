@@ -1,9 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
 import '../providers/shopping_list_provider.dart';
+import '../services/barcode_service.dart';
+import '../theme/app_theme.dart';
+import '../utils/app_snackbar.dart';
 import '../widgets/product_card.dart';
+import '../widgets/scanner_chrome.dart';
 import 'product_form_screen.dart';
 
+/// Scanner barcode per aggiungere rapidamente un prodotto in dispensa.
+///
+/// Prima questa schermata era solo una scenografia (un mirino disegnato su
+/// sfondo nero, nessuna fotocamera reale): l'icona "SCANSIONA" prometteva
+/// una funzione inesistente. `BarcodeService` esisteva ma non veniva mai
+/// chiamato da nessuno screen. Ora la fotocamera è reale (mobile_scanner) e
+/// il barcode letto viene cercato su Open Food Facts tramite
+/// `BarcodeService`, precompilando il form del prodotto.
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key});
 
@@ -12,37 +25,80 @@ class ScannerScreen extends StatefulWidget {
 }
 
 class _ScannerScreenState extends State<ScannerScreen> {
-  bool _isFlashOn = false;
+  final MobileScannerController _controller = MobileScannerController();
+  final BarcodeService _barcodeService = BarcodeService();
+
+  bool _isProcessing = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _onDetect(BarcodeCapture capture) async {
+    if (_isProcessing) return;
+
+    final code = capture.barcodes.isNotEmpty ? capture.barcodes.first.rawValue : null;
+    if (code == null || code.isEmpty) return;
+
+    setState(() => _isProcessing = true);
+    await _controller.stop();
+
+    final result = await _barcodeService.lookup(code);
+    if (!mounted) return;
+
+    if (result.found) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          fullscreenDialog: true,
+          builder: (_) => ProductFormScreen(
+            prefilledNome: result.nome,
+            prefilledCategoria: result.categoria,
+            prefilledImageUrl: result.imageUrl,
+          ),
+        ),
+      );
+    } else {
+      AppSnackbar.show(
+        context,
+        message: 'Prodotto non trovato: inseriscilo manualmente',
+        icon: Icons.info_outline,
+      );
+      setState(() => _isProcessing = false);
+      await _controller.start();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A1A), // Sfondo scuro per simulare la fotocamera
+      backgroundColor: AppColors.scannerBackground,
       body: Stack(
         children: [
-          // 1. Mirino dello scanner centrale
-          Center(
-            child: _buildViewfinder(),
+          // 0. Anteprima reale della fotocamera
+          MobileScanner(
+            controller: _controller,
+            onDetect: _onDetect,
+            // Prima l'assenza del permesso produceva solo uno schermo
+            // nero senza spiegazioni. Ora mostriamo un messaggio chiaro
+            // con un tasto per aprire le impostazioni di sistema.
+            errorBuilder: (context, error, child) {
+              return ScannerPermissionDenied(onClose: () => Navigator.pop(context));
+            },
           ),
 
+          // Overlay scuro per far risaltare il mirino sopra il feed camera
+          Container(color: Colors.black.withOpacity(0.35)),
+
+          // 1. Mirino dello scanner centrale
+          const Center(child: ScannerViewfinder()),
+
           // 2. Pulsanti superiori (Flash e Chiudi)
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildControlButton(
-                    icon: _isFlashOn ? Icons.flash_on : Icons.flash_off,
-                    onTap: () => setState(() => _isFlashOn = !_isFlashOn),
-                  ),
-                  _buildControlButton(
-                    icon: Icons.close,
-                    onTap: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-            ),
+          ScannerTopControls(
+            controller: _controller,
+            onCloseTap: () => Navigator.pop(context),
           ),
 
           // 3. Pannello inferiore "Carrello"
@@ -55,156 +111,64 @@ class _ScannerScreenState extends State<ScannerScreen> {
     );
   }
 
-  // Costruttore dei pulsanti fluttuanti circolari
-  Widget _buildControlButton({required IconData icon, required VoidCallback onTap}) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(30),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.15),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(icon, color: Colors.white, size: 24),
-      ),
-    );
-  }
-
-  // Costruttore del mirino (angoli e raggio laser)
-  Widget _buildViewfinder() {
-    return SizedBox(
-      width: 260,
-      height: 260,
-      child: Stack(
-        children: [
-          Positioned(top: 0, left: 0, child: _buildCorner(top: true, left: true)),
-          Positioned(top: 0, right: 0, child: _buildCorner(top: true, left: false)),
-          Positioned(bottom: 0, left: 0, child: _buildCorner(top: false, left: true)),
-          Positioned(bottom: 0, right: 0, child: _buildCorner(top: false, left: false)),
-
-          // Linea laser centrale
-          Center(
-            child: Container(
-              width: double.infinity,
-              height: 2,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.white.withOpacity(0.6),
-                    blurRadius: 8,
-                    spreadRadius: 2,
-                  )
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Disegna un singolo angolo del mirino
-  Widget _buildCorner({required bool top, required bool left}) {
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        border: Border(
-          top: top ? const BorderSide(color: Colors.white, width: 4) : BorderSide.none,
-          bottom: !top ? const BorderSide(color: Colors.white, width: 4) : BorderSide.none,
-          left: left ? const BorderSide(color: Colors.white, width: 4) : BorderSide.none,
-          right: !left ? const BorderSide(color: Colors.white, width: 4) : BorderSide.none,
-        ),
-        borderRadius: BorderRadius.only(
-          topLeft: top && left ? const Radius.circular(16) : Radius.zero,
-          topRight: top && !left ? const Radius.circular(16) : Radius.zero,
-          bottomLeft: !top && left ? const Radius.circular(16) : Radius.zero,
-          bottomRight: !top && !left ? const Radius.circular(16) : Radius.zero,
-        ),
-      ),
-    );
-  }
-
   // Pannello bianco inferiore scorrevole
   Widget _buildCartBottomSheet(BuildContext context) {
     final provider = context.watch<ShoppingListProvider>();
-    final cartItems = provider.giaPreso; // Legge i prodotti segnati come "nel carrello"
+    final cartItems = provider.giaPreso; // Prodotti segnati come "nel carrello"
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.42,
       decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        color: AppColors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.pill)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: 12),
-          // Maniglia di trascinamento visiva
           Center(
             child: Container(
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: AppColors.grey300,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
           const SizedBox(height: 24),
-
-          // Titolo
-          const Center(
-            child: Text(
-              'CARRELLO',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                letterSpacing: 2.0,
-                fontSize: 16,
-              ),
-            ),
-          ),
+          const Center(child: Text('CARRELLO', style: AppTextStyles.sectionLabel)),
           const SizedBox(height: 24),
-
-          // Griglia delle card
           Expanded(
             child: cartItems.isEmpty
                 ? Center(
-              child: Text(
-                'Nessun prodotto nel carrello',
-                style: TextStyle(color: Colors.grey.shade500),
-              ),
-            )
+                    child: Text('Nessun prodotto nel carrello', style: AppTextStyles.subtitle),
+                  )
                 : GridView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 0.8,
-              ),
-              itemCount: cartItems.length,
-              itemBuilder: (context, index) {
-                final item = cartItems[index];
-                return ProductCard(
-                  name: item.nome,
-                  onTap: () {
-                    // Chiude la schermata scanner e apre il form passando il nome precompilato
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        fullscreenDialog: true,
-                        builder: (_) => ProductFormScreen(
-                          prefilledNome: item.nome, // Pre-compila l'input "Nome Prodotto"
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 0.8,
+                    ),
+                    itemCount: cartItems.length,
+                    itemBuilder: (context, index) {
+                      final item = cartItems[index];
+                      return ProductCard(
+                        name: item.nome,
+                        onTap: () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              fullscreenDialog: true,
+                              builder: (_) => ProductFormScreen(prefilledNome: item.nome),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
           ),
         ],
       ),

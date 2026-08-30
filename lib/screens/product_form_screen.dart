@@ -6,17 +6,21 @@ import '../models/shopping_item.dart';
 import '../providers/pantry_provider.dart';
 import '../providers/location_provider.dart';
 import '../providers/shopping_list_provider.dart';
+import '../theme/app_theme.dart';
+import '../utils/app_snackbar.dart';
 
 class ProductFormScreen extends StatefulWidget {
   final Product? existingProduct;
   final String? prefilledNome;
   final String? prefilledCategoria;
+  final String? prefilledImageUrl;
 
   const ProductFormScreen({
     super.key,
     this.existingProduct,
     this.prefilledNome,
     this.prefilledCategoria,
+    this.prefilledImageUrl,
   });
 
   @override
@@ -32,8 +36,11 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   String _categoria = 'Altro';
   String _posizione = 'Dispensa';
   DateTime? _dataScadenza;
+  String? _imageUrl;
 
-  final List<String> _unita_options = ['pz', 'g', 'kg', 'l'];
+  // Rinominato da `_unita_options` (snake_case non idiomatico in Dart) a
+  // `_unitaOptions` (lowerCamelCase, coerente con il resto del codice).
+  final List<String> _unitaOptions = ['pz', 'g', 'kg', 'l'];
   final List<String> _categorie = ['Latticini', 'Verdura', 'Carne', 'Altro'];
 
   bool get _isEditing => widget.existingProduct != null;
@@ -57,10 +64,13 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       _categoria = p.categoria;
       _posizione = p.posizione;
       _dataScadenza = p.dataScadenza;
+      _imageUrl = p.imagePath;
     } else if (widget.prefilledCategoria != null &&
         _categorie.contains(widget.prefilledCategoria)) {
       _categoria = widget.prefilledCategoria!;
     }
+
+    _imageUrl ??= widget.prefilledImageUrl;
 
     _nomeController.addListener(_onNameChanged);
   }
@@ -107,9 +117,21 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   }
 
   void _pickImage() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Selezione immagine in arrivo!')),
-    );
+    AppSnackbar.showComingSoon(context, 'Selezione immagine');
+  }
+
+  /// Restituisce la posizione da usare per il salvataggio: quella scelta
+  /// dall'utente se ancora valida, altrimenti la prima disponibile.
+  ///
+  /// Prima questa correzione avveniva con un `setState` chiamato dentro
+  /// `addPostFrameCallback` invocato *durante il build* del `Consumer`
+  /// sottostante: un pattern fragile (side-effect nascosto nel ciclo di
+  /// build, un frame di ritardo prima che l'interfaccia si aggiornasse).
+  /// Ora il fallback è calcolato in modo puro sia nel form sia al momento
+  /// del salvataggio, senza alcun effetto collaterale durante il build.
+  String? _effettivaPosizione(List<String> posizioniDisponibili) {
+    if (posizioniDisponibili.contains(_posizione)) return _posizione;
+    return posizioniDisponibili.isNotEmpty ? posizioniDisponibili.first : null;
   }
 
   void _save() {
@@ -117,6 +139,10 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
     final pantryProvider = context.read<PantryProvider>();
     final shoppingProvider = context.read<ShoppingListProvider>();
+    final locationProvider = context.read<LocationProvider>();
+
+    final posizioniDisponibili = locationProvider.locations.map((l) => l.nome).toList();
+    final posizioneDaSalvare = _effettivaPosizione(posizioniDisponibili) ?? _posizione;
 
     final insertedName = _nomeController.text.trim();
 
@@ -126,8 +152,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       p.quantita = double.parse(_quantitaController.text);
       p.unita = _unita;
       p.categoria = _categoria;
-      p.posizione = _posizione;
+      p.posizione = posizioneDaSalvare;
       p.dataScadenza = _dataScadenza;
+      p.imagePath = _imageUrl;
       pantryProvider.updateProduct(p);
     } else {
       // 1. Aggiunge il prodotto alla dispensa
@@ -137,9 +164,10 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         quantita: double.parse(_quantitaController.text),
         unita: _unita,
         categoria: _categoria,
-        posizione: _posizione,
+        posizione: posizioneDaSalvare,
         dataAcquisto: DateTime.now(),
         dataScadenza: _dataScadenza,
+        imagePath: _imageUrl,
       );
       pantryProvider.addProduct(newProduct);
 
@@ -153,22 +181,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       }
     }
 
-    // Feedback visivo di conferma
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle_outline, color: Colors.white),
-            const SizedBox(width: 12),
-            Text(_isEditing ? 'Prodotto modificato' : 'Prodotto inserito in dispensa'),
-          ],
-        ),
-        backgroundColor: Colors.black87,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        margin: const EdgeInsets.only(bottom: 24, left: 16, right: 16),
-        duration: const Duration(seconds: 2),
-      ),
+    AppSnackbar.show(
+      context,
+      message: _isEditing ? 'Prodotto modificato' : 'Prodotto inserito in dispensa',
     );
 
     Navigator.pop(context);
@@ -177,14 +192,12 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
         leading: const SizedBox.shrink(),
         actions: [
           IconButton(
-            icon: const Icon(Icons.close, color: Colors.black),
+            icon: const Icon(Icons.close, color: AppColors.black),
             onPressed: () => Navigator.pop(context),
           ),
           const SizedBox(width: 8),
@@ -206,16 +219,41 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                       width: 140,
                       height: 140,
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade50,
-                        borderRadius: BorderRadius.circular(32),
+                        color: AppColors.grey50,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
                         border: Border.all(color: Colors.black87, width: 1.5),
                       ),
-                      child: Center(
-                        child: CircleAvatar(
-                          radius: 40,
-                          backgroundColor: Colors.white,
-                          child: Icon(Icons.image, size: 40, color: Colors.grey.shade300),
-                        ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(AppRadius.pill - 1.5),
+                        child: _imageUrl != null && _imageUrl!.isNotEmpty
+                            ? Image.network(
+                                _imageUrl!,
+                                fit: BoxFit.cover,
+                                loadingBuilder: (context, child, progress) {
+                                  if (progress == null) return child;
+                                  return const Center(
+                                    child: SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    ),
+                                  );
+                                },
+                                errorBuilder: (context, error, stackTrace) => Center(
+                                  child: CircleAvatar(
+                                    radius: 40,
+                                    backgroundColor: AppColors.white,
+                                    child: Icon(Icons.image, size: 40, color: AppColors.grey300),
+                                  ),
+                                ),
+                              )
+                            : Center(
+                                child: CircleAvatar(
+                                  radius: 40,
+                                  backgroundColor: AppColors.white,
+                                  child: Icon(Icons.image, size: 40, color: AppColors.grey300),
+                                ),
+                              ),
                       ),
                     ),
                     Positioned(
@@ -227,9 +265,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: Colors.black,
+                            color: AppColors.black,
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2.5),
+                            border: Border.all(color: AppColors.white, width: 2.5),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withOpacity(0.15),
@@ -238,7 +276,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                               ),
                             ],
                           ),
-                          child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                          child: const Icon(Icons.camera_alt, color: AppColors.white, size: 20),
                         ),
                       ),
                     ),
@@ -259,18 +297,18 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                       letterSpacing: 2.0,
                       fontSize: 14,
                     ),
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       hintText: 'NOME PRODOTTO',
-                      contentPadding: const EdgeInsets.symmetric(vertical: 18),
-                      border: const OutlineInputBorder(
+                      contentPadding: EdgeInsets.symmetric(vertical: 18),
+                      border: OutlineInputBorder(
                         borderRadius: BorderRadius.zero,
                         borderSide: BorderSide(color: Colors.black87, width: 1.5),
                       ),
-                      enabledBorder: const OutlineInputBorder(
+                      enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.zero,
                         borderSide: BorderSide(color: Colors.black87, width: 1.5),
                       ),
-                      focusedBorder: const OutlineInputBorder(
+                      focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.zero,
                         borderSide: BorderSide(color: Colors.black87, width: 2.0),
                       ),
@@ -283,7 +321,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                     Container(
                       margin: const EdgeInsets.only(top: 4),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.white,
                         border: Border.all(color: Colors.black87, width: 1),
                         boxShadow: [
                           BoxShadow(
@@ -312,22 +350,16 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   // Nome a sinistra
-                                  Text(
-                                    item.nome,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14,
-                                    ),
-                                  ),
+                                  Text(item.nome, style: AppTextStyles.cardTitle.copyWith(fontSize: 14)),
                                   // Immagine/Icona a destra
                                   Container(
                                     width: 32,
                                     height: 32,
                                     decoration: BoxDecoration(
-                                      color: Colors.grey.shade100,
-                                      borderRadius: BorderRadius.circular(8),
+                                      color: AppColors.grey100,
+                                      borderRadius: BorderRadius.circular(AppRadius.sm),
                                     ),
-                                    child: const Icon(Icons.image, size: 16, color: Colors.grey),
+                                    child: Icon(Icons.image, size: 16, color: AppColors.grey500),
                                   ),
                                 ],
                               ),
@@ -388,7 +420,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                           contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                           border: OutlineInputBorder(borderRadius: BorderRadius.zero),
                         ),
-                        items: _unita_options
+                        items: _unitaOptions
                             .map((u) => DropdownMenuItem(value: u, child: Text(u)))
                             .toList(),
                         onChanged: (v) => setState(() => _unita = v!),
@@ -420,18 +452,20 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
               // Alloca in (Posizione)
               Consumer<LocationProvider>(
                 builder: (context, locationProvider, _) {
-                  final posizioniDisponibili = locationProvider.locations.map((l) => l.nome).toList();
+                  final posizioniDisponibili =
+                      locationProvider.locations.map((l) => l.nome).toList();
 
-                  if (!posizioniDisponibili.contains(_posizione) && posizioniDisponibili.isNotEmpty) {
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      setState(() => _posizione = posizioniDisponibili.first);
-                    });
-                  }
+                  // Calcolo puro, senza setState né side-effect durante il
+                  // build: se `_posizione` non è più valida (es. la
+                  // location è stata eliminata), il dropdown mostra
+                  // semplicemente la prima disponibile finché l'utente non
+                  // ne sceglie un'altra o salva il form.
+                  final effettiva = _effettivaPosizione(posizioniDisponibili);
 
                   return _buildFormRow(
                     'ALLOCA IN',
                     DropdownButtonFormField<String>(
-                      value: posizioniDisponibili.contains(_posizione) ? _posizione : null,
+                      value: effettiva,
                       icon: const Icon(Icons.keyboard_arrow_down, size: 18),
                       decoration: const InputDecoration(
                         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -440,7 +474,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                       items: posizioniDisponibili
                           .map((p) => DropdownMenuItem(value: p, child: Text(p)))
                           .toList(),
-                      onChanged: (v) => setState(() => _posizione = v!),
+                      onChanged: (v) {
+                        if (v != null) setState(() => _posizione = v);
+                      },
                     ),
                   );
                 },
@@ -458,11 +494,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                   alignment: Alignment.center,
                   child: Text(
                     _isEditing ? 'MODIFICA' : 'INSERISCI',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 2.0,
-                      fontSize: 16,
-                    ),
+                    style: AppTextStyles.primaryActionLabel,
                   ),
                 ),
               ),
@@ -479,18 +511,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.0,
-            fontSize: 12,
-          ),
-        ),
-        SizedBox(
-          width: 160,
-          child: inputWidget,
-        ),
+        Text(label, style: AppTextStyles.fieldLabel),
+        SizedBox(width: 160, child: inputWidget),
       ],
     );
   }
