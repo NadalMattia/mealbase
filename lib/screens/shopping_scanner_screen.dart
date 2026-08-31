@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import '../providers/shopping_list_provider.dart';
 import '../services/barcode_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/app_snackbar.dart';
 import '../widgets/product_image_picker.dart';
-import '../widgets/scanner_chrome.dart';
+import '../widgets/scanner_layout.dart';
 
 class ShoppingScannerScreen extends StatefulWidget {
   const ShoppingScannerScreen({super.key});
@@ -17,34 +16,14 @@ class ShoppingScannerScreen extends StatefulWidget {
 }
 
 class _ShoppingScannerScreenState extends State<ShoppingScannerScreen> {
-  final MobileScannerController _controller = MobileScannerController();
   final BarcodeService _barcodeService = BarcodeService();
   final TextEditingController _nomeController = TextEditingController();
 
   bool _isLookingUp = false;
-  bool _isPermissionGranted = false;
-  bool _isChecking = true;
   String? _imagePath;
 
   @override
-  void initState() {
-    super.initState();
-    _checkCameraPermission();
-  }
-
-  Future<void> _checkCameraPermission() async {
-    final status = await Permission.camera.request();
-    if (!mounted) return;
-
-    setState(() {
-      _isPermissionGranted = status.isGranted;
-      _isChecking = false;
-    });
-  }
-
-  @override
   void dispose() {
-    _controller.dispose();
     _nomeController.dispose();
     super.dispose();
   }
@@ -64,8 +43,8 @@ class _ShoppingScannerScreenState extends State<ShoppingScannerScreen> {
       setState(() {
         _nomeController.text = result.nome!;
         _imagePath ??= result.imageUrl;
+        _isLookingUp = false;
       });
-      setState(() => _isLookingUp = false);
     } else {
       AppSnackbar.show(context, message: 'Prodotto non trovato', icon: Icons.info_outline);
       Future.delayed(const Duration(milliseconds: 2500), () {
@@ -84,44 +63,10 @@ class _ShoppingScannerScreenState extends State<ShoppingScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.scannerBackground,
+    return ScannerLayout(
       resizeToAvoidBottomInset: true,
-      body: Stack(
-        children: [
-          // 0. SFONDO: Fotocamera isolata a schermo intero
-          Positioned.fill(
-            child: _isChecking
-                ? const Center(child: CircularProgressIndicator(color: AppColors.white))
-                : _isPermissionGranted
-                ? MobileScanner(
-              controller: _controller,
-              onDetect: _onDetect,
-              errorBuilder: (context, error, child) {
-                return ScannerPermissionDenied(onClose: () => Navigator.pop(context));
-              },
-            )
-                : ScannerPermissionDenied(onClose: () => Navigator.pop(context)),
-          ),
-
-          // 1. OVERLAY E MIRINO
-          if (_isPermissionGranted && !_isChecking) ...[
-            Positioned.fill(child: Container(color: Colors.black.withOpacity(0.35))),
-            const Center(child: ScannerViewfinder()),
-            Positioned(
-              top: 0, left: 0, right: 0,
-              child: ScannerTopControls(
-                controller: _controller,
-                onCloseTap: () => Navigator.pop(context),
-              ),
-            ),
-          ],
-
-          // 2. PANNELLO INFERIORE
-          if (!_isChecking)
-            Positioned.fill(child: _buildAddFormBottomSheet(context)),
-        ],
-      ),
+      onDetect: _onDetect,
+      bottomSheetBuilder: (context, controller) => _buildAddFormBottomSheet(context),
     );
   }
 

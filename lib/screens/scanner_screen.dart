@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import '../providers/shopping_list_provider.dart';
 import '../services/barcode_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/app_snackbar.dart';
 import '../widgets/product_card.dart';
-import '../widgets/scanner_chrome.dart';
+import '../widgets/scanner_layout.dart';
 import 'product_form_screen.dart';
 
 class ScannerScreen extends StatefulWidget {
@@ -18,35 +17,9 @@ class ScannerScreen extends StatefulWidget {
 }
 
 class _ScannerScreenState extends State<ScannerScreen> {
-  final MobileScannerController _controller = MobileScannerController();
   final BarcodeService _barcodeService = BarcodeService();
   final DraggableScrollableController _sheetController = DraggableScrollableController();
-
   bool _isProcessing = false;
-  bool _isPermissionGranted = false;
-  bool _isChecking = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkCameraPermission();
-  }
-
-  Future<void> _checkCameraPermission() async {
-    final status = await Permission.camera.request();
-    if (!mounted) return;
-
-    setState(() {
-      _isPermissionGranted = status.isGranted;
-      _isChecking = false;
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
 
   Future<void> _onDetect(BarcodeCapture capture) async {
     if (_isProcessing) return;
@@ -81,43 +54,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.scannerBackground,
-      body: Stack(
-        children: [
-          // 0. SFONDO: Fotocamera isolata a schermo intero
-          Positioned.fill(
-            child: _isChecking
-                ? const Center(child: CircularProgressIndicator(color: AppColors.white))
-                : _isPermissionGranted
-                ? MobileScanner(
-              controller: _controller,
-              onDetect: _onDetect,
-              errorBuilder: (context, error, child) {
-                return ScannerPermissionDenied(onClose: () => Navigator.pop(context));
-              },
-            )
-                : ScannerPermissionDenied(onClose: () => Navigator.pop(context)),
-          ),
-
-          // 1. OVERLAY E MIRINO
-          if (_isPermissionGranted && !_isChecking) ...[
-            Positioned.fill(child: Container(color: Colors.black.withOpacity(0.35))),
-            const Center(child: ScannerViewfinder()),
-            Positioned(
-              top: 0, left: 0, right: 0,
-              child: ScannerTopControls(
-                controller: _controller,
-                onCloseTap: () => Navigator.pop(context),
-              ),
-            ),
-          ],
-
-          // 2. PANNELLO INFERIORE
-          if (!_isChecking)
-            Positioned.fill(child: _buildCartBottomSheet(context)),
-        ],
-      ),
+    return ScannerLayout(
+      onDetect: _onDetect,
+      bottomSheetBuilder: (context, controller) => _buildCartBottomSheet(context),
     );
   }
 

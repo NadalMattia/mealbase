@@ -39,7 +39,7 @@ dependencies:
   hive_flutter: ^1.1.0
 
   # Scanner barcode
-  mobile_scanner: ^5.2.3
+  mobile_scanner: ^7.4.0
 
   # Notifiche locali
   flutter_local_notifications: ^17.2.3
@@ -55,6 +55,9 @@ dependencies:
   # permette di rilevare il diniego permanente e aprire le impostazioni
   # di sistema invece di lasciare l'utente bloccato su uno schermo nero
   permission_handler: ^11.3.1
+
+  # Selezione/scatto foto prodotto (fotocamera o libreria)
+  image_picker: ^1.1.2
 
   # Bordo tratteggiato
   dotted_border: ^2.1.0
