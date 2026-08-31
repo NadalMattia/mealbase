@@ -1,27 +1,33 @@
 import 'package:flutter/material.dart';
-import 'main_screen.dart';
-import 'pantry_screen.dart';
+import '../widgets/app_bottom_nav.dart';
+import 'house_list_screen.dart';
+import 'profile_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _currentIndex = 0;
+
+  final List<Widget> _tabs = const [
+    HouseListScreen(),
+    ProfileScreen(),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Le tue case')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            child: ListTile(
-              title: const Text('Casa 1'),
-              trailing: const Icon(Icons.arrow_forward_ios),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const MainScreen()),
-              ),
-            ),
-          ),
+      body: IndexedStack(index: _currentIndex, children: _tabs),
+      bottomNavigationBar: AppBottomNav(
+        currentIndex: _currentIndex,
+        onTap: (index) => setState(() => _currentIndex = index),
+        items: const [
+          AppBottomNavItem(icon: Icons.menu, label: 'Menu'),
+          AppBottomNavItem(icon: Icons.person_outline, label: 'Profilo'),
         ],
       ),
     );

@@ -3,29 +3,34 @@ import 'package:provider/provider.dart';
 import '../providers/pantry_provider.dart';
 import '../providers/location_provider.dart';
 import '../models/product.dart';
+import '../theme/app_theme.dart';
+import '../utils/app_snackbar.dart';
+import '../widgets/pill_action_bar.dart';
 import 'scanner_screen.dart';
 import 'product_form_screen.dart';
 import 'manage_locations_screen.dart';
 import 'house_settings_screen.dart';
+import '../widgets/product_card.dart';
 
 class PantryScreen extends StatefulWidget {
-  const PantryScreen({super.key});
+  final String houseName;
+  const PantryScreen({super.key, required this.houseName});
 
   @override
   State<PantryScreen> createState() => _PantryScreenState();
 }
 
-// NOTA: TickerProviderStateMixin (non "Single") perché il TabController
-// viene ricreato ogni volta che cambia il numero di spazi/posizioni.
-class _PantryScreenState extends State<PantryScreen>
-    with TickerProviderStateMixin {
+class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMixin {
   TabController? _tabController;
   List<String> _currentTabs = [];
+  String _searchQuery = '';
+
+  // Stati per la selezione multipla
+  bool _isSelectionMode = false;
+  final Set<String> _selectedProducts = {};
 
   void _rebuildTabController(List<String> tabs) {
-    if (_tabController != null && _listEquals(_currentTabs, tabs)) {
-      return;
-    }
+    if (_tabController != null && _listEquals(_currentTabs, tabs)) return;
     _currentTabs = tabs;
     _tabController?.dispose();
     _tabController = TabController(length: tabs.length, vsync: this);
@@ -45,6 +50,39 @@ class _PantryScreenState extends State<PantryScreen>
     super.dispose();
   }
 
+  // Abilita/Disabilita la modalità selezione
+  void _toggleSelectionMode() {
+    setState(() {
+      _isSelectionMode = !_isSelectionMode;
+      _selectedProducts.clear();
+    });
+  }
+
+  // Aggiunge o rimuove un prodotto dalla selezione
+  void _toggleProductSelection(String id) {
+    setState(() {
+      if (_selectedProducts.contains(id)) {
+        _selectedProducts.remove(id);
+      } else {
+        _selectedProducts.add(id);
+      }
+    });
+  }
+
+  void _deleteSelected() {
+    if (_selectedProducts.isEmpty) return;
+
+    final count = _selectedProducts.length;
+    final provider = context.read<PantryProvider>();
+
+    for (final id in _selectedProducts) {
+      provider.deleteProduct(id);
+    }
+
+    _toggleSelectionMode();
+    AppSnackbar.showDeleted(context, message: '$count prodotti eliminati');
+  }
+
   @override
   Widget build(BuildContext context) {
     final locationProvider = context.watch<LocationProvider>();
@@ -52,12 +90,19 @@ class _PantryScreenState extends State<PantryScreen>
     _rebuildTabController(tabs);
 
     return Scaffold(
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        title: const Text('Dispensa'),
+        title: Text(
+          widget.houseName.toUpperCase(),
+          style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.black),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings),
-            tooltip: 'Impostazioni Casa 1',
+            icon: Icon(Icons.people_outline, color: AppColors.grey400),
+            onPressed: () => AppSnackbar.showComingSoon(context, 'Condivisione coinquilini'),
+          ),
+          IconButton(
+            icon: Icon(Icons.settings, color: AppColors.grey400),
             onPressed: () {
               Navigator.push(
                 context,
@@ -67,28 +112,84 @@ class _PantryScreenState extends State<PantryScreen>
           ),
         ],
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
-          child: Row(
+          preferredSize: const Size.fromHeight(110),
+          child: Column(
             children: [
-              Expanded(
-                child: TabBar(
-                  controller: _tabController,
-                  isScrollable: true,
-                  tabs: tabs.map((t) => Tab(text: t)).toList(),
+              Row(
+                children: [
+                  Expanded(
+                    child: TabBar(
+                      controller: _tabController,
+                      isScrollable: true,
+                      indicator: BoxDecoration(
+                        borderRadius: BorderRadius.circular(AppRadius.xl),
+                        color: AppColors.black,
+                      ),
+                      labelColor: AppColors.white,
+                      unselectedLabelColor: AppColors.grey400,
+                      labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                      tabs: tabs.map((t) => Tab(
+                        height: 32,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Text(t.toUpperCase()),
+                        ),
+                      )).toList(),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.add_circle_outline, color: AppColors.grey300),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ManageLocationsScreen()),
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: AppColors.grey50,
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                        ),
+                        child: TextField(
+                          onChanged: (value) => setState(() => _searchQuery = value),
+                          decoration: InputDecoration(
+                            hintText: 'Cerca ingredienti',
+                            hintStyle: AppTextStyles.hint,
+                            prefixIcon: Icon(Icons.search, color: AppColors.grey400),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Tasto cestino: attiva/disattiva la modalità selezione
+                    _SquareButton(
+                      icon: Icons.delete_outline,
+                      isActive: _isSelectionMode,
+                      onTap: _toggleSelectionMode,
+                    ),
+                    const SizedBox(width: 8),
+                    _SquareButton(
+                      icon: Icons.tune,
+                      isActive: false,
+                      onTap: () => AppSnackbar.showComingSoon(context, 'Filtri avanzati'),
+                    ),
+                  ],
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.add),
-                tooltip: 'Gestisci spazi',
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const ManageLocationsScreen(),
-                    ),
-                  );
-                },
-              ),
+              const SizedBox(height: 8),
             ],
           ),
         ),
@@ -97,23 +198,46 @@ class _PantryScreenState extends State<PantryScreen>
         children: [
           TabBarView(
             controller: _tabController,
-            children:
-            tabs.map((posizione) => _ProductList(posizione: posizione)).toList(),
+            children: tabs.map((posizione) => _ProductList(
+              posizione: posizione,
+              searchQuery: _searchQuery,
+              isSelectionMode: _isSelectionMode,
+              selectedProducts: _selectedProducts,
+              onToggleSelection: _toggleProductSelection,
+            )).toList(),
           ),
+
+          // Switch tra la barra standard e la barra di eliminazione
           Positioned(
             left: 16,
             right: 16,
             bottom: 20,
-            child: _ScanInsertBar(
-              onInsert: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ProductFormScreen()),
-              ),
-              onScan: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ScannerScreen()),
-              ),
-            ),
+            child: _isSelectionMode
+                ? DeleteSelectionBar(
+                    selectedCount: _selectedProducts.length,
+                    onDelete: _deleteSelected,
+                    onCancel: _toggleSelectionMode,
+                  )
+                : PillActionBar(
+                    actions: [
+                      PillBarAction(
+                        icon: Icons.edit,
+                        label: 'INSERISCI',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const ProductFormScreen()),
+                        ),
+                      ),
+                      PillBarAction(
+                        icon: Icons.crop_free,
+                        label: 'SCANSIONA',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const ScannerScreen()),
+                        ),
+                      ),
+                    ],
+                  ),
           ),
         ],
       ),
@@ -121,83 +245,26 @@ class _PantryScreenState extends State<PantryScreen>
   }
 }
 
-/// Barra pillola fluttuante con azioni "Inserisci" e "Scansiona",
-/// posizionata sopra la lista prodotti (vedi mockup fornito).
-class _ScanInsertBar extends StatelessWidget {
-  final VoidCallback onInsert;
-  final VoidCallback onScan;
-
-  const _ScanInsertBar({required this.onInsert, required this.onScan});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      elevation: 8,
-      borderRadius: BorderRadius.circular(32),
-      color: Theme.of(context).colorScheme.primary,
-      child: SizedBox(
-        height: 56,
-        child: Row(
-          children: [
-            Expanded(
-              child: _BarButton(
-                icon: Icons.edit,
-                label: 'Inserisci',
-                onTap: onInsert,
-                borderRadius: const BorderRadius.horizontal(
-                  left: Radius.circular(32),
-                ),
-              ),
-            ),
-            Container(width: 1, height: 28, color: Colors.white38),
-            Expanded(
-              child: _BarButton(
-                icon: Icons.crop_free,
-                label: 'Scansiona',
-                onTap: onScan,
-                borderRadius: const BorderRadius.horizontal(
-                  right: Radius.circular(32),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BarButton extends StatelessWidget {
+class _SquareButton extends StatelessWidget {
   final IconData icon;
-  final String label;
   final VoidCallback onTap;
-  final BorderRadius borderRadius;
+  final bool isActive;
 
-  const _BarButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    required this.borderRadius,
-  });
+  const _SquareButton({required this.icon, required this.onTap, required this.isActive});
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
+      borderRadius: BorderRadius.circular(AppRadius.md),
       onTap: onTap,
-      borderRadius: borderRadius,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: Colors.white, size: 20),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
+      child: Container(
+        height: 44,
+        width: 44,
+        decoration: BoxDecoration(
+          color: isActive ? AppColors.black : AppColors.grey50,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        child: Icon(icon, color: isActive ? AppColors.white : AppColors.grey400, size: 20),
       ),
     );
   }
@@ -205,47 +272,73 @@ class _BarButton extends StatelessWidget {
 
 class _ProductList extends StatelessWidget {
   final String posizione;
-  const _ProductList({required this.posizione});
+  final String searchQuery;
+  final bool isSelectionMode;
+  final Set<String> selectedProducts;
+  final Function(String) onToggleSelection;
+
+  const _ProductList({
+    required this.posizione,
+    required this.searchQuery,
+    required this.isSelectionMode,
+    required this.selectedProducts,
+    required this.onToggleSelection,
+  });
 
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<PantryProvider>();
-    final products = provider.byPosizione(posizione);
+    var products = provider.byPosizione(posizione);
 
-    if (products.isEmpty) {
-      return const Center(child: Text('Nessun prodotto qui'));
+    if (searchQuery.trim().isNotEmpty) {
+      products = products.where(
+              (p) => p.nome.toLowerCase().contains(searchQuery.toLowerCase().trim())
+      ).toList();
     }
 
-    return ListView.builder(
-      // padding maggiorato in basso per non finire sotto la barra pillola
-      padding: const EdgeInsets.only(bottom: 96),
+    if (products.isEmpty) {
+      return Center(
+          child: Text(
+            searchQuery.isEmpty ? 'Nessun prodotto qui' : 'Nessun risultato',
+            style: AppTextStyles.emptyState,
+          )
+      );
+    }
+
+    return GridView.builder(
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 24, bottom: 96),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 16,
+        childAspectRatio: 0.8,
+      ),
       itemCount: products.length,
       itemBuilder: (context, index) {
         final Product p = products[index];
-        return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          child: ListTile(
-            leading: const CircleAvatar(child: Icon(Icons.fastfood)),
-            title: Text(p.nome),
-            subtitle: Text(
-              '${p.quantita} ${p.unita} · ${p.categoria}'
-                  '${p.dataScadenza != null ? " · Scad. ${p.dataScadenza!.day}/${p.dataScadenza!.month}/${p.dataScadenza!.year}" : ""}',
-            ),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete_outline),
-              onPressed: () {
-                context.read<PantryProvider>().deleteProduct(p.id);
-              },
-            ),
-            onTap: () {
+
+        return ProductCard(
+          name: p.nome,
+          imageUrl: p.imagePath,
+          isSelectable: isSelectionMode,
+          isSelected: selectedProducts.contains(p.id),
+          onTap: () {
+            if (isSelectionMode) {
+              onToggleSelection(p.id);
+            } else {
               Navigator.push(
                 context,
                 MaterialPageRoute(
+                  fullscreenDialog: true,
                   builder: (_) => ProductFormScreen(existingProduct: p),
                 ),
               );
-            },
-          ),
+            }
+          },
+          onDelete: () {
+            context.read<PantryProvider>().deleteProduct(p.id);
+            AppSnackbar.showDeleted(context, message: '${p.nome} eliminato');
+          },
         );
       },
     );

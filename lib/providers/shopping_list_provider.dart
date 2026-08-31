@@ -8,12 +8,7 @@ class ShoppingListProvider extends ChangeNotifier {
   List<ShoppingItem> _items = [];
 
   ShoppingListProvider() {
-    loadItems();
-  }
-
-  void loadItems() {
-    _items = _service.getAll();
-    notifyListeners();
+    // Il caricamento avviene dopo lo switch della casa
   }
 
   List<ShoppingItem> get daAcquistare =>
@@ -22,14 +17,29 @@ class ShoppingListProvider extends ChangeNotifier {
   List<ShoppingItem> get giaPreso =>
       _items.where((i) => i.inCarrello).toList();
 
-  Future<void> addItem(String nome) async {
+  Future<void> switchHouse(String houseName) async {
+    await _service.switchHouse(houseName);
+    loadItems();
+  }
+
+  void loadItems() {
+    _items = _service.getAll();
+    notifyListeners();
+  }
+
+  Future<void> addItem(String nome, {String? imagePath}) async {
     if (nome.trim().isEmpty) return;
-    final item = ShoppingItem(id: const Uuid().v4(), nome: nome.trim());
+    final item = ShoppingItem(id: const Uuid().v4(), nome: nome.trim(), imagePath: imagePath);
     await _service.addItem(item);
     loadItems();
   }
 
-  /// Sposta l'elemento tra "Spesa" e "Già preso" (REQ-10)
+  // --- NUOVO METODO AGGIUNTO PER LA MODIFICA ---
+  Future<void> updateItem(ShoppingItem item) async {
+    await _service.updateItem(item);
+    loadItems();
+  }
+
   Future<void> toggleItem(ShoppingItem item) async {
     item.inCarrello = !item.inCarrello;
     await _service.updateItem(item);

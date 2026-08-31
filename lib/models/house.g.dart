@@ -1,41 +1,38 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'shopping_item.dart';
+part of 'house.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
 // **************************************************************************
 
-class ShoppingItemAdapter extends TypeAdapter<ShoppingItem> {
+class HouseAdapter extends TypeAdapter<House> {
   @override
-  final int typeId = 1;
+  final int typeId = 3;
 
   @override
-  ShoppingItem read(BinaryReader reader) {
+  House read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return ShoppingItem(
+    return House(
       id: fields[0] as String,
       nome: fields[1] as String,
-      inCarrello: fields[2] as bool,
-      imagePath: fields[3] as String?,
+      ordine: fields[2] as int,
     );
   }
 
   @override
-  void write(BinaryWriter writer, ShoppingItem obj) {
+  void write(BinaryWriter writer, House obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(3)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
       ..write(obj.nome)
       ..writeByte(2)
-      ..write(obj.inCarrello)
-      ..writeByte(3)
-      ..write(obj.imagePath);
+      ..write(obj.ordine);
   }
 
   @override
@@ -44,7 +41,7 @@ class ShoppingItemAdapter extends TypeAdapter<ShoppingItem> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is ShoppingItemAdapter &&
+      other is HouseAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

@@ -1,27 +1,22 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/product.dart';
+import 'house_scoped_hive_service.dart';
 
-class HiveService {
-  static const String boxName = 'products';
+class HiveService extends HouseScopedHiveService<Product> {
+  HiveService() : super('products');
 
-  static Future<void> init() async {
-    Hive.registerAdapter(ProductAdapter());
-    await Hive.openBox<Product>(boxName);
+  // Metodo STATICO: chiamato da main.dart senza inizializzare la classe.
+  static void registerAdapter() {
+    if (!Hive.isAdapterRegistered(0)) {
+      Hive.registerAdapter(ProductAdapter());
+    }
   }
 
-  Box<Product> get _box => Hive.box<Product>(boxName);
+  List<Product> getAllProducts() => getAll();
 
-  List<Product> getAllProducts() => _box.values.toList();
+  Future<void> addProduct(Product product) async => await put(product.id, product);
 
-  Future<void> addProduct(Product product) async {
-    await _box.put(product.id, product);
-  }
+  Future<void> updateProduct(Product product) async => await product.save();
 
-  Future<void> updateProduct(Product product) async {
-    await product.save();
-  }
-
-  Future<void> deleteProduct(String id) async {
-    await _box.delete(id);
-  }
+  Future<void> deleteProduct(String id) async => await delete(id);
 }
