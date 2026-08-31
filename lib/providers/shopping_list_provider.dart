@@ -27,9 +27,9 @@ class ShoppingListProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> addItem(String nome) async {
+  Future<void> addItem(String nome, {String? imagePath}) async {
     if (nome.trim().isEmpty) return;
-    final item = ShoppingItem(id: const Uuid().v4(), nome: nome.trim());
+    final item = ShoppingItem(id: const Uuid().v4(), nome: nome.trim(), imagePath: imagePath);
     await _service.addItem(item);
     loadItems();
   }

@@ -8,6 +8,7 @@ import '../providers/location_provider.dart';
 import '../providers/shopping_list_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/app_snackbar.dart';
+import '../widgets/product_image_picker.dart';
 
 class ProductFormScreen extends StatefulWidget {
   final Product? existingProduct;
@@ -116,10 +117,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     }
   }
 
-  void _pickImage() {
-    AppSnackbar.showComingSoon(context, 'Selezione immagine');
-  }
-
   /// Restituisce la posizione da usare per il salvataggio: quella scelta
   /// dall'utente se ancora valida, altrimenti la prima disponibile.
   ///
@@ -212,75 +209,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
             children: [
               // Immagine Prodotto e Fotocamera
               Center(
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Container(
-                      width: 140,
-                      height: 140,
-                      decoration: BoxDecoration(
-                        color: AppColors.grey50,
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                        border: Border.all(color: Colors.black87, width: 1.5),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(AppRadius.pill - 1.5),
-                        child: _imageUrl != null && _imageUrl!.isNotEmpty
-                            ? Image.network(
-                                _imageUrl!,
-                                fit: BoxFit.cover,
-                                loadingBuilder: (context, child, progress) {
-                                  if (progress == null) return child;
-                                  return const Center(
-                                    child: SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: CircularProgressIndicator(strokeWidth: 2),
-                                    ),
-                                  );
-                                },
-                                errorBuilder: (context, error, stackTrace) => Center(
-                                  child: CircleAvatar(
-                                    radius: 40,
-                                    backgroundColor: AppColors.white,
-                                    child: Icon(Icons.image, size: 40, color: AppColors.grey300),
-                                  ),
-                                ),
-                              )
-                            : Center(
-                                child: CircleAvatar(
-                                  radius: 40,
-                                  backgroundColor: AppColors.white,
-                                  child: Icon(Icons.image, size: 40, color: AppColors.grey300),
-                                ),
-                              ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: -8,
-                      right: -8,
-                      child: InkWell(
-                        onTap: _pickImage,
-                        borderRadius: BorderRadius.circular(24),
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: AppColors.black,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: AppColors.white, width: 2.5),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.15),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(Icons.camera_alt, color: AppColors.white, size: 20),
-                        ),
-                      ),
-                    ),
-                  ],
+                child: ProductImagePicker(
+                  imagePath: _imageUrl,
+                  onImagePicked: (path) => setState(() => _imageUrl = path),
                 ),
               ),
               const SizedBox(height: 40),

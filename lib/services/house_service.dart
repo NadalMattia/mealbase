@@ -29,7 +29,7 @@ class HouseService {
   static Future<void> _seedDefaultsIfEmpty() async {
     final box = Hive.box<House>(boxName);
     if (box.isNotEmpty) return;
-    const defaults = ['Casa 1', 'Casa 2'];
+    const defaults = ['Casa 1']; //, 'Casa 2'];
     for (var i = 0; i < defaults.length; i++) {
       final house = House(id: const Uuid().v4(), nome: defaults[i], ordine: i);
       await box.put(house.id, house);

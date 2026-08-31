@@ -191,6 +191,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             final item = items[index];
             return ProductCard(
               name: item.nome,
+              imageUrl: item.imagePath,
               isSelectable: _isSelectionMode,
               isSelected: _selectedItems.contains(item.id),
               onTap: () {

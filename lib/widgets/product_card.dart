@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
@@ -20,6 +21,15 @@ class ProductCard extends StatelessWidget {
     this.isSelected = false,
     this.imageUrl,
   });
+
+  /// [imageUrl] può essere un URL remoto (foto Open Food Facts) o un
+  /// percorso file locale (foto scattata/scelta dall'utente): sceglie
+  /// l'`ImageProvider` giusto in base al contenuto, come fa già
+  /// `ProductImagePicker`.
+  ImageProvider? get _imageProvider {
+    if (imageUrl == null || imageUrl!.isEmpty) return null;
+    return imageUrl!.startsWith('http') ? NetworkImage(imageUrl!) : FileImage(File(imageUrl!));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,13 +56,9 @@ class ProductCard extends StatelessWidget {
                     CircleAvatar(
                       radius: 28,
                       backgroundColor: AppColors.white,
-                      backgroundImage: (imageUrl != null && imageUrl!.isNotEmpty)
-                          ? NetworkImage(imageUrl!)
-                          : null,
-                      onBackgroundImageError: (imageUrl != null && imageUrl!.isNotEmpty)
-                          ? (_, __) {}
-                          : null,
-                      child: (imageUrl == null || imageUrl!.isEmpty)
+                      backgroundImage: _imageProvider,
+                      onBackgroundImageError: _imageProvider != null ? (_, __) {} : null,
+                      child: _imageProvider == null
                           ? Icon(Icons.image, color: Colors.black12, size: 28)
                           : null,
                     ),

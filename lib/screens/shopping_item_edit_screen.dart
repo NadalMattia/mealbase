@@ -4,6 +4,7 @@ import '../models/shopping_item.dart';
 import '../providers/shopping_list_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/app_snackbar.dart';
+import '../widgets/product_image_picker.dart';
 
 class ShoppingItemEditScreen extends StatefulWidget {
   final ShoppingItem item;
@@ -16,11 +17,13 @@ class ShoppingItemEditScreen extends StatefulWidget {
 
 class _ShoppingItemEditScreenState extends State<ShoppingItemEditScreen> {
   late TextEditingController _nomeController;
+  late String? _imagePath;
 
   @override
   void initState() {
     super.initState();
     _nomeController = TextEditingController(text: widget.item.nome);
+    _imagePath = widget.item.imagePath;
   }
 
   @override
@@ -34,6 +37,7 @@ class _ShoppingItemEditScreenState extends State<ShoppingItemEditScreen> {
 
     final provider = context.read<ShoppingListProvider>();
     widget.item.nome = _nomeController.text.trim();
+    widget.item.imagePath = _imagePath;
     provider.updateItem(widget.item);
 
     AppSnackbar.show(context, message: 'Prodotto aggiornato');
@@ -63,50 +67,9 @@ class _ShoppingItemEditScreenState extends State<ShoppingItemEditScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Center(
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    width: 140,
-                    height: 140,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
-                      borderRadius: BorderRadius.circular(32),
-                      border: Border.all(color: Colors.black87, width: 1.5),
-                    ),
-                    child: Center(
-                      child: CircleAvatar(
-                        radius: 40,
-                        backgroundColor: Colors.white,
-                        child: Icon(Icons.image, size: 40, color: Colors.grey.shade300),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: -8,
-                    right: -8,
-                    child: InkWell(
-                      onTap: () => AppSnackbar.showComingSoon(context, 'Selezione immagine'),
-                      borderRadius: BorderRadius.circular(24),
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.black,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2.5),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.15),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
-                      ),
-                    ),
-                  ),
-                ],
+              child: ProductImagePicker(
+                imagePath: _imagePath,
+                onImagePicked: (path) => setState(() => _imagePath = path),
               ),
             ),
             const SizedBox(height: 40),

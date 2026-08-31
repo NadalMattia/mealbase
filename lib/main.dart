@@ -20,9 +20,13 @@ void main() async {
 
   // Configurazione richiesta dal pacchetto openfoodfacts prima di ogni
   // chiamata: User-Agent e lingua/paese di riferimento per i risultati.
+  // Non serve alcun account Open Food Facts: userAgent è solo una stringa
+  // identificativa per le richieste HTTP, non una credenziale. Il login
+  // (User con userId/password) serve solo per operazioni di scrittura
+  // (aggiungere prodotti, caricare immagini), che questa app non usa.
   OpenFoodAPIConfiguration.userAgent = UserAgent(
     name: 'MealBase',
-    url: 'https://github.com/tuonome/mealbase',
+    url: 'https://github.com/NadalMattia/mealbase',
   );
   OpenFoodAPIConfiguration.globalLanguages = [OpenFoodFactsLanguage.ITALIAN];
   OpenFoodAPIConfiguration.globalCountry = OpenFoodFactsCountry.ITALY;
