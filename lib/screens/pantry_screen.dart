@@ -24,6 +24,7 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
   TabController? _tabController;
   List<String> _currentTabs = [];
   String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
 
   // Stati per la selezione multipla
   bool _isSelectionMode = false;
@@ -47,10 +48,10 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
   @override
   void dispose() {
     _tabController?.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
-  // Abilita/Disabilita la modalità selezione
   void _toggleSelectionMode() {
     setState(() {
       _isSelectionMode = !_isSelectionMode;
@@ -58,7 +59,6 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
     });
   }
 
-  // Aggiunge o rimuove un prodotto dalla selezione
   void _toggleProductSelection(String id) {
     setState(() {
       if (_selectedProducts.contains(id)) {
@@ -92,17 +92,27 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
+        backgroundColor: AppColors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        titleSpacing: 16,
         title: Text(
           widget.houseName.toUpperCase(),
-          style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.black),
+          style: const TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: 22,
+            letterSpacing: 0.5,
+            color: AppColors.black,
+          ),
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.people_outline, color: AppColors.grey400),
+            icon: const Icon(Icons.people_outline, color: AppColors.black),
             onPressed: () => AppSnackbar.showComingSoon(context, 'Condivisione coinquilini'),
           ),
           IconButton(
-            icon: Icon(Icons.settings, color: AppColors.grey400),
+            icon: const Icon(Icons.settings_outlined, color: AppColors.black),
             onPressed: () {
               Navigator.push(
                 context,
@@ -110,46 +120,83 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
               );
             },
           ),
+          const SizedBox(width: 8),
         ],
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(110),
+          preferredSize: const Size.fromHeight(112),
           child: Column(
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: TabBar(
-                      controller: _tabController,
-                      isScrollable: true,
-                      indicator: BoxDecoration(
-                        borderRadius: BorderRadius.circular(AppRadius.xl),
-                        color: AppColors.black,
-                      ),
-                      labelColor: AppColors.white,
-                      unselectedLabelColor: AppColors.grey400,
-                      labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                      tabs: tabs.map((t) => Tab(
-                        height: 32,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Text(t.toUpperCase()),
+              // 1. BARRA DEI TAB + TASTO "+ STANZA"
+              Padding(
+                padding: const EdgeInsets.only(left: 16, right: 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TabBar(
+                        controller: _tabController,
+                        isScrollable: true,
+                        tabAlignment: TabAlignment.start,
+                        dividerColor: Colors.transparent,
+                        indicatorSize: TabBarIndicatorSize.tab,
+                        indicator: BoxDecoration(
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                          color: AppColors.black,
                         ),
-                      )).toList(),
+                        labelColor: AppColors.white,
+                        unselectedLabelColor: AppColors.grey500,
+                        labelStyle: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          letterSpacing: 0.6,
+                        ),
+                        unselectedLabelStyle: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                        padding: EdgeInsets.zero,
+                        labelPadding: const EdgeInsets.only(right: 8),
+                        tabs: tabs.map((t) => Tab(
+                          height: 38,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(AppRadius.pill),
+                              color: AppColors.grey100.withValues(alpha: 0.6),
+                            ),
+                            child: Text(t.toUpperCase()),
+                          ),
+                        )).toList(),
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.add_circle_outline, color: AppColors.grey300),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const ManageLocationsScreen()),
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                ],
+                    const SizedBox(width: 6),
+
+                    // Bottone Aggiungi Stanza
+                    InkWell(
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const ManageLocationsScreen()),
+                        );
+                      },
+                      child: Container(
+                        height: 38,
+                        width: 38,
+                        decoration: BoxDecoration(
+                          color: AppColors.grey100,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.grey300, width: 0.8),
+                        ),
+                        child: const Icon(Icons.add, color: AppColors.black, size: 20),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
+
+              // 2. BARRA DI RICERCA + TASTI AZIONE
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
@@ -160,21 +207,31 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
                         decoration: BoxDecoration(
                           color: AppColors.grey50,
                           borderRadius: BorderRadius.circular(AppRadius.lg),
+                          border: Border.all(color: AppColors.grey200, width: 1),
                         ),
                         child: TextField(
+                          controller: _searchController,
                           onChanged: (value) => setState(() => _searchQuery = value),
                           decoration: InputDecoration(
-                            hintText: 'Cerca ingredienti',
+                            hintText: 'Cerca ingredienti...',
                             hintStyle: AppTextStyles.hint,
-                            prefixIcon: Icon(Icons.search, color: AppColors.grey400),
+                            prefixIcon: Icon(Icons.search, color: AppColors.grey400, size: 20),
+                            suffixIcon: _searchQuery.isNotEmpty
+                                ? IconButton(
+                              icon: Icon(Icons.cancel, color: AppColors.grey400, size: 18),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() => _searchQuery = '');
+                              },
+                            )
+                                : null,
                             border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                            contentPadding: const EdgeInsets.symmetric(vertical: 10),
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
-                    // Tasto cestino: attiva/disattiva la modalità selezione
                     _SquareButton(
                       icon: Icons.delete_outline,
                       isActive: _isSelectionMode,
@@ -214,30 +271,30 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
             bottom: 20,
             child: _isSelectionMode
                 ? DeleteSelectionBar(
-                    selectedCount: _selectedProducts.length,
-                    onDelete: _deleteSelected,
-                    onCancel: _toggleSelectionMode,
-                  )
+              selectedCount: _selectedProducts.length,
+              onDelete: _deleteSelected,
+              onCancel: _toggleSelectionMode,
+            )
                 : PillActionBar(
-                    actions: [
-                      PillBarAction(
-                        icon: Icons.edit,
-                        label: 'INSERISCI',
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const ProductFormScreen()),
-                        ),
-                      ),
-                      PillBarAction(
-                        icon: Icons.crop_free,
-                        label: 'SCANSIONA',
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const ScannerScreen()),
-                        ),
-                      ),
-                    ],
+              actions: [
+                PillBarAction(
+                  icon: Icons.edit,
+                  label: 'INSERISCI',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ProductFormScreen()),
                   ),
+                ),
+                PillBarAction(
+                  icon: Icons.crop_free,
+                  label: 'SCANSIONA',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ScannerScreen()),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -257,12 +314,17 @@ class _SquareButton extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(AppRadius.md),
       onTap: onTap,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
         height: 44,
         width: 44,
         decoration: BoxDecoration(
           color: isActive ? AppColors.black : AppColors.grey50,
           borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(
+            color: isActive ? AppColors.black : AppColors.grey200,
+            width: 1,
+          ),
         ),
         child: Icon(icon, color: isActive ? AppColors.white : AppColors.grey400, size: 20),
       ),
@@ -292,21 +354,21 @@ class _ProductList extends StatelessWidget {
 
     if (searchQuery.trim().isNotEmpty) {
       products = products.where(
-              (p) => p.nome.toLowerCase().contains(searchQuery.toLowerCase().trim())
+            (p) => p.nome.toLowerCase().contains(searchQuery.toLowerCase().trim()),
       ).toList();
     }
 
     if (products.isEmpty) {
       return Center(
-          child: Text(
-            searchQuery.isEmpty ? 'Nessun prodotto qui' : 'Nessun risultato',
-            style: AppTextStyles.emptyState,
-          )
+        child: Text(
+          searchQuery.isEmpty ? 'Nessun prodotto qui' : 'Nessun risultato',
+          style: AppTextStyles.emptyState,
+        ),
       );
     }
 
     return GridView.builder(
-      padding: const EdgeInsets.only(left: 16, right: 16, top: 24, bottom: 96),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 20, bottom: 96),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
         crossAxisSpacing: 12,

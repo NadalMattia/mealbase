@@ -33,7 +33,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
     if (!mounted) return;
 
     if (result.found) {
-      Navigator.pushReplacement(
+      final saved = await Navigator.push<bool>(
         context,
         MaterialPageRoute(
           fullscreenDialog: true,
@@ -44,6 +44,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
           ),
         ),
       );
+
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
     } else {
       AppSnackbar.show(context, message: 'Prodotto non trovato', icon: Icons.info_outline);
       Future.delayed(const Duration(milliseconds: 2500), () {
@@ -91,7 +95,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
                   child: Column(
                     children: [
                       Container(
-                        width: 40, height: 4,
+                        width: 40,
+                        height: 4,
                         decoration: BoxDecoration(color: AppColors.grey300, borderRadius: BorderRadius.circular(2)),
                       ),
                       const SizedBox(height: 20),
@@ -114,7 +119,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
                   controller: scrollController,
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3, crossAxisSpacing: 16, mainAxisSpacing: 16, childAspectRatio: 0.8,
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 0.8,
                   ),
                   itemCount: cartItems.length,
                   itemBuilder: (context, index) {
@@ -122,13 +130,24 @@ class _ScannerScreenState extends State<ScannerScreen> {
                     return ProductCard(
                       name: item.nome,
                       imageUrl: item.imagePath,
-                      onTap: () => Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          fullscreenDialog: true,
-                          builder: (_) => ProductFormScreen(prefilledNome: item.nome, prefilledImageUrl: item.imagePath),
-                        ),
-                      ),
+                      onTap: () async {
+                        // Apre il form e attende che il prodotto venga salvato
+                        final saved = await Navigator.push<bool>(
+                          context,
+                          MaterialPageRoute(
+                            fullscreenDialog: true,
+                            builder: (_) => ProductFormScreen(
+                              prefilledNome: item.nome,
+                              prefilledImageUrl: item.imagePath,
+                            ),
+                          ),
+                        );
+
+                        // Rimuove l'elemento dal carrello della spesa una volta inserito in dispensa
+                        if (saved == true && context.mounted) {
+                          context.read<ShoppingListProvider>().deleteItem(item.id);
+                        }
+                      },
                     );
                   },
                 ),
