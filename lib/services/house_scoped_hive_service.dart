@@ -15,18 +15,27 @@ abstract class HouseScopedHiveService<T extends HiveObject> {
   HouseScopedHiveService(this.baseBoxName);
 
   String? _boxName;
+  String? _houseName;
 
   /// Passa da una casa all'altra aprendo (se necessario) il box dedicato.
   /// Le sottoclassi possono sovrascrivere [onHouseSwitched] per eseguire
-  /// logica aggiuntiva dopo l'apertura (es. seed di valori di default).
+  /// logica aggiuntiva dopo l'apertura (es. seed di valori di default,
+  /// o una migrazione da un vecchio schema di naming del box).
   @mustCallSuper
   Future<void> switchHouse(String houseName) async {
+    _houseName = houseName;
     _boxName = '${baseBoxName}_$houseName';
     if (!Hive.isBoxOpen(_boxName!)) {
       await Hive.openBox<T>(_boxName!);
     }
     await onHouseSwitched();
   }
+
+  /// Nome della casa attualmente selezionata (quello passato a
+  /// [switchHouse]), utile alle sottoclassi che devono ricostruire nomi di
+  /// box "legacy" per operazioni di migrazione una tantum.
+  @protected
+  String? get houseName => _houseName;
 
   /// Hook per le sottoclassi, chiamato subito dopo che il box della casa
   /// corrente è stato aperto. Di default non fa nulla.

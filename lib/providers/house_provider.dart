@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:uuid/uuid.dart';
 import '../models/house.dart';
 import '../services/house_service.dart';
 
@@ -17,8 +18,20 @@ class HouseProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Crea una nuova casa.
+  ///
+  /// L'id viene generato con `uuid` (come già avviene per `Location` e,
+  /// dopo il refactor, per `ShoppingItem`/`Product`) invece che con
+  /// `DateTime.now().millisecondsSinceEpoch`: elimina il, seppur remoto,
+  /// rischio di collisioni tra id creati nello stesso istante e rende la
+  /// generazione degli id uniforme in tutta l'app.
+  ///
+  /// NOTA su [imagePath]: si assume che, se presente, sia già stato reso
+  /// persistente da `ImageStorageService.persistLocalImage()` da parte del
+  /// chiamante (vedi `house_list_screen.dart`) — questo provider non tocca
+  /// il file, si limita a salvarne il path.
   Future<void> addHouse(String nome, {String? imagePath}) async {
-    final id = DateTime.now().millisecondsSinceEpoch.toString();
+    final id = const Uuid().v4();
     final house = House(
       id: id,
       nome: nome,

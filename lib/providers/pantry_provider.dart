@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../models/product.dart';
 import '../services/hive_service.dart';
 import '../services/notification_service.dart';
+import '../services/image_storage_service.dart';
 
 class PantryProvider extends ChangeNotifier {
   final HiveService _hiveService = HiveService();
@@ -69,11 +70,24 @@ class PantryProvider extends ChangeNotifier {
     loadProducts();
   }
 
-  Future<void> updateProduct(Product product) async {
+  /// Aggiorna un prodotto esistente (o lo crea, se per qualche motivo non
+  /// era ancora salvato in Hive).
+  ///
+  /// [previousImagePath] è opzionale: `ProductFormScreen` lo valorizza con
+  /// il path dell'immagine *prima* della modifica (catturato prima di
+  /// sovrascrivere i campi dell'oggetto `Product`, che è lo stesso
+  /// riferimento mutato in-place). Se l'immagine è cambiata, il vecchio
+  /// file locale viene cancellato per evitare di accumulare immagini non
+  /// più referenziate sullo storage del device.
+  Future<void> updateProduct(Product product, {String? previousImagePath}) async {
     if (product.isInBox) {
       await product.save();
     } else {
       await _hiveService.addProduct(product);
+    }
+
+    if (previousImagePath != null && previousImagePath != product.imagePath) {
+      await ImageStorageService.deleteImage(previousImagePath);
     }
 
     if (product.dataScadenza != null) {
@@ -98,16 +112,42 @@ class PantryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Elimina definitivamente un prodotto (flusso "nascondi + conferma"
+  /// dopo lo swipe, con possibilità di annullare tramite snackbar).
+  /// Ripulisce anche l'eventuale immagine locale associata.
   Future<void> confirmDeleteProduct(String id) async {
     _pendingDeleteIds.remove(id);
+    final product = _findById(id);
+
     await NotificationService().cancelNotification(id);
     await _hiveService.deleteProduct(id);
+    if (product != null) {
+      await ImageStorageService.deleteImage(product.imagePath);
+    }
     loadProducts();
   }
 
+  /// Elimina un prodotto senza passare dal flusso "nascondi + conferma"
+  /// (usato per l'eliminazione multipla in modalità selezione).
+  /// Ripulisce anche l'eventuale immagine locale associata.
   Future<void> deleteProduct(String id) async {
+    final product = _findById(id);
+
     await NotificationService().cancelNotification(id);
     await _hiveService.deleteProduct(id);
+    if (product != null) {
+      await ImageStorageService.deleteImage(product.imagePath);
+    }
     loadProducts();
+  }
+
+  /// Cerca un prodotto per id nella lista in memoria, usato per recuperare
+  /// il suo `imagePath` prima di eliminarlo definitivamente da Hive.
+  Product? _findById(String id) {
+    try {
+      return _products.firstWhere((p) => p.id == id);
+    } catch (_) {
+      return null;
+    }
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/pantry_sort_option.dart';
+import '../models/product_category.dart';
 import '../theme/app_theme.dart';
 
 class PantryFilterBottomSheet extends StatefulWidget {
@@ -22,16 +23,13 @@ class _PantryFilterBottomSheetState extends State<PantryFilterBottomSheet> {
   late PantrySortOption _selectedSort;
   late String? _selectedCategory;
 
-  final List<String> _categories = [
-    'Tutte',
-    'Altro',
-    'Frutta/Verdura',
-    'Latticini',
-    'Carne/Pesce',
-    'Dispensa',
-    'Bevande',
-    'Surgelati'
-  ];
+  // 'Tutte' è un valore "sentinella" solo per la UI del filtro (nessun
+  // prodotto ha davvero categoria 'Tutte'), quindi resta una stringa a sé
+  // e non fa parte dell'enum ProductCategory. Le categorie vere vengono
+  // da ProductCategories.labels: prima questa lista era hardcoded qui e
+  // duplicata identicamente in product_form_screen.dart, con il rischio
+  // che le due si disallineassero nel tempo.
+  final List<String> _categories = ['Tutte', ...ProductCategories.labels];
 
   @override
   void initState() {

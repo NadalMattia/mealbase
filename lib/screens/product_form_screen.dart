@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
 import '../models/product.dart';
+import '../models/product_category.dart';
 import '../providers/pantry_provider.dart';
 import '../providers/shopping_list_provider.dart';
 import '../providers/location_provider.dart';
@@ -34,7 +36,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   late TextEditingController _quantitaController;
 
   String? _imagePath;
-  String _categoria = 'Altro';
+  String _categoria = ProductCategories.defaultLabel;
   String _posizione = 'Dispensa';
   String _unita = 'pz';
   late DateTime _dataAcquisto;
@@ -58,7 +60,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         text: p.quantita % 1 == 0 ? p.quantita.toInt().toString() : p.quantita.toString(),
       );
       _imagePath = p.imagePath;
-      _categoria = p.categoria.isNotEmpty ? p.categoria : 'Altro';
+      _categoria = p.categoria.isNotEmpty ? p.categoria : ProductCategories.defaultLabel;
       _posizione = p.posizione.isNotEmpty ? p.posizione : 'Dispensa';
       _unita = p.unita.isNotEmpty ? p.unita : 'pz';
       _dataAcquisto = p.dataAcquisto;
@@ -122,12 +124,15 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         final key = '${nomeClean}_$marcaClean';
         if (!uniqueMatches.containsKey(key)) {
           uniqueMatches[key] = Product(
-            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            // Id generato con uuid solo per identità interna: questo
+            // oggetto è "sintetico" (serve solo a popolare il suggerimento
+            // in UI) e non viene mai salvato così com'è in Hive.
+            id: const Uuid().v4(),
             nome: nomeStr,
             marca: marcaStr,
             quantita: 1.0,
             unita: 'pz',
-            categoria: 'Altro',
+            categoria: ProductCategories.defaultLabel,
             posizione: 'Dispensa',
             dataAcquisto: DateTime.now(),
             imagePath: img,
@@ -181,6 +186,14 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
     if (widget.existingProduct != null) {
       final p = widget.existingProduct!;
+
+      // Catturiamo il path dell'immagine PRIMA di sovrascrivere i campi:
+      // `p` è lo stesso riferimento Hive che stiamo per mutare in-place,
+      // quindi è l'unico momento in cui possiamo ancora leggere il valore
+      // precedente. Lo passiamo al provider così può ripulire il vecchio
+      // file locale se l'immagine è stata sostituita.
+      final previousImagePath = p.imagePath;
+
       p.nome = nomeInserito;
       p.marca = marcaInserita.isEmpty ? null : marcaInserita;
       p.quantita = quantitaNum;
@@ -191,10 +204,12 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       p.dataScadenza = _dataScadenza;
       p.imagePath = _imagePath;
 
-      pantryProvider.updateProduct(p);
+      pantryProvider.updateProduct(p, previousImagePath: previousImagePath);
     } else {
       final newProduct = Product(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        // Uuid invece di millisecondsSinceEpoch: uniforme con Location,
+        // House e ShoppingItem, elimina il rischio di collisioni di id.
+        id: const Uuid().v4(),
         nome: nomeInserito,
         marca: marcaInserita.isEmpty ? null : marcaInserita,
         quantita: quantitaNum,
@@ -418,7 +433,12 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: _categoria,
-                      items: ['Altro', 'Frutta/Verdura', 'Latticini', 'Carne/Pesce', 'Dispensa', 'Bevande', 'Surgelati'].map((c) {
+                      // Lista generata da ProductCategory (vedi
+                      // models/product_category.dart): prima era una lista
+                      // di stringhe hardcoded, duplicata identicamente in
+                      // pantry_filter_bottom_sheet.dart, con il rischio che
+                      // le due liste si disallineassero nel tempo.
+                      items: ProductCategories.labels.map((c) {
                         return DropdownMenuItem(value: c, child: Text(c));
                       }).toList(),
                       onChanged: (val) {

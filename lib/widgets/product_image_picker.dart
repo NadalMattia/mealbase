@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../services/image_storage_service.dart';
 import '../theme/app_theme.dart';
 
 /// Avatar circolare con badge fotocamera per aggiungere/cambiare la foto
@@ -73,7 +74,12 @@ class ProductImagePicker extends StatelessWidget {
       final picker = ImagePicker();
       final picked = await picker.pickImage(source: source, imageQuality: 80);
       if (picked != null) {
-        onImagePicked(picked.path);
+        // Copiamo subito il file in una cartella persistente dell'app
+        // (vedi ImageStorageService per i dettagli sul "perché") invece di
+        // tenere il path temporaneo restituito da image_picker, che su
+        // alcune piattaforme non è garantito nel tempo.
+        final persistedPath = await ImageStorageService.persistLocalImage(picked.path);
+        onImagePicked(persistedPath);
       }
     } catch (e) {
       // Permesso negato, fotocamera non disponibile, utente ha annullato
