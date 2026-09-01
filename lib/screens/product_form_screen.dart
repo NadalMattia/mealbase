@@ -1,13 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:uuid/uuid.dart';
 import '../models/product.dart';
-import '../models/shopping_item.dart';
 import '../providers/pantry_provider.dart';
-import '../providers/location_provider.dart';
 import '../providers/shopping_list_provider.dart';
+import '../providers/location_provider.dart';
 import '../theme/app_theme.dart';
-import '../utils/app_snackbar.dart';
 import '../widgets/product_image_picker.dart';
 
 class ProductFormScreen extends StatefulWidget {
@@ -29,427 +27,428 @@ class ProductFormScreen extends StatefulWidget {
 }
 
 class _ProductFormScreenState extends State<ProductFormScreen> {
-  final _formKey = GlobalKey<FormState>();
-
   late TextEditingController _nomeController;
   late TextEditingController _quantitaController;
-  String _unita = 'pz';
+
+  String? _imagePath;
   String _categoria = 'Altro';
   String _posizione = 'Dispensa';
+  String _unita = 'pz';
+  late DateTime _dataAcquisto;
   DateTime? _dataScadenza;
-  String? _imageUrl;
-
-  // Rinominato da `_unita_options` (snake_case non idiomatico in Dart) a
-  // `_unitaOptions` (lowerCamelCase, coerente con il resto del codice).
-  final List<String> _unitaOptions = ['pz', 'g', 'kg', 'l'];
-  final List<String> _categorie = ['Latticini', 'Verdura', 'Carne', 'Altro'];
-
-  bool get _isEditing => widget.existingProduct != null;
-
-  // Lista locale per i suggerimenti pescati dal carrello
-  List<ShoppingItem> _suggestions = [];
 
   @override
   void initState() {
     super.initState();
-    final p = widget.existingProduct;
 
-    _nomeController = TextEditingController(
-      text: p?.nome ?? widget.prefilledNome ?? '',
-    );
-    _quantitaController =
-        TextEditingController(text: p?.quantita.toInt().toString() ?? '1');
-
-    if (p != null) {
-      _unita = p.unita;
-      _categoria = p.categoria;
-      _posizione = p.posizione;
-      _dataScadenza = p.dataScadenza;
-      _imageUrl = p.imagePath;
-    } else if (widget.prefilledCategoria != null &&
-        _categorie.contains(widget.prefilledCategoria)) {
-      _categoria = widget.prefilledCategoria!;
-    }
-
-    _imageUrl ??= widget.prefilledImageUrl;
-
-    _nomeController.addListener(_onNameChanged);
-  }
-
-  void _onNameChanged() {
-    final query = _nomeController.text.trim().toLowerCase();
-    if (query.isEmpty || _isEditing) {
-      setState(() => _suggestions = []);
-      return;
-    }
-
-    // Pescati direttamente dal carrello (elementi inCarrello == true)
-    final shoppingProvider = context.read<ShoppingListProvider>();
-    final cartItems = shoppingProvider.giaPreso;
-
-    // Filtra gli elementi del carrello in base alle lettere digitate
-    final matches = cartItems
-        .where((item) => item.nome.toLowerCase().contains(query))
-        .toList();
-
-    setState(() {
-      _suggestions = matches;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<PantryProvider>().loadProducts();
+      }
     });
+
+    if (widget.existingProduct != null) {
+      final p = widget.existingProduct!;
+      _nomeController = TextEditingController(text: p.nome);
+      _quantitaController = TextEditingController(
+        text: p.quantita % 1 == 0 ? p.quantita.toInt().toString() : p.quantita.toString(),
+      );
+      _imagePath = p.imagePath;
+      _categoria = p.categoria.isNotEmpty ? p.categoria : 'Altro';
+      _posizione = p.posizione.isNotEmpty ? p.posizione : 'Dispensa';
+      _unita = p.unita.isNotEmpty ? p.unita : 'pz';
+      _dataAcquisto = p.dataAcquisto;
+      _dataScadenza = p.dataScadenza;
+    } else {
+      _nomeController = TextEditingController(text: widget.prefilledNome ?? '');
+      _quantitaController = TextEditingController(text: '1');
+      _imagePath = widget.prefilledImageUrl;
+      _dataAcquisto = DateTime.now();
+      if (widget.prefilledCategoria != null && widget.prefilledCategoria!.isNotEmpty) {
+        _categoria = widget.prefilledCategoria!;
+      }
+    }
   }
 
   @override
   void dispose() {
-    _nomeController.removeListener(_onNameChanged);
     _nomeController.dispose();
     _quantitaController.dispose();
     super.dispose();
   }
 
-  Future<void> _pickDate() async {
+  /// Cerca prodotti in TUTTE le fonti dell'app (Dispensa + Spesa/Carrello)
+  List<Product> _getCombinedSuggestions(BuildContext context, String query) {
+    final cleanQuery = query.trim().toLowerCase();
+    if (cleanQuery.isEmpty) return [];
+
+    final pantryProducts = context.watch<PantryProvider>().products;
+
+    List<dynamic> shoppingItems = [];
+    try {
+      final shoppingProvider = context.watch<ShoppingListProvider>();
+      shoppingItems = [...shoppingProvider.giaPreso];
+    } catch (_) {}
+
+    final Map<String, Product> uniqueMatches = {};
+
+    // 1. Cerca nella Dispensa
+    for (var p in pantryProducts) {
+      if (p.nome.toLowerCase().contains(cleanQuery)) {
+        uniqueMatches[p.nome.toLowerCase()] = p;
+      }
+    }
+
+    // 2. Cerca nella Spesa/Carrello
+    for (var item in shoppingItems) {
+      final String nomeStr = item.nome ?? '';
+      if (nomeStr.toLowerCase().contains(cleanQuery)) {
+        final key = nomeStr.toLowerCase();
+        final String? img = item.imagePath;
+
+        if (!uniqueMatches.containsKey(key)) {
+          uniqueMatches[key] = Product(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            nome: nomeStr,
+            quantita: 1.0,
+            unita: 'pz',
+            categoria: 'Altro',
+            posizione: 'Dispensa',
+            dataAcquisto: DateTime.now(),
+            imagePath: img,
+          );
+        } else if ((uniqueMatches[key]!.imagePath == null || uniqueMatches[key]!.imagePath!.isEmpty) && img != null) {
+          uniqueMatches[key]!.imagePath = img;
+        }
+      }
+    }
+
+    return uniqueMatches.values.toList();
+  }
+
+  void _onSuggestionTap(Product suggestion) {
+    setState(() {
+      _nomeController.text = suggestion.nome;
+      _imagePath = suggestion.imagePath; // Copia la foto dal carrello/dispensa
+      if (suggestion.categoria.isNotEmpty) {
+        _categoria = suggestion.categoria;
+      }
+      if (suggestion.posizione.isNotEmpty) {
+        _posizione = suggestion.posizione;
+      }
+      if (suggestion.unita.isNotEmpty) {
+        _unita = suggestion.unita;
+      }
+    });
+    FocusScope.of(context).unfocus();
+  }
+
+  void _saveProduct() {
+    final nomeInserito = _nomeController.text.trim();
+    if (nomeInserito.isEmpty) return;
+
+    final pantryProvider = context.read<PantryProvider>();
+    final quantitaNum = double.tryParse(_quantitaController.text.trim().replaceAll(',', '.')) ?? 1.0;
+
+    if (widget.existingProduct != null) {
+      final updated = Product(
+        id: widget.existingProduct!.id,
+        nome: nomeInserito,
+        quantita: quantitaNum,
+        unita: _unita,
+        categoria: _categoria,
+        posizione: _posizione,
+        dataAcquisto: _dataAcquisto,
+        dataScadenza: _dataScadenza,
+        imagePath: _imagePath,
+      );
+      pantryProvider.updateProduct(updated);
+    } else {
+      final newProduct = Product(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        nome: nomeInserito,
+        quantita: quantitaNum,
+        unita: _unita,
+        categoria: _categoria,
+        posizione: _posizione,
+        dataAcquisto: _dataAcquisto,
+        dataScadenza: _dataScadenza,
+        imagePath: _imagePath,
+      );
+      pantryProvider.addProduct(newProduct);
+
+      // FIX: Rimuove automaticamente il prodotto dal carrello della spesa se presente
+      try {
+        final shoppingProvider = context.read<ShoppingListProvider>();
+        final cartItems = shoppingProvider.giaPreso;
+        for (var item in cartItems) {
+          if (item.nome.toString().trim().toLowerCase() == nomeInserito.toLowerCase()) {
+            shoppingProvider.deleteItem(item.id);
+            break;
+          }
+        }
+      } catch (_) {}
+    }
+
+    Navigator.pop(context, true);
+  }
+
+  String _formatDate(DateTime? date) {
+    if (date == null) return '- / - / -';
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+  }
+
+  Future<void> _pickScadenza() async {
+    final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
-      initialDate: _dataScadenza ?? DateTime.now(),
-      firstDate: DateTime.now().subtract(const Duration(days: 365)),
-      lastDate: DateTime.now().add(const Duration(days: 365 * 3)),
+      initialDate: _dataScadenza ?? now,
+      firstDate: now.subtract(const Duration(days: 365)),
+      lastDate: now.add(const Duration(days: 365 * 5)),
     );
     if (picked != null) {
       setState(() => _dataScadenza = picked);
     }
   }
 
-  /// Restituisce la posizione da usare per il salvataggio: quella scelta
-  /// dall'utente se ancora valida, altrimenti la prima disponibile.
-  ///
-  /// Prima questa correzione avveniva con un `setState` chiamato dentro
-  /// `addPostFrameCallback` invocato *durante il build* del `Consumer`
-  /// sottostante: un pattern fragile (side-effect nascosto nel ciclo di
-  /// build, un frame di ritardo prima che l'interfaccia si aggiornasse).
-  /// Ora il fallback è calcolato in modo puro sia nel form sia al momento
-  /// del salvataggio, senza alcun effetto collaterale durante il build.
-  String? _effettivaPosizione(List<String> posizioniDisponibili) {
-    if (posizioniDisponibili.contains(_posizione)) return _posizione;
-    return posizioniDisponibili.isNotEmpty ? posizioniDisponibili.first : null;
-  }
-
-  void _save() {
-    if (!_formKey.currentState!.validate()) return;
-
-    final pantryProvider = context.read<PantryProvider>();
-    final shoppingProvider = context.read<ShoppingListProvider>();
-    final locationProvider = context.read<LocationProvider>();
-
-    final posizioniDisponibili = locationProvider.locations.map((l) => l.nome).toList();
-    final posizioneDaSalvare = _effettivaPosizione(posizioniDisponibili) ?? _posizione;
-
-    final insertedName = _nomeController.text.trim();
-
-    if (_isEditing) {
-      final p = widget.existingProduct!;
-      p.nome = insertedName;
-      p.quantita = double.parse(_quantitaController.text);
-      p.unita = _unita;
-      p.categoria = _categoria;
-      p.posizione = posizioneDaSalvare;
-      p.dataScadenza = _dataScadenza;
-      p.imagePath = _imageUrl;
-      pantryProvider.updateProduct(p);
-    } else {
-      // 1. Aggiunge il prodotto alla dispensa
-      final newProduct = Product(
-        id: const Uuid().v4(),
-        nome: insertedName,
-        quantita: double.parse(_quantitaController.text),
-        unita: _unita,
-        categoria: _categoria,
-        posizione: posizioneDaSalvare,
-        dataAcquisto: DateTime.now(),
-        dataScadenza: _dataScadenza,
-        imagePath: _imageUrl,
-      );
-      pantryProvider.addProduct(newProduct);
-
-      // 2. Rimuove automaticamente il prodotto dal carrello se era presente
-      final matchingCartItems = shoppingProvider.giaPreso
-          .where((item) => item.nome.toLowerCase() == insertedName.toLowerCase())
-          .toList();
-
-      for (final cartItem in matchingCartItems) {
-        shoppingProvider.deleteItem(cartItem.id);
-      }
-    }
-
-    AppSnackbar.show(
-      context,
-      message: _isEditing ? 'Prodotto modificato' : 'Prodotto inserito in dispensa',
-    );
-
-    Navigator.pop(context);
-  }
-
   @override
   Widget build(BuildContext context) {
+    final locationProvider = context.watch<LocationProvider>();
+    final isEditing = widget.existingProduct != null;
+    final suggestions = isEditing ? <Product>[] : _getCombinedSuggestions(context, _nomeController.text);
+
+    final locations = locationProvider.locations.map((l) => l.nome).toList();
+    if (!locations.contains('Dispensa')) locations.add('Dispensa');
+    if (!locations.contains(_posizione)) locations.add(_posizione);
+
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
-        leading: const SizedBox.shrink(),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.close, color: AppColors.black),
-            onPressed: () => Navigator.pop(context),
-          ),
-          const SizedBox(width: 8),
-        ],
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: const CloseButton(color: AppColors.black),
       ),
-      body: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Immagine Prodotto e Fotocamera
-              Center(
-                child: ProductImagePicker(
-                  imagePath: _imageUrl,
-                  onImagePicked: (path) => setState(() => _imageUrl = path),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Picker Foto
+            Center(
+              child: ProductImagePicker(
+                imagePath: _imagePath,
+                onImagePicked: (path) => setState(() => _imagePath = path),
+                size: 140,
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Input Nome Prodotto
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: AppColors.black, width: 1.5),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: TextField(
+                controller: _nomeController,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                decoration: const InputDecoration(
+                  hintText: 'Nome prodotto',
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                ),
+                onChanged: (_) => setState(() {}),
+              ),
+            ),
+
+            // Autocompletamento Suggerimenti
+            if (!isEditing && _nomeController.text.trim().isNotEmpty && suggestions.isNotEmpty)
+              Container(
+                margin: const EdgeInsets.only(top: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.grey50,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(color: AppColors.grey300),
+                ),
+                child: Column(
+                  children: suggestions.map((item) {
+                    return ListTile(
+                      leading: _buildThumbnail(item.imagePath),
+                      title: Text(item.nome, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      onTap: () => _onSuggestionTap(item),
+                    );
+                  }).toList(),
                 ),
               ),
-              const SizedBox(height: 40),
 
-              // Sezione Nome Prodotto con menu a cascata dai prodotti del carrello
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextFormField(
-                    controller: _nomeController,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 2.0,
-                      fontSize: 14,
-                    ),
-                    decoration: const InputDecoration(
-                      hintText: 'NOME PRODOTTO',
-                      contentPadding: EdgeInsets.symmetric(vertical: 18),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.zero,
-                        borderSide: BorderSide(color: Colors.black87, width: 1.5),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.zero,
-                        borderSide: BorderSide(color: Colors.black87, width: 1.5),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.zero,
-                        borderSide: BorderSide(color: Colors.black87, width: 2.0),
-                      ),
-                    ),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Obbligatorio' : null,
-                  ),
+            const SizedBox(height: 24),
 
-                  // Menu a cascata con i prodotti pescati dal carrello (Nome a sx, Immagine a dx)
-                  if (_suggestions.isNotEmpty)
-                    Container(
-                      margin: const EdgeInsets.only(top: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.white,
-                        border: Border.all(color: Colors.black87, width: 1),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _suggestions.length,
-                        itemBuilder: (context, index) {
-                          final item = _suggestions[index];
-                          return InkWell(
-                            onTap: () {
-                              setState(() {
-                                _nomeController.text = item.nome;
-                                _suggestions = []; // Chiude il menu a cascata
-                              });
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  // Nome a sinistra
-                                  Text(item.nome, style: AppTextStyles.cardTitle.copyWith(fontSize: 14)),
-                                  // Immagine/Icona a destra
-                                  Container(
-                                    width: 32,
-                                    height: 32,
-                                    decoration: BoxDecoration(
-                                      color: AppColors.grey100,
-                                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                                    ),
-                                    child: Icon(Icons.image, size: 16, color: AppColors.grey500),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 40),
-
-              // Scadenza
-              _buildFormRow(
-                'SCADENZA',
+            // Scadenza
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('SCADENZA', style: AppTextStyles.fieldLabel),
                 InkWell(
-                  onTap: _pickDate,
+                  onTap: _pickScadenza,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   child: Container(
-                    height: 48,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black87, width: 1),
+                      border: Border.all(color: AppColors.black, width: 1),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
-                    alignment: Alignment.center,
                     child: Text(
                       _formatDate(_dataScadenza),
-                      style: const TextStyle(fontWeight: FontWeight.w500, letterSpacing: 1.5),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
+              ],
+            ),
+            const SizedBox(height: 16),
 
-              // Quantità e Unità
-              _buildFormRow(
-                'QUANTITÀ',
+            // Quantità e Unità
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('QUANTITÀ', style: AppTextStyles.fieldLabel),
                 Row(
                   children: [
-                    Expanded(
-                      flex: 2,
-                      child: TextFormField(
+                    Container(
+                      width: 60,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppColors.black, width: 1),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                      child: TextField(
                         controller: _quantitaController,
-                        keyboardType: TextInputType.number,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         textAlign: TextAlign.center,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                         decoration: const InputDecoration(
-                          contentPadding: EdgeInsets.symmetric(vertical: 14),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.zero),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(vertical: 8),
                         ),
-                        validator: (v) => (v == null || double.tryParse(v) == null) ? '!' : null,
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Expanded(
-                      flex: 3,
-                      child: DropdownButtonFormField<String>(
-                        value: _unita,
-                        icon: const Icon(Icons.keyboard_arrow_down, size: 18),
-                        decoration: const InputDecoration(
-                          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.zero),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppColors.black, width: 1),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _unita,
+                          items: ['pz', 'g', 'kg', 'ml', 'l'].map((u) {
+                            return DropdownMenuItem(value: u, child: Text(u));
+                          }).toList(),
+                          onChanged: (val) {
+                            if (val != null) setState(() => _unita = val);
+                          },
                         ),
-                        items: _unitaOptions
-                            .map((u) => DropdownMenuItem(value: u, child: Text(u)))
-                            .toList(),
-                        onChanged: (v) => setState(() => _unita = v!),
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 24),
+              ],
+            ),
+            const SizedBox(height: 16),
 
-              // Categoria
-              _buildFormRow(
-                'CATEGORIA',
-                DropdownButtonFormField<String>(
-                  value: _categoria,
-                  icon: const Icon(Icons.keyboard_arrow_down, size: 18),
-                  decoration: const InputDecoration(
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.zero),
+            // Categoria
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('CATEGORIA', style: AppTextStyles.fieldLabel),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppColors.black, width: 1),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
-                  items: _categorie
-                      .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                      .toList(),
-                  onChanged: (v) => setState(() => _categoria = v!),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Alloca in (Posizione)
-              Consumer<LocationProvider>(
-                builder: (context, locationProvider, _) {
-                  final posizioniDisponibili =
-                      locationProvider.locations.map((l) => l.nome).toList();
-
-                  // Calcolo puro, senza setState né side-effect durante il
-                  // build: se `_posizione` non è più valida (es. la
-                  // location è stata eliminata), il dropdown mostra
-                  // semplicemente la prima disponibile finché l'utente non
-                  // ne sceglie un'altra o salva il form.
-                  final effettiva = _effettivaPosizione(posizioniDisponibili);
-
-                  return _buildFormRow(
-                    'ALLOCA IN',
-                    DropdownButtonFormField<String>(
-                      value: effettiva,
-                      icon: const Icon(Icons.keyboard_arrow_down, size: 18),
-                      decoration: const InputDecoration(
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.zero),
-                      ),
-                      items: posizioniDisponibili
-                          .map((p) => DropdownMenuItem(value: p, child: Text(p)))
-                          .toList(),
-                      onChanged: (v) {
-                        if (v != null) setState(() => _posizione = v);
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _categoria,
+                      items: ['Altro', 'Frutta/Verdura', 'Latticini', 'Carne/Pesce', 'Dispensa', 'Bevande', 'Surgelati'].map((c) {
+                        return DropdownMenuItem(value: c, child: Text(c));
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) setState(() => _categoria = val);
                       },
                     ),
-                  );
-                },
-              ),
-              const SizedBox(height: 48),
-
-              // Tasto finale Modifica/Inserisci
-              InkWell(
-                onTap: _save,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.black87, width: 2),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    _isEditing ? 'MODIFICA' : 'INSERISCI',
-                    style: AppTextStyles.primaryActionLabel,
                   ),
                 ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Posizione / Alloca In
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('ALLOCA IN', style: AppTextStyles.fieldLabel),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppColors.black, width: 1),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _posizione,
+                      items: locations.map((loc) {
+                        return DropdownMenuItem(value: loc, child: Text(loc));
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) setState(() => _posizione = val);
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+
+            // Bottone Inserisci / Salva Modifiche
+            InkWell(
+              onTap: _saveProduct,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppColors.black, width: 1.5),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  isEditing ? 'SALVA MODIFICHE' : 'INSERISCI',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 1),
+                ),
               ),
-              const SizedBox(height: 40),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildFormRow(String label, Widget inputWidget) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(label, style: AppTextStyles.fieldLabel),
-        SizedBox(width: 160, child: inputWidget),
-      ],
-    );
-  }
+  Widget _buildThumbnail(String? path) {
+    if (path == null || path.isEmpty) {
+      return Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(color: AppColors.grey200, borderRadius: BorderRadius.circular(AppRadius.md)),
+        child: Icon(Icons.image, color: AppColors.grey400, size: 20),
+      );
+    }
 
-  String _formatDate(DateTime? date) {
-    if (date == null) return '- / - / -';
-    return '${date.day.toString().padLeft(2, '0')} / ${date.month.toString().padLeft(2, '0')} / ${date.year.toString().substring(2)}';
+    final isNetwork = path.startsWith('http://') || path.startsWith('https://');
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      child: isNetwork
+          ? Image.network(path, width: 40, height: 40, fit: BoxFit.cover)
+          : Image.file(File(path), width: 40, height: 40, fit: BoxFit.cover),
+    );
   }
 }

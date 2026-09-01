@@ -8,9 +8,7 @@ class PantryProvider extends ChangeNotifier {
 
   List<Product> get products => _products;
 
-  PantryProvider() {
-    // Rimosso loadProducts() dal costruttore per caricare i dati solo dopo il tap
-  }
+  PantryProvider();
 
   Future<void> switchHouse(String houseName) async {
     await _hiveService.switchHouse(houseName);
@@ -25,6 +23,37 @@ class PantryProvider extends ChangeNotifier {
   List<Product> byPosizione(String posizione) {
     if (posizione == 'Tutto') return _products;
     return _products.where((p) => p.posizione == posizione).toList();
+  }
+
+  /// Cerca tra i prodotti esistenti e ne restituisce la lista unica
+  List<Product> searchProducts(String query) {
+    if (query.trim().isEmpty) return [];
+
+    final Map<String, Product> uniqueMatches = {};
+    for (var p in _products) {
+      if (p.nome.toLowerCase().contains(query.toLowerCase())) {
+        // Se troviamo doppioni, salviamo la versione che possiede un'immagine
+        if (!uniqueMatches.containsKey(p.nome) || (p.imagePath != null && p.imagePath!.isNotEmpty)) {
+          uniqueMatches[p.nome] = p;
+        }
+      }
+    }
+    return uniqueMatches.values.toList();
+  }
+
+  /// Recupera un prodotto per nome per estrarre immagine e categoria
+  Product? findByName(String name) {
+    try {
+      return _products.firstWhere(
+            (p) => p.nome.toLowerCase() == name.trim().toLowerCase() && p.imagePath != null && p.imagePath!.isNotEmpty,
+      );
+    } catch (_) {
+      try {
+        return _products.firstWhere((p) => p.nome.toLowerCase() == name.trim().toLowerCase());
+      } catch (_) {
+        return null;
+      }
+    }
   }
 
   Future<void> addProduct(Product product) async {
