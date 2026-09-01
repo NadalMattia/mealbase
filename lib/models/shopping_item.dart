@@ -11,17 +11,19 @@ class ShoppingItem extends HiveObject {
   String nome;
 
   @HiveField(2)
-  bool inCarrello;
+  bool preso;
 
-  // Percorso locale (foto scattata/scelta dall'utente) oppure URL remoto
-  // (immagine trovata su Open Food Facts durante la scansione barcode).
   @HiveField(3)
   String? imagePath;
+
+  @HiveField(4)
+  String? marca;
 
   ShoppingItem({
     required this.id,
     required this.nome,
-    this.inCarrello = false,
+    this.preso = false,
     this.imagePath,
+    this.marca,
   });
 }

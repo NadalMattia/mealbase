@@ -18,6 +18,7 @@ class ShoppingScannerScreen extends StatefulWidget {
 class _ShoppingScannerScreenState extends State<ShoppingScannerScreen> {
   final BarcodeService _barcodeService = BarcodeService();
   final TextEditingController _nomeController = TextEditingController();
+  final TextEditingController _marcaController = TextEditingController();
 
   bool _isLookingUp = false;
   String? _imagePath;
@@ -25,6 +26,7 @@ class _ShoppingScannerScreenState extends State<ShoppingScannerScreen> {
   @override
   void dispose() {
     _nomeController.dispose();
+    _marcaController.dispose();
     super.dispose();
   }
 
@@ -42,6 +44,9 @@ class _ShoppingScannerScreenState extends State<ShoppingScannerScreen> {
     if (result.found && result.nome != null) {
       setState(() {
         _nomeController.text = result.nome!;
+        if (result.marca != null && result.marca!.isNotEmpty) {
+          _marcaController.text = result.marca!;
+        }
         _imagePath ??= result.imageUrl;
         _isLookingUp = false;
       });
@@ -54,9 +59,17 @@ class _ShoppingScannerScreenState extends State<ShoppingScannerScreen> {
   }
 
   void _save() {
-    if (_nomeController.text.trim().isEmpty) return;
+    final nome = _nomeController.text.trim();
+    if (nome.isEmpty) return;
 
-    context.read<ShoppingListProvider>().addItem(_nomeController.text.trim(), imagePath: _imagePath);
+    final marcaText = _marcaController.text.trim();
+
+    context.read<ShoppingListProvider>().addItem(
+      nome,
+      marca: marcaText.isEmpty ? null : marcaText,
+      imagePath: _imagePath,
+    );
+
     AppSnackbar.show(context, message: 'Prodotto aggiunto alla spesa');
     Navigator.pop(context);
   }
@@ -72,11 +85,11 @@ class _ShoppingScannerScreenState extends State<ShoppingScannerScreen> {
 
   Widget _buildAddFormBottomSheet(BuildContext context) {
     return DraggableScrollableSheet(
-      initialChildSize: 0.45,
+      initialChildSize: 0.52,
       minChildSize: 0.20,
       maxChildSize: 0.85,
       snap: true,
-      snapSizes: const [0.20, 0.45, 0.85],
+      snapSizes: const [0.20, 0.52, 0.85],
       builder: (context, scrollController) {
         return Container(
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
@@ -94,45 +107,79 @@ class _ShoppingScannerScreenState extends State<ShoppingScannerScreen> {
                   decoration: BoxDecoration(color: AppColors.grey300, borderRadius: BorderRadius.circular(2)),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               Center(
                 child: ProductImagePicker(
                   imagePath: _imagePath,
                   onImagePicked: (path) => setState(() => _imagePath = path),
-                  size: 100,
+                  size: 90,
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
+
+              // Campo Nome Prodotto
               Row(
                 children: [
                   const Text('PRODOTTO', style: AppTextStyles.fieldLabel),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Container(
-                      height: 48,
+                      height: 44,
                       decoration: BoxDecoration(color: AppColors.grey50, borderRadius: BorderRadius.circular(AppRadius.xl)),
                       child: Row(
                         children: [
                           Expanded(
                             child: TextField(
                               controller: _nomeController,
-                              decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14)),
+                              decoration: const InputDecoration(
+                                hintText: 'Nome',
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              ),
                             ),
                           ),
                           if (_isLookingUp)
-                            const Padding(padding: EdgeInsets.only(right: 12), child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))),
+                            const Padding(
+                              padding: EdgeInsets.only(right: 12),
+                              child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                            ),
                         ],
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 12),
+
+              // Campo Marca
+              Row(
+                children: [
+                  const Text('MARCA', style: AppTextStyles.fieldLabel),
+                  const SizedBox(width: 38),
+                  Expanded(
+                    child: Container(
+                      height: 44,
+                      decoration: BoxDecoration(color: AppColors.grey50, borderRadius: BorderRadius.circular(AppRadius.xl)),
+                      child: TextField(
+                        controller: _marcaController,
+                        decoration: const InputDecoration(
+                          hintText: 'Marca (opzionale)',
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Tasto Aggiungi
               InkWell(
                 onTap: _save,
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   decoration: BoxDecoration(color: AppColors.black, borderRadius: BorderRadius.circular(AppRadius.pill)),
                   alignment: Alignment.center,
                   child: const Text('AGGIUNGI', style: AppTextStyles.pillButtonLabel),

@@ -33,12 +33,14 @@ class _ScannerScreenState extends State<ScannerScreen> {
     if (!mounted) return;
 
     if (result.found) {
-      final saved = await Navigator.push<bool>(
+      // Rimosso 'final saved =' non utilizzato
+      await Navigator.push<bool>(
         context,
         MaterialPageRoute(
           fullscreenDialog: true,
           builder: (_) => ProductFormScreen(
             prefilledNome: result.nome,
+            prefilledMarca: result.marca,
             prefilledCategoria: result.categoria,
             prefilledImageUrl: result.imageUrl,
           ),
@@ -53,6 +55,15 @@ class _ScannerScreenState extends State<ScannerScreen> {
       Future.delayed(const Duration(milliseconds: 2500), () {
         if (mounted) setState(() => _isProcessing = false);
       });
+    }
+  }
+
+  /// Estrae in sicurezza la marca da ShoppingItem evitando errori di compilazione
+  String? _getItemMarca(dynamic item) {
+    try {
+      return item.marca?.toString();
+    } catch (_) {
+      return null;
     }
   }
 
@@ -127,23 +138,25 @@ class _ScannerScreenState extends State<ScannerScreen> {
                   itemCount: cartItems.length,
                   itemBuilder: (context, index) {
                     final item = cartItems[index];
+                    final itemMarca = _getItemMarca(item);
+
                     return ProductCard(
                       name: item.nome,
+                      brand: itemMarca,
                       imageUrl: item.imagePath,
                       onTap: () async {
-                        // Apre il form e attende che il prodotto venga salvato
                         final saved = await Navigator.push<bool>(
                           context,
                           MaterialPageRoute(
                             fullscreenDialog: true,
                             builder: (_) => ProductFormScreen(
                               prefilledNome: item.nome,
+                              prefilledMarca: itemMarca,
                               prefilledImageUrl: item.imagePath,
                             ),
                           ),
                         );
 
-                        // Rimuove l'elemento dal carrello della spesa una volta inserito in dispensa
                         if (saved == true && context.mounted) {
                           context.read<ShoppingListProvider>().deleteItem(item.id);
                         }

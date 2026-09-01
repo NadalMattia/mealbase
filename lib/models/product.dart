@@ -14,13 +14,13 @@ class Product extends HiveObject {
   double quantita;
 
   @HiveField(3)
-  String unita; // pz, g, kg, l
+  String unita;
 
   @HiveField(4)
   String categoria;
 
   @HiveField(5)
-  String posizione; // Frigo, Dispensa, Freezer
+  String posizione;
 
   @HiveField(6)
   DateTime dataAcquisto;
@@ -30,6 +30,9 @@ class Product extends HiveObject {
 
   @HiveField(8)
   String? imagePath;
+
+  @HiveField(9)
+  String? marca;
 
   Product({
     required this.id,
@@ -41,5 +44,6 @@ class Product extends HiveObject {
     required this.dataAcquisto,
     this.dataScadenza,
     this.imagePath,
+    this.marca,
   });
 }

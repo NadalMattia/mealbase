@@ -51,89 +51,63 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     AppSnackbar.showDeleted(context, message: '$count elementi eliminati');
   }
 
-  void _showAddItemDialog() {
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Aggiungi alla spesa'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(hintText: 'Nome prodotto'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Annulla'),
-          ),
-          TextButton(
-            onPressed: () {
-              if (controller.text.trim().isNotEmpty) {
-                context.read<ShoppingListProvider>().addItem(controller.text.trim());
-              }
-              Navigator.pop(dialogContext);
-            },
-            child: const Text('Aggiungi'),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ShoppingListProvider>();
     final daAcquistare = provider.daAcquistare;
     final giaPreso = provider.giaPreso;
 
-    return Scaffold(
-      backgroundColor: AppColors.white,
-      body: Stack(
-        children: [
-          SafeArea(
-            child: CustomScrollView(
-              slivers: [
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                _buildSectionHeader('LISTA DELLA SPESA'),
-                _buildGrid(daAcquistare, provider),
+    return GestureDetector(
+      onTap: () => AppSnackbar.hide(context),
+      behavior: HitTestBehavior.translucent,
+      child: Scaffold(
+        backgroundColor: AppColors.white,
+        body: Stack(
+          children: [
+            SafeArea(
+              child: CustomScrollView(
+                slivers: [
+                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                  _buildSectionHeader('LISTA DELLA SPESA'),
+                  _buildGrid(daAcquistare, provider),
 
-                const SliverToBoxAdapter(child: SizedBox(height: 32)),
-                _buildSectionHeader('NEL CARRELLO'),
-                _buildGrid(giaPreso, provider),
+                  const SliverToBoxAdapter(child: SizedBox(height: 32)),
+                  _buildSectionHeader('NEL CARRELLO'),
+                  _buildGrid(giaPreso, provider),
 
-                const SliverToBoxAdapter(child: SizedBox(height: 120)),
-              ],
-            ),
-          ),
-
-          if (_isSelectionMode)
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: 20,
-              child: DeleteSelectionBar(
-                selectedCount: _selectedItems.length,
-                onDelete: _deleteSelected,
-                onCancel: _toggleSelectionMode,
+                  const SliverToBoxAdapter(child: SizedBox(height: 120)),
+                ],
               ),
             ),
-        ],
+
+            if (_isSelectionMode)
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: 20,
+                child: DeleteSelectionBar(
+                  selectedCount: _selectedItems.length,
+                  onDelete: _deleteSelected,
+                  onCancel: _toggleSelectionMode,
+                ),
+              ),
+          ],
+        ),
+        floatingActionButton: !_isSelectionMode
+            ? FloatingActionButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                fullscreenDialog: true,
+                builder: (_) => const ShoppingScannerScreen(),
+              ),
+            );
+          },
+          child: const Icon(Icons.add, size: 28),
+        )
+            : null,
       ),
-      floatingActionButton: !_isSelectionMode
-          ? FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              fullscreenDialog: true, // Apre con animazione dal basso
-              builder: (_) => const ShoppingScannerScreen(),
-            ),
-          );
-        },
-        child: const Icon(Icons.add, size: 28),
-      )
-          : null,
     );
   }
 
@@ -191,6 +165,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             final item = items[index];
             return ProductCard(
               name: item.nome,
+              brand: item.marca,
               imageUrl: item.imagePath,
               isSelectable: _isSelectionMode,
               isSelected: _selectedItems.contains(item.id),
@@ -198,13 +173,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 if (_isSelectionMode) {
                   _toggleItemSelection(item.id);
                 } else {
-                  // Con un tocco si sposta tra Carrello e Spesa
                   provider.toggleItem(item);
                 }
               },
               onLongPress: () {
                 if (!_isSelectionMode) {
-                  // Tenendo premuto si apre il form per modificare
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -214,9 +187,21 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                   );
                 }
               },
-              onDelete: () {
-                provider.deleteItem(item.id);
-                AppSnackbar.showDeleted(context, message: '${item.nome} eliminato');
+              onDelete: () async {
+                final itemId = item.id;
+
+                provider.hideItem(itemId);
+
+                final snackbarController = AppSnackbar.showDeleted(
+                  context,
+                  message: '${item.nome} eliminato',
+                  onUndo: () => provider.cancelDeleteItem(itemId),
+                );
+
+                final reason = await snackbarController.closed;
+                if (reason != SnackBarClosedReason.action) {
+                  provider.confirmDeleteItem(itemId);
+                }
               },
             );
           },
