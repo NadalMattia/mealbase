@@ -38,6 +38,9 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
     _currentTabs = tabs;
     _tabController?.dispose();
     _tabController = TabController(length: tabs.length, vsync: this);
+    _tabController!.addListener(() {
+      if (mounted) setState(() {});
+    });
   }
 
   bool _listEquals(List<String> a, List<String> b) {
@@ -116,29 +119,24 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
       onTap: () => AppSnackbar.hide(context),
       behavior: HitTestBehavior.translucent,
       child: Scaffold(
-        backgroundColor: AppColors.white,
+        backgroundColor: AppColors.pannaWarm,
         appBar: AppBar(
-          backgroundColor: AppColors.white,
+          backgroundColor: AppColors.pannaWarm,
           elevation: 0,
           scrolledUnderElevation: 0,
           centerTitle: false,
           titleSpacing: 16,
           title: Text(
             widget.houseName.toUpperCase(),
-            style: const TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 22,
-              letterSpacing: 0.5,
-              color: AppColors.black,
-            ),
+            style: AppTextStyles.screenTitle,
           ),
           actions: [
             IconButton(
-              icon: const Icon(Icons.people_outline, color: AppColors.black),
+              icon: const Icon(Icons.people_outline, color: AppColors.verdeBosco),
               onPressed: () => AppSnackbar.showComingSoon(context, 'Condivisione coinquilini'),
             ),
             IconButton(
-              icon: const Icon(Icons.settings_outlined, color: AppColors.black),
+              icon: const Icon(Icons.settings_outlined, color: AppColors.verdeBosco),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -165,26 +163,29 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
                           indicatorSize: TabBarIndicatorSize.tab,
                           indicator: BoxDecoration(
                             borderRadius: BorderRadius.circular(AppRadius.pill),
-                            color: AppColors.black,
+                            color: AppColors.grey300, // Colore morbido di selezione
                           ),
-                          labelColor: AppColors.white,
-                          unselectedLabelColor: AppColors.grey500,
+                          labelColor: AppColors.verdeBosco,
+                          unselectedLabelColor: AppColors.grey600,
                           labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 0.6),
                           unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                           padding: EdgeInsets.zero,
                           labelPadding: const EdgeInsets.only(right: 8),
-                          tabs: tabs.map((t) => Tab(
-                            height: 38,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(AppRadius.pill),
-                                color: AppColors.grey100.withValues(alpha: 0.6),
+                          tabs: List.generate(tabs.length, (index) {
+                            final isSelected = _tabController?.index == index;
+                            return Tab(
+                              height: 38,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                                  color: isSelected ? Colors.transparent : AppColors.grey100.withValues(alpha: 0.6),
+                                ),
+                                child: Text(tabs[index].toUpperCase()),
                               ),
-                              child: Text(t.toUpperCase()),
-                            ),
-                          )).toList(),
+                            );
+                          }),
                         ),
                       ),
                       const SizedBox(width: 6),
@@ -204,7 +205,7 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
                             shape: BoxShape.circle,
                             border: Border.all(color: AppColors.grey300, width: 0.8),
                           ),
-                          child: const Icon(Icons.add, color: AppColors.black, size: 20),
+                          child: const Icon(Icons.add, color: AppColors.verdeBosco, size: 20),
                         ),
                       ),
                     ],
@@ -229,10 +230,10 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
                             decoration: InputDecoration(
                               hintText: 'Cerca ingredienti...',
                               hintStyle: AppTextStyles.hint,
-                              prefixIcon: Icon(Icons.search, color: AppColors.grey400, size: 20),
+                              prefixIcon: const Icon(Icons.search, color: AppColors.grey400, size: 20),
                               suffixIcon: _searchQuery.isNotEmpty
                                   ? IconButton(
-                                icon: Icon(Icons.cancel, color: AppColors.grey400, size: 18),
+                                icon: const Icon(Icons.cancel, color: AppColors.grey400, size: 18),
                                 onPressed: () {
                                   _searchController.clear();
                                   setState(() => _searchQuery = '');
@@ -334,10 +335,10 @@ class _SquareButton extends StatelessWidget {
         height: 44,
         width: 44,
         decoration: BoxDecoration(
-          color: isActive ? AppColors.black : AppColors.grey50,
+          color: isActive ? AppColors.verdeBosco : AppColors.grey50,
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
-            color: isActive ? AppColors.black : AppColors.grey200,
+            color: isActive ? AppColors.verdeBosco : AppColors.grey200,
             width: 1,
           ),
         ),

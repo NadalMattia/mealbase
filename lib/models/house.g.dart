@@ -20,19 +20,22 @@ class HouseAdapter extends TypeAdapter<House> {
       id: fields[0] as String,
       nome: fields[1] as String,
       ordine: fields[2] as int,
+      imagePath: fields[3] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, House obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(4)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
       ..write(obj.nome)
       ..writeByte(2)
-      ..write(obj.ordine);
+      ..write(obj.ordine)
+      ..writeByte(3)
+      ..write(obj.imagePath);
   }
 
   @override
