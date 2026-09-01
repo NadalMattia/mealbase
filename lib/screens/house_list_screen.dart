@@ -8,6 +8,7 @@ import '../providers/pantry_provider.dart';
 import '../providers/location_provider.dart';
 import '../providers/shopping_list_provider.dart';
 import '../providers/house_provider.dart';
+import '../services/image_storage_service.dart';
 import '../theme/app_theme.dart';
 
 class HouseListScreen extends StatefulWidget {
@@ -208,8 +209,13 @@ class _AddHouseDialogState extends State<_AddHouseDialog> {
     );
 
     if (pickedFile != null) {
+      // Come per ProductImagePicker: copiamo subito il file scelto in una
+      // cartella persistente dell'app (vedi ImageStorageService) invece di
+      // tenere il path temporaneo restituito da image_picker.
+      final persistedPath = await ImageStorageService.persistLocalImage(pickedFile.path);
+      if (!mounted) return;
       setState(() {
-        _selectedImagePath = pickedFile.path;
+        _selectedImagePath = persistedPath;
       });
     }
   }

@@ -41,10 +41,17 @@ class _ShoppingItemEditScreenState extends State<ShoppingItemEditScreen> {
     final provider = context.read<ShoppingListProvider>();
     final marcaText = _marcaController.text.trim();
 
+    // Catturiamo il path dell'immagine PRIMA di sovrascrivere i campi
+    // dell'oggetto: `widget.item` è lo stesso riferimento Hive che stiamo
+    // per mutare in-place, quindi dopo le righe seguenti il vecchio valore
+    // non sarebbe più recuperabile. Passandolo al provider, questo può
+    // cancellare il vecchio file locale se l'immagine è stata sostituita.
+    final previousImagePath = widget.item.imagePath;
+
     widget.item.nome = _nomeController.text.trim();
     widget.item.marca = marcaText.isEmpty ? null : marcaText;
     widget.item.imagePath = _imagePath;
-    provider.updateItem(widget.item);
+    provider.updateItem(widget.item, previousImagePath: previousImagePath);
 
     AppSnackbar.show(context, message: 'Prodotto aggiornato');
 
