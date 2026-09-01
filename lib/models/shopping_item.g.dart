@@ -19,23 +19,26 @@ class ShoppingItemAdapter extends TypeAdapter<ShoppingItem> {
     return ShoppingItem(
       id: fields[0] as String,
       nome: fields[1] as String,
-      inCarrello: fields[2] as bool,
+      preso: fields[2] as bool,
       imagePath: fields[3] as String?,
+      marca: fields[4] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, ShoppingItem obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
       ..write(obj.nome)
       ..writeByte(2)
-      ..write(obj.inCarrello)
+      ..write(obj.preso)
       ..writeByte(3)
-      ..write(obj.imagePath);
+      ..write(obj.imagePath)
+      ..writeByte(4)
+      ..write(obj.marca);
   }
 
   @override

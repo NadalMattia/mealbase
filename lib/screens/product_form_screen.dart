@@ -11,6 +11,7 @@ import '../widgets/product_image_picker.dart';
 class ProductFormScreen extends StatefulWidget {
   final Product? existingProduct;
   final String? prefilledNome;
+  final String? prefilledMarca;
   final String? prefilledCategoria;
   final String? prefilledImageUrl;
 
@@ -18,6 +19,7 @@ class ProductFormScreen extends StatefulWidget {
     super.key,
     this.existingProduct,
     this.prefilledNome,
+    this.prefilledMarca,
     this.prefilledCategoria,
     this.prefilledImageUrl,
   });
@@ -28,6 +30,7 @@ class ProductFormScreen extends StatefulWidget {
 
 class _ProductFormScreenState extends State<ProductFormScreen> {
   late TextEditingController _nomeController;
+  late TextEditingController _marcaController;
   late TextEditingController _quantitaController;
 
   String? _imagePath;
@@ -50,6 +53,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     if (widget.existingProduct != null) {
       final p = widget.existingProduct!;
       _nomeController = TextEditingController(text: p.nome);
+      _marcaController = TextEditingController(text: p.marca ?? '');
       _quantitaController = TextEditingController(
         text: p.quantita % 1 == 0 ? p.quantita.toInt().toString() : p.quantita.toString(),
       );
@@ -61,6 +65,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       _dataScadenza = p.dataScadenza;
     } else {
       _nomeController = TextEditingController(text: widget.prefilledNome ?? '');
+      _marcaController = TextEditingController(text: widget.prefilledMarca ?? '');
       _quantitaController = TextEditingController(text: '1');
       _imagePath = widget.prefilledImageUrl;
       _dataAcquisto = DateTime.now();
@@ -73,43 +78,53 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   @override
   void dispose() {
     _nomeController.dispose();
+    _marcaController.dispose();
     _quantitaController.dispose();
     super.dispose();
   }
 
-  /// Cerca prodotti in TUTTE le fonti dell'app (Dispensa + Spesa/Carrello)
-  List<Product> _getCombinedSuggestions(BuildContext context, String query) {
+  List<Product> _getCombinedSuggestions(
+      List<Product> pantryProducts,
+      List<dynamic> shoppingItems,
+      String query,
+      ) {
     final cleanQuery = query.trim().toLowerCase();
     if (cleanQuery.isEmpty) return [];
 
-    final pantryProducts = context.watch<PantryProvider>().products;
-
-    List<dynamic> shoppingItems = [];
-    try {
-      final shoppingProvider = context.watch<ShoppingListProvider>();
-      shoppingItems = [...shoppingProvider.giaPreso];
-    } catch (_) {}
-
     final Map<String, Product> uniqueMatches = {};
 
-    // 1. Cerca nella Dispensa
     for (var p in pantryProducts) {
-      if (p.nome.toLowerCase().contains(cleanQuery)) {
-        uniqueMatches[p.nome.toLowerCase()] = p;
+      final nome = p.nome.toLowerCase();
+      final marca = p.marca?.toLowerCase() ?? '';
+      if (nome.contains(cleanQuery) || marca.contains(cleanQuery)) {
+        final key = '${nome}_$marca';
+        uniqueMatches[key] = p;
       }
     }
 
-    // 2. Cerca nella Spesa/Carrello
     for (var item in shoppingItems) {
-      final String nomeStr = item.nome ?? '';
-      if (nomeStr.toLowerCase().contains(cleanQuery)) {
-        final key = nomeStr.toLowerCase();
-        final String? img = item.imagePath;
+      if (item == null) continue;
 
+      String nomeStr = '';
+      String? marcaStr;
+      String? img;
+
+      try { nomeStr = (item.nome ?? '').toString(); } catch (_) {}
+      try { marcaStr = item.marca?.toString(); } catch (_) {}
+      try { img = item.imagePath?.toString(); } catch (_) {}
+
+      if (nomeStr.trim().isEmpty) continue;
+
+      final nomeClean = nomeStr.toLowerCase();
+      final marcaClean = (marcaStr ?? '').toLowerCase();
+
+      if (nomeClean.contains(cleanQuery) || marcaClean.contains(cleanQuery)) {
+        final key = '${nomeClean}_$marcaClean';
         if (!uniqueMatches.containsKey(key)) {
           uniqueMatches[key] = Product(
             id: DateTime.now().millisecondsSinceEpoch.toString(),
             nome: nomeStr,
+            marca: marcaStr,
             quantita: 1.0,
             unita: 'pz',
             categoria: 'Altro',
@@ -117,8 +132,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
             dataAcquisto: DateTime.now(),
             imagePath: img,
           );
-        } else if ((uniqueMatches[key]!.imagePath == null || uniqueMatches[key]!.imagePath!.isEmpty) && img != null) {
-          uniqueMatches[key]!.imagePath = img;
         }
       }
     }
@@ -129,44 +142,61 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   void _onSuggestionTap(Product suggestion) {
     setState(() {
       _nomeController.text = suggestion.nome;
-      _imagePath = suggestion.imagePath; // Copia la foto dal carrello/dispensa
-      if (suggestion.categoria.isNotEmpty) {
-        _categoria = suggestion.categoria;
-      }
-      if (suggestion.posizione.isNotEmpty) {
-        _posizione = suggestion.posizione;
-      }
-      if (suggestion.unita.isNotEmpty) {
-        _unita = suggestion.unita;
-      }
+      _marcaController.text = suggestion.marca ?? '';
+      _imagePath = suggestion.imagePath;
+      if (suggestion.categoria.isNotEmpty) _categoria = suggestion.categoria;
+      if (suggestion.posizione.isNotEmpty) _posizione = suggestion.posizione;
+      if (suggestion.unita.isNotEmpty) _unita = suggestion.unita;
     });
     FocusScope.of(context).unfocus();
+  }
+
+  Future<void> _pickScadenza() async {
+    final now = DateTime.now();
+    final tomorrow = DateTime(now.year, now.month, now.day + 1);
+
+    final initialDate = (_dataScadenza != null && _dataScadenza!.isAfter(now))
+        ? _dataScadenza!
+        : tomorrow;
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: tomorrow,
+      lastDate: now.add(const Duration(days: 365 * 5)),
+    );
+
+    if (picked != null) {
+      setState(() => _dataScadenza = picked);
+    }
   }
 
   void _saveProduct() {
     final nomeInserito = _nomeController.text.trim();
     if (nomeInserito.isEmpty) return;
 
+    final marcaInserita = _marcaController.text.trim();
     final pantryProvider = context.read<PantryProvider>();
     final quantitaNum = double.tryParse(_quantitaController.text.trim().replaceAll(',', '.')) ?? 1.0;
 
     if (widget.existingProduct != null) {
-      final updated = Product(
-        id: widget.existingProduct!.id,
-        nome: nomeInserito,
-        quantita: quantitaNum,
-        unita: _unita,
-        categoria: _categoria,
-        posizione: _posizione,
-        dataAcquisto: _dataAcquisto,
-        dataScadenza: _dataScadenza,
-        imagePath: _imagePath,
-      );
-      pantryProvider.updateProduct(updated);
+      final p = widget.existingProduct!;
+      p.nome = nomeInserito;
+      p.marca = marcaInserita.isEmpty ? null : marcaInserita;
+      p.quantita = quantitaNum;
+      p.unita = _unita;
+      p.categoria = _categoria;
+      p.posizione = _posizione;
+      p.dataAcquisto = _dataAcquisto;
+      p.dataScadenza = _dataScadenza;
+      p.imagePath = _imagePath;
+
+      pantryProvider.updateProduct(p);
     } else {
       final newProduct = Product(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         nome: nomeInserito,
+        marca: marcaInserita.isEmpty ? null : marcaInserita,
         quantita: quantitaNum,
         unita: _unita,
         categoria: _categoria,
@@ -177,7 +207,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       );
       pantryProvider.addProduct(newProduct);
 
-      // FIX: Rimuove automaticamente il prodotto dal carrello della spesa se presente
       try {
         final shoppingProvider = context.read<ShoppingListProvider>();
         final cartItems = shoppingProvider.giaPreso;
@@ -198,31 +227,28 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
 
-  Future<void> _pickScadenza() async {
-    final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _dataScadenza ?? now,
-      firstDate: now.subtract(const Duration(days: 365)),
-      lastDate: now.add(const Duration(days: 365 * 5)),
-    );
-    if (picked != null) {
-      setState(() => _dataScadenza = picked);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final locationProvider = context.watch<LocationProvider>();
+    final pantryProducts = context.watch<PantryProvider>().products;
+
+    List<dynamic> shoppingItems = [];
+    try {
+      final shoppingProvider = context.watch<ShoppingListProvider>();
+      shoppingItems = shoppingProvider.giaPreso;
+    } catch (_) {}
+
     final isEditing = widget.existingProduct != null;
-    final suggestions = isEditing ? <Product>[] : _getCombinedSuggestions(context, _nomeController.text);
+    final suggestions = isEditing
+        ? <Product>[]
+        : _getCombinedSuggestions(pantryProducts, shoppingItems, _nomeController.text);
 
     final locations = locationProvider.locations.map((l) => l.nome).toList();
     if (!locations.contains('Dispensa')) locations.add('Dispensa');
     if (!locations.contains(_posizione)) locations.add(_posizione);
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.pannaWarm,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -233,7 +259,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Picker Foto
             Center(
               child: ProductImagePicker(
                 imagePath: _imagePath,
@@ -243,7 +268,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Input Nome Prodotto
             Container(
               decoration: BoxDecoration(
                 border: Border.all(color: AppColors.black, width: 1.5),
@@ -262,7 +286,25 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
               ),
             ),
 
-            // Autocompletamento Suggerimenti
+            const SizedBox(height: 12),
+
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: AppColors.grey300, width: 1),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: TextField(
+                controller: _marcaController,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 14),
+                decoration: const InputDecoration(
+                  hintText: 'Marca (es. Barilla)',
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                ),
+              ),
+            ),
+
             if (!isEditing && _nomeController.text.trim().isNotEmpty && suggestions.isNotEmpty)
               Container(
                 margin: const EdgeInsets.only(top: 8),
@@ -273,9 +315,17 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                 ),
                 child: Column(
                   children: suggestions.map((item) {
+                    final hasMarca = item.marca != null && item.marca!.trim().isNotEmpty;
                     return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
                       leading: _buildThumbnail(item.imagePath),
-                      title: Text(item.nome, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      title: Text(item.nome, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      subtitle: hasMarca
+                          ? Text(
+                        item.marca!.toUpperCase(),
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grey500),
+                      )
+                          : null,
                       onTap: () => _onSuggestionTap(item),
                     );
                   }).toList(),
@@ -284,7 +334,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
             const SizedBox(height: 24),
 
-            // Scadenza
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -308,7 +357,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Quantità e Unità
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -357,7 +405,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Categoria
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -384,7 +431,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Posizione / Alloca In
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -411,19 +457,18 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
             ),
             const SizedBox(height: 32),
 
-            // Bottone Inserisci / Salva Modifiche
             InkWell(
               onTap: _saveProduct,
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.black, width: 1.5),
+                  color: AppColors.verdeSalvia,
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 alignment: Alignment.center,
                 child: Text(
                   isEditing ? 'SALVA MODIFICHE' : 'INSERISCI',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 1),
+                  style: const TextStyle(color: AppColors.white, fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 1),
                 ),
               ),
             ),
@@ -434,12 +479,12 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   }
 
   Widget _buildThumbnail(String? path) {
-    if (path == null || path.isEmpty) {
+    if (path == null || path.trim().isEmpty) {
       return Container(
-        width: 40,
-        height: 40,
+        width: 42,
+        height: 42,
         decoration: BoxDecoration(color: AppColors.grey200, borderRadius: BorderRadius.circular(AppRadius.md)),
-        child: Icon(Icons.image, color: AppColors.grey400, size: 20),
+        child: const Icon(Icons.image, color: AppColors.grey400, size: 22),
       );
     }
 
@@ -447,8 +492,30 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.md),
       child: isNetwork
-          ? Image.network(path, width: 40, height: 40, fit: BoxFit.cover)
-          : Image.file(File(path), width: 40, height: 40, fit: BoxFit.cover),
+          ? Image.network(
+        path,
+        width: 42,
+        height: 42,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => Container(
+          width: 42,
+          height: 42,
+          color: AppColors.grey200,
+          child: const Icon(Icons.broken_image, color: AppColors.grey400, size: 20),
+        ),
+      )
+          : Image.file(
+        File(path),
+        width: 42,
+        height: 42,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => Container(
+          width: 42,
+          height: 42,
+          color: AppColors.grey200,
+          child: const Icon(Icons.broken_image, color: AppColors.grey400, size: 20),
+        ),
+      ),
     );
   }
 }

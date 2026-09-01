@@ -17,18 +17,21 @@ class ShoppingItemEditScreen extends StatefulWidget {
 
 class _ShoppingItemEditScreenState extends State<ShoppingItemEditScreen> {
   late TextEditingController _nomeController;
+  late TextEditingController _marcaController;
   late String? _imagePath;
 
   @override
   void initState() {
     super.initState();
     _nomeController = TextEditingController(text: widget.item.nome);
+    _marcaController = TextEditingController(text: widget.item.marca ?? '');
     _imagePath = widget.item.imagePath;
   }
 
   @override
   void dispose() {
     _nomeController.dispose();
+    _marcaController.dispose();
     super.dispose();
   }
 
@@ -36,7 +39,10 @@ class _ShoppingItemEditScreenState extends State<ShoppingItemEditScreen> {
     if (_nomeController.text.trim().isEmpty) return;
 
     final provider = context.read<ShoppingListProvider>();
+    final marcaText = _marcaController.text.trim();
+
     widget.item.nome = _nomeController.text.trim();
+    widget.item.marca = marcaText.isEmpty ? null : marcaText;
     widget.item.imagePath = _imagePath;
     provider.updateItem(widget.item);
 
@@ -72,7 +78,7 @@ class _ShoppingItemEditScreenState extends State<ShoppingItemEditScreen> {
                 onImagePicked: (path) => setState(() => _imagePath = path),
               ),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 32),
             TextFormField(
               controller: _nomeController,
               textAlign: TextAlign.center,
@@ -94,7 +100,29 @@ class _ShoppingItemEditScreenState extends State<ShoppingItemEditScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 48),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _marcaController,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14),
+              decoration: const InputDecoration(
+                hintText: 'MARCA (ES. BARILLA)',
+                contentPadding: EdgeInsets.symmetric(vertical: 14),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.zero,
+                  borderSide: BorderSide(color: Colors.black38, width: 1.0),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.zero,
+                  borderSide: BorderSide(color: Colors.black38, width: 1.0),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.zero,
+                  borderSide: BorderSide(color: Colors.black87, width: 1.5),
+                ),
+              ),
+            ),
+            const SizedBox(height: 40),
             InkWell(
               onTap: _save,
               child: Container(

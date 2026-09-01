@@ -4,141 +4,162 @@ import '../theme/app_theme.dart';
 
 class ProductCard extends StatelessWidget {
   final String name;
+  final String? brand;
+  final String? imageUrl;
+  final DateTime? expirationDate;
+  final bool isShoppingCard;
+  final bool isSelectable;
+  final bool isSelected;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
   final VoidCallback? onDelete;
-  final bool isSelectable;
-  final bool isSelected;
-  final String? imageUrl;
 
   const ProductCard({
     super.key,
     required this.name,
+    this.brand,
+    this.imageUrl,
+    this.expirationDate,
+    this.isShoppingCard = false,
+    this.isSelectable = false,
+    this.isSelected = false,
     required this.onTap,
     this.onLongPress,
     this.onDelete,
-    this.isSelectable = false,
-    this.isSelected = false,
-    this.imageUrl,
   });
 
-  /// [imageUrl] può essere un URL remoto (foto Open Food Facts) o un
-  /// percorso file locale (foto scattata/scelta dall'utente): sceglie
-  /// l'`ImageProvider` giusto in base al contenuto, come fa già
-  /// `ProductImagePicker`.
-  ImageProvider? get _imageProvider {
-    if (imageUrl == null || imageUrl!.isEmpty) return null;
-    return imageUrl!.startsWith('http') ? NetworkImage(imageUrl!) : FileImage(File(imageUrl!));
+  _CardStyle _getCardStyle() {
+    if (isShoppingCard) {
+      return const _CardStyle(
+        bgColor: AppColors.statusShoppingBg,
+        borderColor: AppColors.statusShoppingBorder,
+      );
+    }
+
+    if (expirationDate == null) {
+      return const _CardStyle(
+        bgColor: AppColors.statusNoDateBg,
+        borderColor: AppColors.statusNoDateBorder,
+      );
+    }
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final expiry = DateTime(expirationDate!.year, expirationDate!.month, expirationDate!.day);
+    final daysLeft = expiry.difference(today).inDays;
+
+    if (daysLeft < 0) {
+      return const _CardStyle(
+        bgColor: AppColors.statusExpiredBg,
+        borderColor: AppColors.statusExpiredBorder,
+      );
+    } else if (daysLeft <= 3) {
+      return const _CardStyle(
+        bgColor: AppColors.statusWarningBg,
+        borderColor: AppColors.statusWarningBorder,
+      );
+    } else {
+      return const _CardStyle(
+        bgColor: AppColors.statusFreshBg,
+        borderColor: AppColors.statusFreshBorder,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 8, right: 8),
+    final cardStyle = _getCardStyle();
+
+    return GestureDetector(
+      onTap: onTap,
+      onLongPress: onLongPress,
       child: Stack(
-        clipBehavior: Clip.none,
         children: [
           Container(
             decoration: BoxDecoration(
-              color: AppColors.grey100,
+              color: AppColors.white,
               borderRadius: BorderRadius.circular(AppRadius.lg),
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-                onTap: onTap,
-                onLongPress: onLongPress, // Utilizzato per rilevare la pressione prolungata
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    CircleAvatar(
-                      radius: 28,
-                      backgroundColor: AppColors.white,
-                      backgroundImage: _imageProvider,
-                      onBackgroundImageError: _imageProvider != null ? (_, __) {} : null,
-                      child: _imageProvider == null
-                          ? Icon(Icons.image, color: Colors.black12, size: 28)
-                          : null,
-                    ),
-                    const SizedBox(height: 12),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Text(
-                        name,
-                        textAlign: TextAlign.center,
-                        style: AppTextStyles.cardTitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Center(
-                      child: Container(
-                        width: 24,
-                        height: 3,
-                        decoration: BoxDecoration(
-                          color: AppColors.grey300,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    )
-                  ],
-                ),
+              border: Border.all(
+                color: isSelected ? AppColors.black : cardStyle.borderColor,
+                width: isSelected ? 2 : 1,
               ),
             ),
-          ),
-
-          if (isSelectable)
-            Positioned(
-              top: -8,
-              right: -8,
-              child: InkWell(
-                onTap: onTap,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.lg - 1)),
+                    child: _buildImage(),
+                  ),
+                ),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppColors.black : AppColors.white,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.black12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
+                    color: cardStyle.bgColor,
+                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(AppRadius.lg - 1)),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.cardTitle,
                       ),
+                      if (brand != null && brand!.trim().isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          brand!.toUpperCase(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.grey500,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
-                  child: Icon(
-                    Icons.check,
-                    size: 14,
-                    color: isSelected ? AppColors.white : Colors.transparent,
-                  ),
+                ),
+              ],
+            ),
+          ),
+          if (isSelectable)
+            Positioned(
+              top: 4,
+              right: 4,
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.black : AppColors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.grey300),
+                ),
+                child: Icon(
+                  isSelected ? Icons.check : Icons.circle_outlined,
+                  size: 16,
+                  color: isSelected ? AppColors.white : AppColors.grey400,
                 ),
               ),
             )
           else if (onDelete != null)
             Positioned(
-              top: -8,
-              right: -8,
+              top: 4,
+              right: 4,
               child: InkWell(
                 onTap: onDelete,
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: AppColors.white,
+                    color: AppColors.white.withValues(alpha: 0.9),
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.black12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
                   ),
-                  child: Icon(Icons.close, size: 14, color: AppColors.grey500),
+                  child: const Icon(Icons.close, size: 14, color: AppColors.black),
                 ),
               ),
             ),
@@ -146,4 +167,43 @@ class ProductCard extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildImage() {
+    if (imageUrl == null || imageUrl!.trim().isEmpty) {
+      return Container(
+        color: AppColors.white.withValues(alpha: 0.5),
+        child: const Icon(Icons.image, color: AppColors.grey400, size: 32),
+      );
+    }
+
+    final isNetwork = imageUrl!.startsWith('http://') || imageUrl!.startsWith('https://');
+
+    return isNetwork
+        ? Image.network(
+      imageUrl!,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => Container(
+        color: AppColors.white.withValues(alpha: 0.5),
+        child: const Icon(Icons.broken_image, color: AppColors.grey400, size: 24),
+      ),
+    )
+        : Image.file(
+      File(imageUrl!),
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => Container(
+        color: AppColors.white.withValues(alpha: 0.5),
+        child: const Icon(Icons.broken_image, color: AppColors.grey400, size: 24),
+      ),
+    );
+  }
+}
+
+class _CardStyle {
+  final Color bgColor;
+  final Color borderColor;
+
+  const _CardStyle({
+    required this.bgColor,
+    required this.borderColor,
+  });
 }

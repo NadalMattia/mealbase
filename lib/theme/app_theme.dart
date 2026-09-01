@@ -1,35 +1,52 @@
 import 'package:flutter/material.dart';
 
-/// Palette colori dell'app. Prima d'ora ogni schermata definiva i propri
-/// `Colors.black87` / `Colors.grey.shade400` "a mano": centralizzarli qui
-/// permette di cambiare il look dell'app da un solo punto e rende evidente
-/// quali colori fanno parte del design system.
 class AppColors {
   AppColors._();
 
-  static const Color black = Colors.black;
+  // --- PALETTE PRINCIPALE "ORGANIC FRESH" ---
+  static const Color pannaWarm = Color(0xFFF9F8F6);     // Sfondo principale
+  static const Color verdeSalvia = Color(0xFF6B8E78);   // Primary / Tasti azione
+  static const Color albicoccaSoft = Color(0xFFE8A588); // Accenti
+  static const Color verdeBosco = Color(0xFF1E2B22);    // Testi, bordi e icone principali
+
+  // --- ALIAS PER COMPATIBILITÀ ---
+  static const Color black = verdeBosco;
   static const Color white = Colors.white;
-  static const Color danger = Colors.redAccent;
+  static const Color danger = Color(0xFFDC2626);
 
-  static final Color grey50 = Colors.grey.shade50;
-  static final Color grey100 = Colors.grey.shade100;
-  static final Color grey200 = Colors.grey.shade200;
-  static final Color grey300 = Colors.grey.shade300;
-  static final Color grey400 = Colors.grey.shade400;
-  static final Color grey500 = Colors.grey.shade500;
-  static final Color grey600 = Colors.grey.shade600;
+  // --- TONI DI GRIGIO WARM & DESATURATI ---
+  static const Color grey50 = Color(0xFFF3F4F1);
+  static const Color grey100 = Color(0xFFE8E8E3);
+  static const Color grey200 = Color(0xFFD6D6CF);
+  static const Color grey300 = Color(0xFFC2C2B8);
+  static const Color grey400 = Color(0xFF9E9E92);
+  static const Color grey500 = Color(0xFF7A7A70);
+  static const Color grey600 = Color(0xFF57574E);
 
-  /// Sfondo scuro usato dalle schermate fotocamera/scanner.
+  // --- UTILITY & SCANNER ---
   static const Color scannerBackground = Color(0xFF1A1A1A);
+  static const Color feedbackBackground = Color(0xFF1E2B22);
 
-  static const Color feedbackBackground = Colors.black87;
+  // --- CARD DISPENSA (STATI SCADENZA) ---
+  static const Color statusExpiredBg = Color(0xFFFEF2F2);
+  static const Color statusExpiredBorder = Color(0xFFFCA5A5);
+
+  static const Color statusWarningBg = Color(0xFFFFFBEB);
+  static const Color statusWarningBorder = Color(0xFFFDE68A);
+
+  static const Color statusFreshBg = Color(0xFFF0FDF4);
+  static const Color statusFreshBorder = Color(0xFFBBF7D0);
+
+  static const Color statusNoDateBg = Color(0xFFF4F4F2);
+  static const Color statusNoDateBorder = Color(0xFFE2E2DC);
+
+  // --- CARD SPESA ---
+  static const Color statusShoppingBg = Color(0xFFF0F9FF);
+  static const Color statusShoppingBorder = Color(0xFFBAE6FD);
 }
 
-/// Raggi di bordo standard, per non ritrovarsi valori come 12, 16, 20, 24, 32
-/// sparsi a caso nei vari file.
 class AppRadius {
   AppRadius._();
-
   static const double sm = 8;
   static const double md = 12;
   static const double lg = 16;
@@ -38,10 +55,8 @@ class AppRadius {
   static const double pill = 32;
 }
 
-/// Spaziature standard (multipli di 4, come nel resto dell'app).
 class AppSpacing {
   AppSpacing._();
-
   static const double xs = 4;
   static const double sm = 8;
   static const double md = 16;
@@ -50,35 +65,34 @@ class AppSpacing {
   static const double xxl = 40;
 }
 
-/// Stili testo riutilizzabili, estratti dai vari screen dove erano
-/// duplicati con gli stessi identici valori (bold + letterSpacing).
 class AppTextStyles {
   AppTextStyles._();
 
   static const TextStyle screenTitle = TextStyle(
-    fontWeight: FontWeight.bold,
-    fontSize: 20,
-    color: AppColors.black,
+    fontWeight: FontWeight.w900,
+    fontSize: 22,
+    letterSpacing: 0.5,
+    color: AppColors.verdeBosco,
   );
 
   static const TextStyle sectionLabel = TextStyle(
     fontWeight: FontWeight.bold,
     fontSize: 16,
     letterSpacing: 2.0,
-    color: AppColors.black,
+    color: AppColors.verdeBosco,
   );
 
   static const TextStyle fieldLabel = TextStyle(
     fontWeight: FontWeight.bold,
     letterSpacing: 1.0,
     fontSize: 12,
-    color: AppColors.black,
+    color: AppColors.verdeBosco,
   );
 
   static const TextStyle cardTitle = TextStyle(
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.bold,
     fontSize: 12,
-    color: AppColors.black,
+    color: AppColors.verdeBosco,
   );
 
   static const TextStyle pillButtonLabel = TextStyle(
@@ -92,45 +106,42 @@ class AppTextStyles {
     fontWeight: FontWeight.bold,
     letterSpacing: 2.0,
     fontSize: 16,
-    color: AppColors.black,
+    color: AppColors.verdeBosco,
   );
 
-  static TextStyle emptyState = TextStyle(color: AppColors.grey400);
-  static TextStyle hint = TextStyle(color: AppColors.grey400, fontSize: 14);
-  static TextStyle subtitle = TextStyle(color: AppColors.grey500, fontSize: 13);
+  static const TextStyle emptyState = TextStyle(color: AppColors.grey400, fontSize: 14);
+  static const TextStyle hint = TextStyle(color: AppColors.grey400, fontSize: 14);
+  static const TextStyle subtitle = TextStyle(color: AppColors.grey500, fontSize: 13);
 }
 
-/// Tema Material dell'app. Prima veniva impostato `primarySwatch: Colors.teal`
-/// in `main.dart` ma non era mai davvero utilizzato: tutte le schermate
-/// disegnavano manualmente in bianco/nero/grigio. Questo tema riflette lo
-/// stile minimale che l'app usa realmente.
 ThemeData buildAppTheme() {
   final colorScheme = ColorScheme.fromSeed(
-    seedColor: AppColors.black,
+    seedColor: AppColors.verdeSalvia,
     brightness: Brightness.light,
   ).copyWith(
-    primary: AppColors.black,
+    primary: AppColors.verdeSalvia,
     onPrimary: AppColors.white,
-    secondary: AppColors.black,
-    surface: AppColors.white,
+    secondary: AppColors.albicoccaSoft,
+    surface: AppColors.pannaWarm,
     error: AppColors.danger,
   );
 
   return ThemeData(
     useMaterial3: true,
     colorScheme: colorScheme,
-    scaffoldBackgroundColor: AppColors.white,
+    scaffoldBackgroundColor: AppColors.pannaWarm,
     appBarTheme: const AppBarTheme(
-      backgroundColor: AppColors.white,
-      foregroundColor: AppColors.black,
+      backgroundColor: AppColors.pannaWarm,
+      foregroundColor: AppColors.verdeBosco,
       elevation: 0,
+      scrolledUnderElevation: 0,
       centerTitle: false,
       titleTextStyle: AppTextStyles.screenTitle,
     ),
-    textSelectionTheme: const TextSelectionThemeData(cursorColor: AppColors.black),
-    dividerTheme: DividerThemeData(color: AppColors.grey200),
+    textSelectionTheme: const TextSelectionThemeData(cursorColor: AppColors.verdeBosco),
+    dividerTheme: const DividerThemeData(color: AppColors.grey200),
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
-      backgroundColor: AppColors.black,
+      backgroundColor: AppColors.verdeSalvia,
       foregroundColor: AppColors.white,
     ),
     snackBarTheme: SnackBarThemeData(
