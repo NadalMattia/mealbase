@@ -27,22 +27,31 @@ class AppColors {
   static const Color scannerBackground = Color(0xFF1A1A1A);
   static const Color feedbackBackground = Color(0xFF1E2B22);
 
-  // --- CARD DISPENSA (STATI SCADENZA) ---
-  static const Color statusExpiredBg = Color(0xFFFEF2F2);
-  static const Color statusExpiredBorder = Color(0xFFFCA5A5);
+  // --- CARD DISPENSA (STATI SCADENZA - MARCATI E AD ALTO CONTRASTO) ---
+  // Scaduto
+  static const Color statusExpiredBg = Color(0xFFFCA5A5);
+  static const Color statusExpiredBorder = Color(0xFFEF4444);
+  static const Color statusExpiredText = Color(0xFF7F1D1D);
 
-  static const Color statusWarningBg = Color(0xFFFFFBEB);
-  static const Color statusWarningBorder = Color(0xFFFDE68A);
+  // In scadenza (<= 3 giorni)
+  static const Color statusWarningBg = Color(0xFFFDBA74);
+  static const Color statusWarningBorder = Color(0xFFF97316);
+  static const Color statusWarningText = Color(0xFF7C2D12);
 
-  static const Color statusFreshBg = Color(0xFFF0FDF4);
-  static const Color statusFreshBorder = Color(0xFFBBF7D0);
+  // Buono stato
+  static const Color statusFreshBg = Color(0xFF86EFAC);
+  static const Color statusFreshBorder = Color(0xFF22C55E);
+  static const Color statusFreshText = Color(0xFF14532D);
 
-  static const Color statusNoDateBg = Color(0xFFF4F4F2);
-  static const Color statusNoDateBorder = Color(0xFFE2E2DC);
+  // Senza data
+  static const Color statusNoDateBg = Color(0xFFCBD5E1);
+  static const Color statusNoDateBorder = Color(0xFF64748B);
+  static const Color statusNoDateText = Color(0xFF0F172A);
 
   // --- CARD SPESA ---
-  static const Color statusShoppingBg = Color(0xFFF0F9FF);
-  static const Color statusShoppingBorder = Color(0xFFBAE6FD);
+  static const Color statusShoppingBg = Color(0xFF7DD3FC);
+  static const Color statusShoppingBorder = Color(0xFF0284C7);
+  static const Color statusShoppingText = Color(0xFF0C4A6E);
 }
 
 class AppRadius {
