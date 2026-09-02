@@ -29,6 +29,7 @@
 \usepackage{tikz}
 \usepackage[hidelinks,bookmarksnumbered=true]{hyperref}
 \usepackage[bottom]{footmisc}
+\usepackage[normalem]{ulem}
   
 % =========================================================
 % COLORI E STILI CUSTOM PER APP CARDS
@@ -370,7 +371,7 @@ Fanno volutamente eccezione i requisiti abilitanti REQ-01 (Autenticazione) e REQ
   \makebox[\textwidth][c]{%
     \includegraphics[width=1.15\textwidth]{immagini/BangVsBuck.pdf}%
   }
-  \caption{Bang vs Buck Chart dei requisiti di MealBase. La maggior parte dei requisiti ALTA si colloca nei quadranti ad alto impatto; REQ-01 e REQ-08 sono eccezioni volute (requisiti abilitanti, si veda testo); REQ-13 e REQ-14, a basso rapporto impatto/costo, confermano la priorità BASSA.}
+  \caption{Bang vs Buck Chart dei requisiti di MealBase.}
   \label{fig:bangbuck}
 \end{figure}
 
@@ -446,7 +447,7 @@ In questa sezione sono raccolte le funzionalità estese e le idee evolutive iden
 \midrule
 EXT-01 & Integrazione con Assistenti Vocali & Comandi all'applicazione tramite integrazione vocale (es. Siri / Google Assistant) per aggiungere prodotti o consultare le scadenze a mani libere. & \textcolor{blue}{\textbf{BASSA}} & Alto valore d'innovazione, ma richiede un effort tecnologico non prioritario rispetto al consolidamento delle funzionalità core (scanner, notifiche). \\ \addlinespace[0.5em]
 EXT-02 & Statistiche di Riduzione dello Spreco & Dashboard con indicatori su quantità e valore economico dei prodotti salvati dallo spreco grazie alle notifiche. & \textcolor{blue}{\textbf{BASSA}} & Funzionalità motivazionale di rinforzo, utile a lungo termine ma non necessaria per validare il valore primario dell'app all'MVP. \\ \addlinespace[0.5em]
-EXT-03 & Condivisione Social e Collaborazione & Funzionalità per condividere contenuti (es. ricette realizzate) e collaborare in tempo reale con altri utenti al di fuori del proprio nucleo familiare. & \textcolor{blue}{\textbf{BASSA}} & Funzionalità secondaria destinata ad ampliare il bacino di utenza in una fase successiva, non richiesta dalle Personas primarie individuate. \\ 
+EXT-03 & Condivisione Social e Collaborazione & Funzionalità per condividere contenuti (es. ricette realizzate) e collaborare in tempo reale con altri utenti al di fuori del proprio nucleo familiare. & \textcolor{blue}{\textbf{BASSA}} & Funzionalità secondaria destinata ad ampliare il bacino di utenza in una fase successiva, non richiesta dal target primario individuato. \\ 
 \bottomrule
 \end{tabularx}
 \caption{Estensioni di prodotto per rilasci futuri.}
@@ -455,6 +456,7 @@ EXT-03 & Condivisione Social e Collaborazione & Funzionalità per condividere co
 % =========================================================
 % SKETCHING
 % =========================================================
+\newpage
 \section{Sketching}
 \label{sec:sketching}
 
@@ -462,7 +464,6 @@ EXT-03 & Condivisione Social e Collaborazione & Funzionalità per condividere co
 La fase di \textit{Sketching} rappresenta il primo passo del processo di prototipazione a basso livello (\textit{Low-Fidelity Prototyping}). L'obiettivo principale è esplorare rapidamente le strutture di layout e la sequenza delle interazioni (\textit{Task Flow}), focalizzandosi sui requisiti ad \textbf{Priorità ALTA (Must-have)} definiti nel Requirements Brief e risolvendo i principali \textit{pain point} emersi dall'analisi dei concorrenti.
 
 In linea con le direttive del corso, gli sketch sono stati realizzati a mano libera per mantenere un elevato grado di astrazione visuale, concentrando l'attenzione sull'architettura dell'informazione e sulle dinamiche d'uso piuttosto che sui dettagli estetici.
-
 \subsection{Flusso Principale e Mappa delle Interazioni}
 \label{subsec:flusso_principale}
 La mappa concettuale completa delle schermate e dei flussi di navigazione della \textbf{soluzione di design proposta per l'applicazione} è illustrata nella Figura~\ref{fig:sketch_main}. Lo schema organizza l'esperienza d'uso attraverso una sequenza logica di 9 schermate interconnesse, che costituisce l'ossatura di riferimento per la successiva fase di wireframing.
@@ -747,7 +748,7 @@ La Competitive Assessment condotta sui tre concorrenti diretti, supportata dall'
 
 La fase di prototipazione a bassa fedeltà, dallo sketching ai wireframe, ha permesso di esplorare e confrontare soluzioni di layout alternative prima di consolidare la struttura finale, mentre la valutazione con utenti -- pur condotta su un campione ridotto e non generalizzabile statisticamente -- si è rivelata sufficiente a individuare otto problemi di usabilità ricorrenti, riconducibili in larga parte a due temi trasversali: la scarsa fiducia degli utenti meno esperti verso azioni ``automatiche'' prive di conferma esplicita (scanner, salvataggi), e l'ambiguità semantica di alcuni elementi dell'interfaccia (l'etichetta ``Carrello'', il meccanismo di eliminazione in Dispensa). Le conseguenze sul design pianificate in risposta a questi problemi confermano il valore della valutazione precoce su prototipi a basso costo, in linea con la metodologia del corso: individuare e correggere queste criticità in fase di wireframe evita di doverle affrontare -- a costo molto più alto -- a valle dello sviluppo.
 
-Il progetto ha trovato un seguito concreto oltre la fase di design: il codice sorgente dell'applicazione, sviluppata in Flutter secondo la struttura definita in questo documento, è disponibile pubblicamente sulla repository GitHub a questo \href{https://github.com/NadalMattia/mealbase/tree/master}{indirizzo}. Questo ha permesso di verificare in pratica, oltre che sulla carta, la tenuta delle scelte architetturali discusse nei capitoli precedenti -- in particolare la gestione della dispensa multi-casa e il flusso di scansione con correzione manuale -- e di raccogliere ulteriori spunti di miglioramento che confermano la direzione intrapresa fin dal System Concept Statement iniziale.
+Il progetto ha trovato un seguito concreto oltre la fase di design: il codice sorgente dell'applicazione, sviluppata in Flutter secondo la struttura definita in questo documento, è disponibile pubblicamente sulla repository GitHub a questo \href{https://github.com/NadalMattia/mealbase/tree/master}{\uline{indirizzo}}. Questo ha permesso di verificare in pratica, oltre che sulla carta, la tenuta delle scelte architetturali discusse nei capitoli precedenti -- in particolare la gestione della dispensa multi-casa e il flusso di scansione con correzione manuale -- e di raccogliere ulteriori spunti di miglioramento che confermano la direzione intrapresa fin dal System Concept Statement iniziale.
 
 È importante sottolineare che l'implementazione attuale rappresenta un MVP nel senso più stretto del termine: copre i requisiti a priorità ALTA individuati nel Requirements Brief, ma resta ampiamente migliorabile sotto molteplici aspetti, dalla robustezza tecnica (gestione più granulare degli errori di rete e dei permessi, ottimizzazione delle prestazioni su dispensa di grandi dimensioni) alla rifinitura dell'interfaccia in base alle conseguenze sul design emerse in Sezione~\ref{sec:evaluation}, non tutte ancora integrate nella versione corrente. 
 
