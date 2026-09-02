@@ -51,19 +51,22 @@ class _ScannerScreenState extends State<ScannerScreen> {
         setState(() => _isProcessing = false);
       }
     } else {
-      AppSnackbar.show(context, message: 'Prodotto non trovato', icon: Icons.info_outline);
+      // Messaggio diverso a seconda che il barcode non sia stato trovato
+      // nel database Open Food Facts (result.networkError == false) o che
+      // la ricerca sia fallita per un problema di connessione
+      // (result.networkError == true): prima i due casi mostravano lo
+      // stesso messaggio "Prodotto non trovato", fuorviante quando in
+      // realtà il problema era la rete.
+      AppSnackbar.show(
+        context,
+        message: result.networkError
+            ? 'Connessione assente: controlla la rete e riprova'
+            : 'Prodotto non trovato',
+        icon: result.networkError ? Icons.wifi_off : Icons.info_outline,
+      );
       Future.delayed(const Duration(milliseconds: 2500), () {
         if (mounted) setState(() => _isProcessing = false);
       });
-    }
-  }
-
-  /// Estrae in sicurezza la marca da ShoppingItem evitando errori di compilazione
-  String? _getItemMarca(dynamic item) {
-    try {
-      return item.marca?.toString();
-    } catch (_) {
-      return null;
     }
   }
 
@@ -138,7 +141,12 @@ class _ScannerScreenState extends State<ScannerScreen> {
                   itemCount: cartItems.length,
                   itemBuilder: (context, index) {
                     final item = cartItems[index];
-                    final itemMarca = _getItemMarca(item);
+                    // `item` è tipizzato `ShoppingItem` (viene da
+                    // `provider.giaPreso`): prima si passava per una
+                    // funzione `_getItemMarca(dynamic item)` con
+                    // try/catch "difensivo" che non serviva a nulla, dato
+                    // che il tipo è già garantito dal compilatore.
+                    final itemMarca = item.marca;
 
                     return ProductCard(
                       name: item.nome,

@@ -1,8 +1,8 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/image_storage_service.dart';
 import '../theme/app_theme.dart';
+import 'smart_image.dart';
 
 /// Avatar circolare con badge fotocamera per aggiungere/cambiare la foto
 /// di un prodotto.
@@ -28,8 +28,6 @@ class ProductImagePicker extends StatelessWidget {
     required this.onImagePicked,
     this.size = 140,
   });
-
-  bool get _isRemote => imagePath != null && imagePath!.startsWith('http');
 
   Future<void> _showPickerSheet(BuildContext context) async {
     final source = await showModalBottomSheet<ImageSource>(
@@ -140,32 +138,11 @@ class ProductImagePicker extends StatelessWidget {
   }
 
   Widget _buildImage() {
-    if (imagePath == null || imagePath!.isEmpty) {
-      return _placeholder();
-    }
-
-    if (_isRemote) {
-      return Image.network(
-        imagePath!,
-        fit: BoxFit.cover,
-        loadingBuilder: (context, child, progress) {
-          if (progress == null) return child;
-          return const Center(
-            child: SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          );
-        },
-        errorBuilder: (context, error, stackTrace) => _placeholder(),
-      );
-    }
-
-    return Image.file(
-      File(imagePath!),
+    return SmartImage(
+      path: imagePath,
       fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) => _placeholder(),
+      showNetworkLoadingIndicator: true,
+      placeholderBuilder: (_) => _placeholder(),
     );
   }
 
