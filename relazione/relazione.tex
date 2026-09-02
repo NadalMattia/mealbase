@@ -163,7 +163,7 @@ può rivelarsi un compito complesso e dispersivo. Affidarsi alla sola memoria po
 data di scadenza e conseguente spreco alimentare.
 \newline
 L'applicazione per piattaforme mobile MealBase permette all'utente di tenere traccia in modo semplice e veloce dei prodotti alimentari acquistati, 
-registrandone quantità, data di acquisto e scadenza, organizzandoli in un'unica dispensa digitale sempre aggiornata.
+registrandone quantità, data scadenza, organizzandoli in un'unica dispensa digitale sempre aggiornata.
 \newline
 Grazie a un sistema di notifiche, l'utente riceverà promemoria tempestivi sui prodotti in scadenza, riducendo gli sprechi e semplificando la pianificazione della spesa e dei pasti quotidiani.
 
@@ -337,8 +337,6 @@ Collaborazione & KitchenPal e BestBefore gestiscono bene la condivisione familia
 L'analisi delle recensioni reali evidenzia un pattern ricorrente: lo scanner barcode, pur essendo la funzionalità più attesa dagli utenti, è anche la causa principale di abbandono quando risulta inaffidabile (KitchenPal, NoWaste). Al contrario, BestBefore -- pur senza scanner nativo -- ottiene il rating medio più alto tra i concorrenti diretti, grazie a notifiche di scadenza affidabili, condivisione familiare solida e un modello di monetizzazione one-time percepito molto positivamente rispetto agli abbonamenti ricorrenti.
 \newline
 Il gap identificato riguarda quindi l'assenza, tra i concorrenti analizzati, di una soluzione che unisca uno scanner barcode realmente affidabile a un sistema di notifiche stabile e a un modello di monetizzazione non vincolato a funzionalità core. MealBase si posiziona proprio su questo gap, puntando su: (1) uno scanner barcode nativo con possibilità di correzione manuale immediata del match, (2) un sistema di notifiche verificabile dall'utente, (3) condivisione familiare della dispensa e della lista della spesa in un'unica esperienza fluida, (4) un modello di monetizzazione one-time che non comprometta le funzionalità essenziali.
-\newline
-Un ulteriore elemento da evitare, emerso dall'analisi, è la ricategorizzazione automatica e silenziosa degli articoli riscontrata in KitchenPal: MealBase manterrà sempre editabili manualmente categorie e posizioni dei prodotti.
 
 % =========================================================
 % REQUIREMENTS BRIEF
@@ -481,7 +479,7 @@ Le scelte di design e i pattern d'interazione integrati nel flusso principale co
   \item \textbf{Gestione Multi-Dispensa e Autenticazione (\texttt{REQ-01}, \texttt{REQ-09}):} L'accesso iniziale tramite la selezione del nucleo domestico (\textit{Casa 1}, \textit{Casa 2}) stabilisce il contesto di condivisione familiare della dispensa.
   \item \textbf{Dashboard Dispensa Digitale (\texttt{REQ-05}):} Vista principale organizzata con tab superiori per la selezione della posizione (\textit{Tutto}, \textit{Frigo}, \textit{Dispensa}), barra di ricerca rapida, filtri per data di scadenza e pulsante dedicato per la rimozione rapida degli elementi.
   \item \textbf{Scanner Barcode con Correzione Immediata (\texttt{REQ-02}, \texttt{REQ-03}):} La schermata di scansione inquadra il codice a barre e conduce direttamente a un form di riepilogo in cui l'utente può verificare e correggere manualmente nome, quantità, posizione e data di scadenza prima del salvataggio definitivo. Questo flusso risolve direttamente la criticità riscontrata nei competitor (es. KitchenPal), dove le modifiche non venivano memorizzate.
-  \item \textbf{Lista della Spesa e Carrello su Schermo Unico (\texttt{REQ-10}):} Layout diviso verticalmente per gestire in un'unica schermata sia l'elenco degli articoli da acquistare (\textit{Spesa}, in alto) sia quelli già prelevati (\textit{Carrello}, in basso), consentendo il passaggio immediato dei prodotti da una sezione all'altra.
+  \item \textbf{Lista della Spesa e Carrello su Schermo Unico (\texttt{REQ-10}):} Layout diviso orrizontale per gestire in un'unica schermata sia l'elenco degli articoli da acquistare (\textit{Spesa}, in alto) sia quelli già prelevati (\textit{Carrello}, in basso), consentendo il passaggio immediato dei prodotti da una sezione all'altra.
   \item \textbf{Pannello Impostazioni e Condivisione Nucleo (\texttt{REQ-09}):} Sezione dedicata alla gestione degli account associati, con funzionalità per la generazione di link di invito alla lista e disconnessione o eliminazione della casa condivisa.
   \item \textbf{Consistency nella Navigation Bar:} Utilizzo standardizzato della \textit{Bottom Navigation Bar} su tutte le schermate primarie per garantire accessibilità ergonomica con una sola mano.
 \end{itemize}
@@ -547,13 +545,13 @@ pulsante \texttt{AGGIUNGI UNA NUOVA CASA}, mentre nello sketch questa azione era
 \emph{Profilo}) viene introdotta in modo coerente fin da questa schermata, anticipando il pattern di \emph{consistency} descritto in \S\ref{subsec:flusso_principale}.
 
 Selezionata una casa, l'utente accede alla Dispensa, organizzata secondo la struttura a tab orizzontali (\emph{Tutto}, \emph{Frigo}, \emph{Dispensa})
-confermata come soluzione finale in \S\ref{subsec:motivazione_scelta}, con barra di ricerca superiore e due azioni primarie in fondo allo schermo: \texttt{INSERISCI} (inserimento manuale, REQ-04) e \texttt{SCANSIONA} (scanner barcode, REQ-02). La bottom navigation bar della Dispensa riserva inoltre fin da ora una voce dedicata alla sezione \emph{Ricette} (REQ-13): pur non essendo questa funzionalità oggetto di sviluppo nell'MVP, la voce viene mantenuta in interfaccia per garantire continuità visiva in caso di rilascio futuro della funzionalità.
+confermata come soluzione finale in \S\ref{subsec:motivazione_scelta}, con barra di ricerca superiore e due azioni primarie in fondo allo schermo: \texttt{INSERISCI} (inserimento manuale, REQ-04) e \texttt{SCANSIONA} (scanner barcode, REQ-02). La bottom navigation bar della Dispensa riserva inoltre fin da ora una voce dedicata alla sezione \emph{Ricette} (REQ-13): pur non essendo questa funzionalità oggetto di sviluppo, la voce viene mantenuta in interfaccia per garantire continuità visiva in caso di rilascio futuro della funzionalità.
 
 \subsection{Scanner barcode e correzione del match}
 
 Il flusso di scansione rappresenta l'evoluzione più significativa rispetto allo sketch di Figura~\ref{fig:sketch_main}. Nello sketch, il suggerimento di elementi dal
 carrello era indicato solo come nota testuale (``consiglia elementi del carrello per costruzione parola''); nel wireframe questa idea è stata
-tradotta in una schermata intermedia esplicita, in cui un pannello a comparsa (\emph{Carrello}) propone tre prodotti suggeriti prima di
+tradotta in una schermata intermedia esplicita, in cui un pannello a comparsa (\emph{Carrello}) propone i prodotti "acquistati" prima di
 procedere al form di riepilogo. Tale form consente sempre la correzione manuale di nome, scadenza, quantità, categoria e posizione del prodotto
 riconosciuto, in linea con REQ-03: questo garantisce che l'esito della scansione non sia mai definitivo senza un passaggio di verifica da parte
 dell'utente, risolvendo così la criticità osservata in KitchenPal, dove le correzioni post-scansione non venivano salvate (\S\ref{subsec:concorrenti_diretti}).
@@ -719,8 +717,6 @@ P8 & Etichetta ``Carrello'' richiama il carrello fisico, generando confusione se
 \label{tab:eval_issues}
 \end{table}
 
-Il problema \textbf{P4} risulta il più trasversale, essendo segnalato da più utenti con profili diversi (uno fuori target e uno target scettico), e va considerato prioritario in fase di revisione insieme a \textbf{P5}, fondamentale per rassicurare gli utenti esperti sulla corretta registrazione dei dati.
-
 \subsection{Conseguenze sul design}
 \label{subsec:eval_conseguenze}
 Sulla base dei problemi aggregati in Tabella~\ref{tab:eval_issues}, sono state pianificate le seguenti modifiche ai wireframe:
@@ -729,7 +725,7 @@ Sulla base dei problemi aggregati in Tabella~\ref{tab:eval_issues}, sono state p
     \item \textbf{[P1]} Aggiunta di un'icona esplicita (matita/fotocamera) sovrapposta all'immagine placeholder nella schermata Prodotto, per segnalarne l'editabilità.
     \item \textbf{[P2]} Affiancamento di un selettore di unità di misura (pz/g/kg/l) al campo Quantità, per rimuovere l'ambiguità rilevata.
     \item \textbf{[P3]} Sostituzione del flusso a due passaggi (cestino generale $\rightarrow$ ``x'' sul prodotto) con un'icona di eliminazione diretta su ciascuna card prodotto, allineando il pattern a quello già validato in Spesa, senza però rimuovere la modalità ``cestino'' come opzione per eliminazioni multiple rapide.
-    \item \textbf{[P4]/[P8]} Ridisegno delle due zone della schermata Spesa: sostituzione dell'etichetta ``Carrello'' con una meno ambigua (es. ``Già preso''), con intestazioni di sezione più marcate e colore di sfondo differenziato tra le due zone.
+    \item \textbf{[P4]/[P8]} Ridisegno delle due zone della schermata Spesa: sostituzione dell'etichetta ``Carrello'' con una meno ambigua.
     \item \textbf{[P5]} Introduzione di un feedback di conferma esplicito (messaggio o micro-animazione) dopo ogni azione di salvataggio/modifica, sia nel form prodotto sia nelle altre schermate con azioni distruttive o di modifica.
     \item \textbf{[P6]} Aggiunta di un micro-testo informativo al primo utilizzo della modifica manuale (``Le modifiche non vengono mai sovrascritte automaticamente''), per rassicurare gli utenti con esperienza pregressa negativa su app concorrenti.
     \item \textbf{[P7]} Valutazione di un passaggio di conferma esplicito dopo la scansione barcode, prima del salvataggio definitivo, per aumentare la fiducia degli utenti meno inclini a fidarsi di dati ``automatici''.
