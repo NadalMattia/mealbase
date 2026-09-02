@@ -63,12 +63,13 @@ class ShoppingListProvider extends ChangeNotifier {
   /// `DateTime.now().millisecondsSinceEpoch`, per uniformità con `Location`
   /// (che già usava `uuid`) e per eliminare il rischio, seppur remoto, di
   /// collisioni tra id generati nello stesso millisecondo.
-  Future<void> addItem(String nome, {String? marca, String? imagePath}) async {
+  Future<void> addItem(String nome, {String? marca, String? imagePath, int quantita = 1}) async {
     final newItem = ShoppingItem(
       id: const Uuid().v4(),
       nome: nome,
       marca: marca,
       imagePath: imagePath,
+      quantita: quantita,
       preso: false,
     );
 

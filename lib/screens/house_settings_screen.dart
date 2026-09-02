@@ -10,7 +10,7 @@ class HouseSettingsScreen extends StatelessWidget {
       appBarTitle: 'Impostazioni Casa',
       icon: Icons.settings,
       title: 'Funzionalità in arrivo',
-      message: 'Gestione account condivisi e link di invito (REQ-09) '
+      message: 'Gestione account condivisi e link di invito'
           'saranno disponibili in una prossima versione.',
     );
   }

@@ -19,7 +19,15 @@ class _ShoppingScannerScreenState extends State<ShoppingScannerScreen> {
   final BarcodeService _barcodeService = BarcodeService();
   final TextEditingController _nomeController = TextEditingController();
   final TextEditingController _marcaController = TextEditingController();
-  fianl TextEditingController _quantitaController = TextEditingController();
+  // FIX: prima il controller partiva con testo REALE '1' (non un
+  // placeholder), identico all'hintText '1' del campo qui sotto. Cancellando
+  // la cifra digitata, il campo tornava vuoto ma l'hintText mostrava lo
+  // stesso identico "1" al suo posto: sembrava che la cancellazione non
+  // avesse avuto alcun effetto. Ora il controller parte vuoto e "1" si vede
+  // solo come vero placeholder grigio quando il campo è vuoto; il fallback
+  // a 1 se l'utente non scrive nulla resta gestito dal parsing in _save()
+  // (`int.tryParse(quantitaText) ?? 1`).
+  final TextEditingController _quantitaController = TextEditingController();
 
   bool _isLookingUp = false;
   String? _imagePath;
@@ -28,6 +36,7 @@ class _ShoppingScannerScreenState extends State<ShoppingScannerScreen> {
   void dispose() {
     _nomeController.dispose();
     _marcaController.dispose();
+    _quantitaController.dispose();
     super.dispose();
   }
 
@@ -52,8 +61,6 @@ class _ShoppingScannerScreenState extends State<ShoppingScannerScreen> {
         _isLookingUp = false;
       });
     } else {
-      // Vedi commento analogo in scanner_screen.dart: distinguiamo un
-      // errore di rete da un genuino "non trovato" nel database.
       AppSnackbar.show(
         context,
         message: result.networkError
@@ -72,11 +79,14 @@ class _ShoppingScannerScreenState extends State<ShoppingScannerScreen> {
     if (nome.isEmpty) return;
 
     final marcaText = _marcaController.text.trim();
+    final quantitaText = _quantitaController.text.trim();
+    final quantita = int.tryParse(quantitaText) ?? 1;
 
     context.read<ShoppingListProvider>().addItem(
       nome,
       marca: marcaText.isEmpty ? null : marcaText,
       imagePath: _imagePath,
+      quantita: quantita,
     );
 
     AppSnackbar.show(context, message: 'Prodotto aggiunto alla spesa');
@@ -181,7 +191,7 @@ class _ShoppingScannerScreenState extends State<ShoppingScannerScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 12),
 
               // Campo Quantità
               Row(
@@ -197,7 +207,11 @@ class _ShoppingScannerScreenState extends State<ShoppingScannerScreen> {
                       ),
                       child: TextField(
                         controller: _quantitaController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        // Vedi commento analogo in product_form_screen.dart:
+                        // il parsing qui sotto è `int.tryParse`, quindi la
+                        // tastiera non deve invitare a scrivere decimali
+                        // che verrebbero comunque scartati in silenzio.
+                        keyboardType: TextInputType.number,
                         decoration: const InputDecoration(
                           hintText: '1',
                           border: InputBorder.none,

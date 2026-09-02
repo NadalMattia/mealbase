@@ -131,18 +131,31 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
             style: AppTextStyles.screenTitle,
           ),
           actions: [
-            IconButton(
-              icon: const Icon(Icons.people_outline, color: AppColors.verdeBosco),
-              onPressed: () => AppSnackbar.showComingSoon(context, 'Condivisione coinquilini'),
-            ),
-            IconButton(
-              icon: const Icon(Icons.settings_outlined, color: AppColors.verdeBosco),
-              onPressed: () {
+            // Un unico bottone (un solo tap target) che mostra entrambe
+            // le icone affiancate, invece di due IconButton separati:
+            // toccando una qualsiasi delle due icone si va comunque alla
+            // stessa schermata HouseSettingsScreen, che è già pensata per
+            // includere in futuro sia la gestione condivisione/inviti
+            // (icona "persone") sia le altre impostazioni della casa
+            // (icona "ingranaggio").
+            InkWell(
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const HouseSettingsScreen()),
                 );
               },
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Row(
+                  children: [
+                    Icon(Icons.people_outline, color: AppColors.verdeBosco),
+                    SizedBox(width: 12),
+                    Icon(Icons.settings_outlined, color: AppColors.verdeBosco),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(width: 8),
           ],
@@ -160,11 +173,29 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
                           isScrollable: true,
                           tabAlignment: TabAlignment.start,
                           dividerColor: Colors.transparent,
+                          // FIX: prima il TabBar disegnava un proprio
+                          // "indicator" (il box grigio di selezione),
+                          // dimensionato su tutta l'area del Tab
+                          // (`indicatorSize.tab`, che include anche
+                          // `labelPadding`). Il `Container` interno di
+                          // ogni Tab, invece, aveva la sua decorazione
+                          // separata (con padding orizzontale 16) e
+                          // diventava trasparente da selezionato per
+                          // "lasciar vedere" l'indicator sotto. I due box
+                          // avevano dimensioni leggermente diverse (il
+                          // `labelPadding: only(right: 8)` allargava
+                          // l'indicator 8px in più a destra rispetto al
+                          // Container interno), quindi il testo appariva
+                          // spostato a sinistra rispetto al pill grigio
+                          // quando il tab era selezionato.
+                          //
+                          // Ora l'indicator è completamente trasparente:
+                          // è sempre e solo il Container interno di ogni
+                          // Tab (identico nei due stati, cambia solo il
+                          // colore) a disegnare lo sfondo, quindi il testo
+                          // resta sempre centrato nello stesso identico box.
                           indicatorSize: TabBarIndicatorSize.tab,
-                          indicator: BoxDecoration(
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                            color: AppColors.grey300, // Colore morbido di selezione
-                          ),
+                          indicator: const BoxDecoration(),
                           labelColor: AppColors.verdeBosco,
                           unselectedLabelColor: AppColors.grey600,
                           labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 0.6),
@@ -180,7 +211,7 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
                                 alignment: Alignment.center,
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(AppRadius.pill),
-                                  color: isSelected ? Colors.transparent : AppColors.grey100.withValues(alpha: 0.6),
+                                  color: isSelected ? AppColors.grey300 : AppColors.grey100.withValues(alpha: 0.6),
                                 ),
                                 child: Text(tabs[index].toUpperCase()),
                               ),

@@ -11,7 +11,7 @@ class Product extends HiveObject {
   String nome;
 
   @HiveField(2)
-  double quantita;
+  int quantita;
 
   @HiveField(3)
   String unita;

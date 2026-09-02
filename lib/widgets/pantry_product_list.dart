@@ -93,6 +93,7 @@ class PantryProductList extends StatelessWidget {
           brand: p.marca,
           imageUrl: p.imagePath,
           expirationDate: p.dataScadenza,
+          quantity: p.quantita,
           isSelectable: isSelectionMode,
           isSelected: selectedProducts.contains(p.id),
           onTap: () {

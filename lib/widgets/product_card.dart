@@ -7,6 +7,7 @@ class ProductCard extends StatelessWidget {
   final String? brand;
   final String? imageUrl;
   final DateTime? expirationDate;
+  final int? quantity;
   final bool isShoppingCard;
   final bool isSelectable;
   final bool isSelected;
@@ -20,6 +21,7 @@ class ProductCard extends StatelessWidget {
     this.brand,
     this.imageUrl,
     this.expirationDate,
+    this.quantity,
     this.isShoppingCard = false,
     this.isSelectable = false,
     this.isSelected = false,
@@ -129,6 +131,38 @@ class ProductCard extends StatelessWidget {
               ],
             ),
           ),
+          // FIX: il badge "xN" della quantità DEVE essere figlio diretto
+          // dello Stack esterno. Prima era annidato dentro due Column
+          // (quello dell'immagine+info, e quello del testo nome/marca):
+          // Positioned funziona solo se il suo genitore immediato è uno
+          // Stack, quindi in quella posizione Flutter lanciava un errore
+          // di layout ("Incorrect use of ParentDataWidget") ogni volta
+          // che un prodotto aveva quantity > 1 — la card si rompeva del
+          // tutto (il rettangolo grigio senza contenuto negli screenshot),
+          // mostrando solo il pulsante di chiusura, che essendo un altro
+          // Positioned diretto dello Stack continuava a renderizzare
+          // correttamente.
+          if (quantity != null && quantity! > 1)
+            Positioned(
+              bottom: 46,
+              right: 8,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.black.withOpacity(0.85),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  border: Border.all(color: AppColors.white, width: 1),
+                ),
+                child: Text(
+                  'x$quantity',
+                  style: const TextStyle(
+                    color: AppColors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
           if (isSelectable)
             Positioned(
               top: 4,
