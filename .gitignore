@@ -88,3 +88,20 @@ app.*.map.json
 # Cache pacchetti
 /_minted-*/
 *.pdfsync
+
+# ==========================================
+# venv - Ambiente Virtuale Python
+# ==========================================
+# Ambiente Virtuale
+venv/
+.venv/
+env/
+
+# Cache di Python
+__pycache__/
+*.pyc
+
+# File temporanei degli IDE/Editor
+.vscode/
+.idea/
+.DS_Store
