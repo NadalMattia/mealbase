@@ -8,6 +8,9 @@ import '../widgets/pill_action_bar.dart';
 import '../widgets/product_card.dart';
 import 'shopping_item_edit_screen.dart';
 import 'shopping_scanner_screen.dart';
+import '../services/onboarding_service.dart';
+import '../widgets/shopping_empty_state.dart';
+import '../widgets/cart_tip_banner.dart';
 
 class ShoppingListScreen extends StatefulWidget {
   const ShoppingListScreen({super.key});
@@ -19,6 +22,15 @@ class ShoppingListScreen extends StatefulWidget {
 class _ShoppingListScreenState extends State<ShoppingListScreen> {
   bool _isSelectionMode = false;
   final Set<String> _selectedItems = {};
+
+  // Tip "tocca per spostare nel carrello", mostrato una sola volta
+  // nella vita dell'app (stesso pattern del tip scanner in dispensa).
+  bool _showCartTip = !OnboardingService.hasSeenCartTip;
+
+  void _dismissCartTip() {
+    setState(() => _showCartTip = false);
+    OnboardingService.markCartTipSeen();
+  }
 
   void _toggleSelectionMode() {
     setState(() {
@@ -56,6 +68,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     final provider = context.watch<ShoppingListProvider>();
     final daAcquistare = provider.daAcquistare;
     final giaPreso = provider.giaPreso;
+    final isWhollyEmpty = provider.items.isEmpty;
 
     return GestureDetector(
       onTap: () => AppSnackbar.hide(context),
@@ -68,12 +81,18 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               child: CustomScrollView(
                 slivers: [
                   const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                  _buildSectionHeader('LISTA DELLA SPESA'),
-                  _buildGrid(daAcquistare, provider),
+                  if (isWhollyEmpty) ...[
+                    const SliverToBoxAdapter(child: ShoppingEmptyState()),
+                  ] else ...[
+                    _buildSectionHeader('LISTA DELLA SPESA'),
+                    if (_showCartTip && daAcquistare.isNotEmpty)
+                      SliverToBoxAdapter(child: CartTipBanner(onDismiss: _dismissCartTip)),
+                    _buildGrid(daAcquistare, provider),
 
-                  const SliverToBoxAdapter(child: SizedBox(height: 32)),
-                  _buildSectionHeader('NEL CARRELLO'),
-                  _buildGrid(giaPreso, provider),
+                    const SliverToBoxAdapter(child: SizedBox(height: 32)),
+                    _buildSectionHeader('NEL CARRELLO'),
+                    _buildGrid(giaPreso, provider),
+                  ],
 
                   const SliverToBoxAdapter(child: SizedBox(height: 120)),
                 ],

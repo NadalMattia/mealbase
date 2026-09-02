@@ -7,6 +7,7 @@ import '../screens/product_form_screen.dart';
 import '../theme/app_theme.dart';
 import '../utils/app_snackbar.dart';
 import 'product_card.dart';
+import 'pantry_empty_state.dart';
 
 class PantryProductList extends StatelessWidget {
   final String posizione;
@@ -68,6 +69,14 @@ class PantryProductList extends StatelessWidget {
     });
 
     if (products.isEmpty) {
+      final isTrulyEmpty = provider.products.isEmpty &&
+          searchQuery.trim().isEmpty &&
+          (selectedCategory == null || selectedCategory == 'Tutte');
+
+      if (isTrulyEmpty) {
+        return const PantryEmptyState();
+      }
+
       return Center(
         child: Text(
           searchQuery.isEmpty && selectedCategory == null ? 'Nessun prodotto qui' : 'Nessun risultato trovato',

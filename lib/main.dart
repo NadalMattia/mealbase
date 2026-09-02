@@ -13,6 +13,7 @@ import 'services/location_service.dart';
 import 'services/shopping_list_service.dart';
 import 'services/house_service.dart';
 import 'services/notification_service.dart';
+import 'services/onboarding_service.dart';
 import 'screens/home_screen.dart';
 import 'theme/app_theme.dart';
 
@@ -41,6 +42,9 @@ void main() async {
 
   // Apre il box delle case
   await HouseService.openBox();
+
+  // Apre il box dei flag di onboarding (es. "tip scanner già visto")
+  await OnboardingService.openBox();
 
   runApp(const MyApp());
 }

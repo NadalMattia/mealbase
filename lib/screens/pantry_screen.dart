@@ -12,6 +12,8 @@ import 'scanner_screen.dart';
 import 'product_form_screen.dart';
 import 'manage_locations_screen.dart';
 import 'house_settings_screen.dart';
+import '../services/onboarding_service.dart';
+import '../widgets/scan_tip_bubble.dart';
 
 class PantryScreen extends StatefulWidget {
   final String houseName;
@@ -32,6 +34,13 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
 
   bool _isSelectionMode = false;
   final Set<String> _selectedProducts = {};
+
+  bool _showScanTip = !OnboardingService.hasSeenScanTip;
+
+  void _dismissScanTip() {
+    setState(() => _showScanTip = false);
+    OnboardingService.markScanTipSeen();
+  }
 
   void _rebuildTabController(List<String> tabs) {
     if (_tabController != null && _listEquals(_currentTabs, tabs)) return;
@@ -115,6 +124,8 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
 
     final isFilterActive = _selectedCategory != null || _selectedSort != PantrySortOption.insertionDesc;
 
+    final pantryIsEmpty = context.watch<PantryProvider>().products.isEmpty;
+
     return GestureDetector(
       onTap: () => AppSnackbar.hide(context),
       behavior: HitTestBehavior.translucent,
@@ -131,13 +142,6 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
             style: AppTextStyles.screenTitle,
           ),
           actions: [
-            // Un unico bottone (un solo tap target) che mostra entrambe
-            // le icone affiancate, invece di due IconButton separati:
-            // toccando una qualsiasi delle due icone si va comunque alla
-            // stessa schermata HouseSettingsScreen, che è già pensata per
-            // includere in futuro sia la gestione condivisione/inviti
-            // (icona "persone") sia le altre impostazioni della casa
-            // (icona "ingranaggio").
             InkWell(
               borderRadius: BorderRadius.circular(AppRadius.pill),
               onTap: () {
@@ -342,6 +346,12 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
                 ],
               ),
             ),
+            if (_showScanTip && !_isSelectionMode && !pantryIsEmpty)
+              Positioned(
+                right: 16,
+                bottom: 84, // 20 (margine barra) + 56 (altezza barra) + 8 (respiro)
+                child: ScanTipBubble(onDismiss: _dismissScanTip),
+              ),
           ],
         ),
       ),
