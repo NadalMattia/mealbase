@@ -3,17 +3,7 @@ import 'dart:io';
 import 'package:openfoodfacts/openfoodfacts.dart';
 import '../models/product_category.dart';
 
-/// Esito della ricerca di un barcode su Open Food Facts.
-///
-/// PRIMA: `BarcodeService.lookup` catturava ogni eccezione allo stesso
-/// modo (`catch (_) {}`) e ritornava sempre `found: false`. Dal punto di
-/// vista dell'utente, "il prodotto non è nel database di Open Food
-/// Facts" e "non c'è connessione a internet" producevano lo stesso
-/// messaggio ("Prodotto non trovato"), che è fuorviante nel secondo caso:
-/// l'utente potrebbe pensare che il prodotto vada inserito manualmente,
-/// quando in realtà basterebbe riprovare con la connessione attiva.
-///
-/// ORA: [networkError] permette a chi chiama questo servizio (gli screen
+/// [networkError] permette a chi chiama questo servizio (gli screen
 /// dello scanner) di distinguere i due casi e mostrare un messaggio
 /// appropriato.
 class BarcodeLookupResult {

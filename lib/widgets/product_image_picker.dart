@@ -4,15 +4,7 @@ import '../services/image_storage_service.dart';
 import '../theme/app_theme.dart';
 import 'smart_image.dart';
 
-/// Avatar circolare con badge fotocamera per aggiungere/cambiare la foto
-/// di un prodotto.
-///
-/// Prima questo bottone era solo scenografico in tre punti diversi
-/// (`product_form_screen`, `shopping_scanner_screen`,
-/// `shopping_item_edit_screen`): un tap mostrava uno snackbar "in arrivo" e
-/// basta. Ora apre davvero la fotocamera o la libreria foto tramite
-/// `image_picker` e restituisce il percorso del file scelto.
-///
+
 /// [imagePath] accetta sia un percorso file locale (foto scattata/scelta
 /// dall'utente) sia un URL remoto (foto trovata su Open Food Facts durante
 /// la scansione barcode): il widget capisce da solo quale dei due

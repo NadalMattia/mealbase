@@ -1,13 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
-/// Schermata placeholder per funzionalità non ancora implementate.
-///
-/// Prima house_settings_screen.dart e recipes_screen.dart duplicavano lo
-/// stesso identico layout (icona + titolo + descrizione, con l'AppBar
-/// Material di default) usando uno stile visivamente diverso dal resto
-/// dell'app. Ora è un solo widget, riallineato al design system
-/// bianco/nero/minimale usato altrove.
 class ComingSoonScreen extends StatelessWidget {
   final String appBarTitle;
   final IconData icon;

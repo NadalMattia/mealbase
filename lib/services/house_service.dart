@@ -16,20 +16,6 @@ class HouseService {
     }
   }
 
-  /// Recupera tutte le case salvate, ordinate per posizione.
-  ///
-  /// Un utente nuovo (box vuoto al primo avvio) parte senza nessuna casa
-  /// preimpostata: vedrà semplicemente la schermata "Le tue case" vuota,
-  /// con il pulsante "Aggiungi una nuova casa" — che `house_list_screen.dart`
-  /// gestisce già correttamente per una lista vuota, senza bisogno di
-  /// nessuna modifica lì.
-  ///
-  /// PRIMA: se il box era vuoto veniva creata automaticamente una casa
-  /// di default chiamata "Casa 1". Comodo per continuare a sviluppare
-  /// senza dover creare una casa ad ogni test, ma un'esperienza poco
-  /// pulita per un utente reale che installa l'app per la prima volta:
-  /// si ritrovava una casa già presente con un nome generico invece di
-  /// una schermata di benvenuto pulita.
   List<House> getAllHouses() {
     final box = Hive.box<House>(_boxName);
     final houses = box.values.toList();

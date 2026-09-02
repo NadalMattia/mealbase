@@ -10,23 +10,11 @@ class NotificationService {
 
   final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
 
-  /// Inizializza il plugin di notifiche locali e richiede i permessi
-  /// necessari.
-  ///
-  /// FIX: chiamato da `main.dart` con `await NotificationService().init()`
-  /// PRIMA di `runApp()`. Questo significa che qualsiasi eccezione non
-  /// gestita qui dentro (come è appena successo con l'icona
-  /// `@mipmap/ic_launcher` non più esistente) impedisce all'intera app di
-  /// avviarsi — anche se il problema riguarda solo una funzionalità
-  /// secondaria come i promemoria di scadenza. L'app resta bloccata sulla
-  /// schermata di apertura, o si chiude, senza che l'utente abbia modo di
-  /// capire cosa sia successo.
-  ///
-  /// Ora tutta l'inizializzazione è avvolta in un try/catch: un problema
+  /// Tutta l'inizializzazione è avvolta in un try/catch: un problema
   /// con le notifiche (icona mancante, plugin non disponibile, permesso
   /// negato in modo anomalo, ecc.) può al massimo far sì che i
-  /// promemoria di scadenza non funzionino, ma non deve MAI più poter
-  /// impedire l'avvio dell'app.
+  /// promemoria di scadenza non funzionino
+
   Future<void> init() async {
     try {
       tz.initializeTimeZones();
@@ -63,44 +51,8 @@ class NotificationService {
     }
   }
 
-  /// Converte l'id (stringa) di un prodotto nell'id numerico richiesto
-  /// dal plugin di notifiche.
-  ///
-  /// PRIMA: si usava direttamente `id.hashCode`. Su Dart nativo
-  /// `String.hashCode` può restituire un intero a 64 bit, mentre
-  /// l'implementazione Android delle notifiche si aspetta un intero a 32
-  /// bit con segno: un valore troppo grande rischia di essere troncato in
-  /// modo diverso da qui a lì, aumentando il rischio (comunque basso, ma
-  /// non nullo) che due prodotti diversi finiscano per condividere lo
-  /// stesso id di notifica e si sovrascrivano a vicenda.
-  ///
-  /// ORA: mascheriamo esplicitamente il risultato a 31 bit (sempre
-  /// positivo, sempre nel range di un int32 con segno), così il valore
-  /// usato qui è esattamente quello che verrà interpretato dal plugin,
-  /// senza troncamenti impliciti.
   int _notificationIdFor(String productId) => productId.hashCode & 0x7FFFFFFF;
 
-  /// Programma una notifica il giorno prima della scadenza di un prodotto.
-  ///
-  /// FIX: prima veniva usato `AndroidScheduleMode.exactAllowWhileIdle`,
-  /// che su Android 12+ richiede il permesso speciale
-  /// `SCHEDULE_EXACT_ALARM` (o `USE_EXACT_ALARM`), NON dichiarato nel
-  /// manifest dell'app. Senza quel permesso, il plugin lancia
-  /// un'eccezione (`PlatformException: exact_alarms_not_permitted`) che
-  /// non veniva intercettata da nessuna parte: risaliva fino a
-  /// `_saveProduct()` in `product_form_screen.dart` e interrompeva
-  /// silenziosamente tutto il salvataggio — da qui il "tasto Inserisci
-  /// che sembra non fare nulla" ogni volta che si impostava una data di
-  /// scadenza (l'unico caso in cui questo metodo viene chiamato).
-  ///
-  /// Per un promemoria "un giorno prima, alle 9" non serve una precisione
-  /// al secondo: passiamo a `inexactAllowWhileIdle`, che su Android
-  /// consegna la notifica con una tolleranza di qualche minuto ma NON
-  /// richiede alcun permesso speciale. In più, avvolgiamo la chiamata in
-  /// un try/catch: qualsiasi problema futuro con le notifiche (permesso
-  /// negato dall'utente, plugin non disponibile, ecc.) non deve mai più
-  /// poter bloccare il salvataggio del prodotto, che è la funzione
-  /// principale di questo pulsante.
   Future<void> scheduleExpirationNotification({
     required String id,
     required String productName,

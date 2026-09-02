@@ -25,11 +25,7 @@ class HouseProvider extends ChangeNotifier {
   /// `DateTime.now().millisecondsSinceEpoch`: elimina il, seppur remoto,
   /// rischio di collisioni tra id creati nello stesso istante e rende la
   /// generazione degli id uniforme in tutta l'app.
-  ///
-  /// NOTA su [imagePath]: si assume che, se presente, sia già stato reso
-  /// persistente da `ImageStorageService.persistLocalImage()` da parte del
-  /// chiamante (vedi `house_list_screen.dart`) — questo provider non tocca
-  /// il file, si limita a salvarne il path.
+
   Future<void> addHouse(String nome, {String? imagePath}) async {
     final id = const Uuid().v4();
     final house = House(

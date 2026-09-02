@@ -8,10 +8,6 @@ class LocationProvider extends ChangeNotifier {
 
   List<Location> get locations => _locations;
 
-  LocationProvider() {
-    // Rimosso loadLocations() dal costruttore
-  }
-
   Future<void> switchHouse(String houseName) async {
     await _service.switchHouse(houseName);
     loadLocations();

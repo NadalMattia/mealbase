@@ -6,21 +6,7 @@ import 'package:uuid/uuid.dart';
 /// fotocamera o scelte dalla libreria) associate a case, prodotti e
 /// articoli della lista spesa.
 ///
-/// PRIMA: ogni punto dell'app che apriva `image_picker`
-/// (`ProductImagePicker`, il dialog "Nuova casa" in `house_list_screen`)
-/// salvava direttamente il path temporaneo restituito dal plugin
-/// (`XFile.path`) dentro `imagePath`. Due problemi concreti:
-///
-///  1. Su iOS in particolare, quel path punta a un file nella cache
-///     dell'app: non è garantito che sopravviva a lungo, quindi
-///     l'immagine poteva sparire dopo un po' senza che l'utente avesse
-///     fatto nulla.
-///  2. Nessuno cancellava mai il file quando il prodotto/casa/articolo
-///     veniva eliminato, o quando l'immagine veniva sostituita con
-///     un'altra: i file restavano orfani sullo storage del device
-///     all'infinito.
-///
-/// ORA: questo servizio copia ogni immagine scelta dall'utente in una
+/// Questo servizio copia ogni immagine scelta dall'utente in una
 /// sottocartella persistente e dedicata (`mealbase_images/`) dentro la
 /// directory documenti dell'app, con un nome file univoco (uuid), e offre
 /// un metodo per ripulire un'immagine non più referenziata.
@@ -30,12 +16,6 @@ import 'package:uuid/uuid.dart';
 /// questo servizio: restano un link esterno, non c'è nessun file locale da
 /// copiare o cancellare finché l'utente non sceglie esplicitamente una
 /// foto propria.
-///
-/// ATTENZIONE - DIPENDENZA DA AGGIUNGERE: questo servizio usa il pacchetto
-/// `path_provider`, che non era tra le dipendenze già presenti nel
-/// progetto. Va aggiunto a `pubspec.yaml`:
-///   dependencies:
-///     path_provider: ^2.1.0
 class ImageStorageService {
   ImageStorageService._();
 
@@ -84,12 +64,7 @@ class ImageStorageService {
   /// - i path nulli o vuoti (niente da cancellare);
   /// - i path remoti che iniziano con "http" (immagini Open Food Facts:
   ///   non sono file nostri, non vanno toccati).
-  ///
-  /// La cancellazione è "best effort": eventuali errori (permessi, file
-  /// già rimosso da un'altra parte, ecc.) vengono ignorati per non
-  /// bloccare il flusso dell'utente (es. l'eliminazione di un prodotto
-  /// deve riuscire comunque, anche se la pulizia del file immagine
-  /// fallisce).
+
   static Future<void> deleteImage(String? imagePath) async {
     if (imagePath == null || imagePath.isEmpty) return;
     if (imagePath.startsWith('http')) return;
