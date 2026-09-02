@@ -19,6 +19,7 @@ class _ShoppingScannerScreenState extends State<ShoppingScannerScreen> {
   final BarcodeService _barcodeService = BarcodeService();
   final TextEditingController _nomeController = TextEditingController();
   final TextEditingController _marcaController = TextEditingController();
+  fianl TextEditingController _quantitaController = TextEditingController();
 
   bool _isLookingUp = false;
   String? _imagePath;
@@ -51,7 +52,15 @@ class _ShoppingScannerScreenState extends State<ShoppingScannerScreen> {
         _isLookingUp = false;
       });
     } else {
-      AppSnackbar.show(context, message: 'Prodotto non trovato', icon: Icons.info_outline);
+      // Vedi commento analogo in scanner_screen.dart: distinguiamo un
+      // errore di rete da un genuino "non trovato" nel database.
+      AppSnackbar.show(
+        context,
+        message: result.networkError
+            ? 'Connessione assente: controlla la rete e riprova'
+            : 'Prodotto non trovato',
+        icon: result.networkError ? Icons.wifi_off : Icons.info_outline,
+      );
       Future.delayed(const Duration(milliseconds: 2500), () {
         if (mounted) setState(() => _isLookingUp = false);
       });
@@ -164,6 +173,33 @@ class _ShoppingScannerScreenState extends State<ShoppingScannerScreen> {
                         controller: _marcaController,
                         decoration: const InputDecoration(
                           hintText: 'Marca (opzionale)',
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Campo Quantità
+              Row(
+                children: [
+                  const Text('QUANTITÀ', style: AppTextStyles.fieldLabel),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: Container(
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: AppColors.grey50,
+                        borderRadius: BorderRadius.circular(AppRadius.xl),
+                      ),
+                      child: TextField(
+                        controller: _quantitaController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: const InputDecoration(
+                          hintText: '1',
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         ),

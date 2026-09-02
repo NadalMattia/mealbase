@@ -10,6 +10,7 @@ import '../providers/shopping_list_provider.dart';
 import '../providers/house_provider.dart';
 import '../services/image_storage_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/smart_image.dart';
 
 class HouseListScreen extends StatefulWidget {
   const HouseListScreen({super.key});
@@ -172,13 +173,12 @@ class _HouseCard extends StatelessWidget {
   }
 
   Widget _buildHouseImage() {
-    if (imagePath != null && imagePath!.trim().isNotEmpty) {
-      final file = File(imagePath!);
-      if (file.existsSync()) {
-        return Image.file(file, fit: BoxFit.cover);
-      }
-    }
-    return const Icon(Icons.home_outlined, color: AppColors.verdeSalvia, size: 26);
+    return SmartImage(
+      path: imagePath,
+      fit: BoxFit.cover,
+      placeholderBuilder: (_) =>
+          const Icon(Icons.home_outlined, color: AppColors.verdeSalvia, size: 26),
+    );
   }
 }
 

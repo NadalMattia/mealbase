@@ -20,10 +20,11 @@
 /// perfettamente leggibili.
 enum ProductCategory {
   altro,
-  fruttaVerdura,
+  frutta,
+  verdura,
   latticini,
-  carnePesce,
-  dispensa,
+  carne,
+  pesce,
   bevande,
   surgelati,
 }
@@ -35,14 +36,16 @@ extension ProductCategoryLabel on ProductCategory {
     switch (this) {
       case ProductCategory.altro:
         return 'Altro';
-      case ProductCategory.fruttaVerdura:
-        return 'Frutta/Verdura';
+      case ProductCategory.frutta:
+        return 'Frutta';
+      case ProductCategory.verdura:
+        return 'Verdura';
       case ProductCategory.latticini:
         return 'Latticini';
-      case ProductCategory.carnePesce:
-        return 'Carne/Pesce';
-      case ProductCategory.dispensa:
-        return 'Dispensa';
+      case ProductCategory.carne:
+        return 'Carne';
+      case ProductCategory.pesce:
+        return 'Pesce';
       case ProductCategory.bevande:
         return 'Bevande';
       case ProductCategory.surgelati:

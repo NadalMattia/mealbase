@@ -1,14 +1,15 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import '../models/product.dart';
 import '../models/product_category.dart';
+import '../models/shopping_item.dart';
 import '../providers/pantry_provider.dart';
 import '../providers/shopping_list_provider.dart';
 import '../providers/location_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/product_image_picker.dart';
+import '../widgets/smart_image.dart';
 
 class ProductFormScreen extends StatefulWidget {
   final Product? existingProduct;
@@ -85,9 +86,19 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     super.dispose();
   }
 
+  /// Combina i suggerimenti di autocomplete presi dalla dispensa e dagli
+  /// articoli già "presi" nella lista della spesa.
+  ///
+  /// PRIMA: [shoppingItems] era tipizzato `List<dynamic>` e ogni accesso
+  /// ai campi (`item.nome`, `item.marca`, `item.imagePath`) era avvolto
+  /// in un try/catch silenzioso "per sicurezza". In realtà l'oggetto è
+  /// sempre un `ShoppingItem` (viene da `ShoppingListProvider.giaPreso`,
+  /// che ritorna `List<ShoppingItem>`): usare `dynamic` non aggiungeva
+  /// flessibilità reale, toglieva solo il controllo del compilatore e
+  /// nascondeva silenziosamente eventuali bug veri.
   List<Product> _getCombinedSuggestions(
       List<Product> pantryProducts,
-      List<dynamic> shoppingItems,
+      List<ShoppingItem> shoppingItems,
       String query,
       ) {
     final cleanQuery = query.trim().toLowerCase();
@@ -104,16 +115,10 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       }
     }
 
-    for (var item in shoppingItems) {
-      if (item == null) continue;
-
-      String nomeStr = '';
-      String? marcaStr;
-      String? img;
-
-      try { nomeStr = (item.nome ?? '').toString(); } catch (_) {}
-      try { marcaStr = item.marca?.toString(); } catch (_) {}
-      try { img = item.imagePath?.toString(); } catch (_) {}
+    for (final item in shoppingItems) {
+      final nomeStr = item.nome;
+      final marcaStr = item.marca;
+      final img = item.imagePath;
 
       if (nomeStr.trim().isEmpty) continue;
 
@@ -222,16 +227,19 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       );
       pantryProvider.addProduct(newProduct);
 
-      try {
-        final shoppingProvider = context.read<ShoppingListProvider>();
-        final cartItems = shoppingProvider.giaPreso;
-        for (var item in cartItems) {
-          if (item.nome.toString().trim().toLowerCase() == nomeInserito.toLowerCase()) {
-            shoppingProvider.deleteItem(item.id);
-            break;
-          }
+      // Se il prodotto appena salvato in dispensa era anche nel
+      // carrello della lista spesa (es. scansionato e comprato), lo
+      // rimuoviamo automaticamente da lì. ShoppingListProvider è sempre
+      // disponibile (registrato in main.dart), quindi non serve un
+      // try/catch difensivo attorno a context.read qui.
+      final shoppingProvider = context.read<ShoppingListProvider>();
+      final cartItems = shoppingProvider.giaPreso;
+      for (final item in cartItems) {
+        if (item.nome.trim().toLowerCase() == nomeInserito.toLowerCase()) {
+          shoppingProvider.deleteItem(item.id);
+          break;
         }
-      } catch (_) {}
+      }
     }
 
     Navigator.pop(context, true);
@@ -247,11 +255,12 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     final locationProvider = context.watch<LocationProvider>();
     final pantryProducts = context.watch<PantryProvider>().products;
 
-    List<dynamic> shoppingItems = [];
-    try {
-      final shoppingProvider = context.watch<ShoppingListProvider>();
-      shoppingItems = shoppingProvider.giaPreso;
-    } catch (_) {}
+    // ShoppingListProvider è sempre disponibile: è registrato nel
+    // MultiProvider di main.dart insieme a tutti gli altri provider
+    // dell'app, quindi non serve avvolgere questa lettura in un
+    // try/catch difensivo (che in precedenza nascondeva silenziosamente
+    // anche eventuali errori reali).
+    final shoppingItems = context.watch<ShoppingListProvider>().giaPreso;
 
     final isEditing = widget.existingProduct != null;
     final suggestions = isEditing
@@ -498,42 +507,29 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     );
   }
 
+  /// Thumbnail per un suggerimento di autocomplete.
+  ///
+  /// Prima duplicava (con dimensioni fisse 42x42) la stessa logica
+  /// locale/remoto già vista in `ProductImagePicker`, `ProductCard` e
+  /// `house_list_screen.dart` — la quarta copia della stessa cosa. Ora usa
+  /// `SmartImage` come tutte le altre.
   Widget _buildThumbnail(String? path) {
-    if (path == null || path.trim().isEmpty) {
-      return Container(
-        width: 42,
-        height: 42,
-        decoration: BoxDecoration(color: AppColors.grey200, borderRadius: BorderRadius.circular(AppRadius.md)),
-        child: const Icon(Icons.image, color: AppColors.grey400, size: 22),
-      );
-    }
-
-    final isNetwork = path.startsWith('http://') || path.startsWith('https://');
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.md),
-      child: isNetwork
-          ? Image.network(
-        path,
+      child: SizedBox(
         width: 42,
         height: 42,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => Container(
-          width: 42,
-          height: 42,
-          color: AppColors.grey200,
-          child: const Icon(Icons.broken_image, color: AppColors.grey400, size: 20),
-        ),
-      )
-          : Image.file(
-        File(path),
-        width: 42,
-        height: 42,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => Container(
-          width: 42,
-          height: 42,
-          color: AppColors.grey200,
-          child: const Icon(Icons.broken_image, color: AppColors.grey400, size: 20),
+        child: SmartImage(
+          path: path,
+          fit: BoxFit.cover,
+          placeholderBuilder: (_) => Container(
+            color: AppColors.grey200,
+            child: const Icon(Icons.image, color: AppColors.grey400, size: 22),
+          ),
+          errorBuilder: (_) => Container(
+            color: AppColors.grey200,
+            child: const Icon(Icons.broken_image, color: AppColors.grey400, size: 20),
+          ),
         ),
       ),
     );

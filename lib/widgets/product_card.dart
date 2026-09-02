@@ -1,6 +1,6 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'smart_image.dart';
 
 class ProductCard extends StatelessWidget {
   final String name;
@@ -48,12 +48,12 @@ class ProductCard extends StatelessWidget {
     final expiry = DateTime(expirationDate!.year, expirationDate!.month, expirationDate!.day);
     final daysLeft = expiry.difference(today).inDays;
 
-    if (daysLeft < 0) {
+    if (daysLeft <= 0) {
       return const _CardStyle(
         bgColor: AppColors.statusExpiredBg,
         borderColor: AppColors.statusExpiredBorder,
       );
-    } else if (daysLeft <= 3) {
+    } else if (daysLeft >= 1 && daysLeft <= 3){
       return const _CardStyle(
         bgColor: AppColors.statusWarningBg,
         borderColor: AppColors.statusWarningBorder,
@@ -169,28 +169,14 @@ class ProductCard extends StatelessWidget {
   }
 
   Widget _buildImage() {
-    if (imageUrl == null || imageUrl!.trim().isEmpty) {
-      return Container(
+    return SmartImage(
+      path: imageUrl,
+      fit: BoxFit.cover,
+      placeholderBuilder: (_) => Container(
         color: AppColors.white.withValues(alpha: 0.5),
         child: const Icon(Icons.image, color: AppColors.grey400, size: 32),
-      );
-    }
-
-    final isNetwork = imageUrl!.startsWith('http://') || imageUrl!.startsWith('https://');
-
-    return isNetwork
-        ? Image.network(
-      imageUrl!,
-      fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => Container(
-        color: AppColors.white.withValues(alpha: 0.5),
-        child: const Icon(Icons.broken_image, color: AppColors.grey400, size: 24),
       ),
-    )
-        : Image.file(
-      File(imageUrl!),
-      fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => Container(
+      errorBuilder: (_) => Container(
         color: AppColors.white.withValues(alpha: 0.5),
         child: const Icon(Icons.broken_image, color: AppColors.grey400, size: 24),
       ),
