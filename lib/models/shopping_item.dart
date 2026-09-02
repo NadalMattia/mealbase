@@ -19,11 +19,15 @@ class ShoppingItem extends HiveObject {
   @HiveField(4)
   String? marca;
 
+  @HiveField(5)
+  int quantita;
+
   ShoppingItem({
     required this.id,
     required this.nome,
     this.preso = false,
     this.imagePath,
     this.marca,
+    this.quantita = 1,
   });
 }

@@ -22,13 +22,14 @@ class ShoppingItemAdapter extends TypeAdapter<ShoppingItem> {
       preso: fields[2] as bool,
       imagePath: fields[3] as String?,
       marca: fields[4] as String?,
+      quantita: fields[5] as int,
     );
   }
 
   @override
   void write(BinaryWriter writer, ShoppingItem obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -38,7 +39,9 @@ class ShoppingItemAdapter extends TypeAdapter<ShoppingItem> {
       ..writeByte(3)
       ..write(obj.imagePath)
       ..writeByte(4)
-      ..write(obj.marca);
+      ..write(obj.marca)
+      ..writeByte(5)
+      ..write(obj.quantita);
   }
 
   @override

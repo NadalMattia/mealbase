@@ -33,7 +33,6 @@ class _ScannerScreenState extends State<ScannerScreen> {
     if (!mounted) return;
 
     if (result.found) {
-      // Rimosso 'final saved =' non utilizzato
       await Navigator.push<bool>(
         context,
         MaterialPageRoute(
@@ -43,6 +42,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
             prefilledMarca: result.marca,
             prefilledCategoria: result.categoria,
             prefilledImageUrl: result.imageUrl,
+            prefilledQuantita: 1,
           ),
         ),
       );
@@ -152,6 +152,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                       name: item.nome,
                       brand: itemMarca,
                       imageUrl: item.imagePath,
+                      quantity: item.quantita,
                       onTap: () async {
                         final saved = await Navigator.push<bool>(
                           context,
@@ -161,6 +162,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                               prefilledNome: item.nome,
                               prefilledMarca: itemMarca,
                               prefilledImageUrl: item.imagePath,
+                              prefilledQuantita: item.quantita,
                             ),
                           ),
                         );

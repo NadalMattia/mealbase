@@ -167,6 +167,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               name: item.nome,
               brand: item.marca,
               imageUrl: item.imagePath,
+              quantity: item.quantita,
               isSelectable: _isSelectionMode,
               isSelected: _selectedItems.contains(item.id),
               onTap: () {

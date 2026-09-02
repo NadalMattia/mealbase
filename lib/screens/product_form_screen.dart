@@ -17,6 +17,7 @@ class ProductFormScreen extends StatefulWidget {
   final String? prefilledMarca;
   final String? prefilledCategoria;
   final String? prefilledImageUrl;
+  final int? prefilledQuantita;
 
   const ProductFormScreen({
     super.key,
@@ -25,6 +26,7 @@ class ProductFormScreen extends StatefulWidget {
     this.prefilledMarca,
     this.prefilledCategoria,
     this.prefilledImageUrl,
+    this.prefilledQuantita,
   });
 
   @override
@@ -43,6 +45,29 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   late DateTime _dataAcquisto;
   DateTime? _dataScadenza;
 
+  // FIX: quando un suggerimento nasce da un articolo del carrello
+  // (ShoppingItem), qui teniamo traccia di QUALE articolo esatto è
+  // (il suo `id`), così al salvataggio possiamo rimuoverlo dal carrello
+  // in modo affidabile. Prima la rimozione avveniva cercando di nuovo
+  // nel carrello un articolo con lo stesso *nome* del prodotto salvato:
+  // se in carrello c'erano due articoli con lo stesso nome ma marca
+  // diversa, poteva cancellare quello sbagliato, lasciando l'altro
+  // "a ricomparire" come suggerimento la volta successiva.
+  //
+  // `_cartSuggestionOrigin` mappa l'id (sintetico, generato in
+  // `_getCombinedSuggestions`) di ogni suggerimento-da-carrello all'id
+  // reale dell'articolo di origine in `ShoppingListProvider`. Viene
+  // ripopolata ad ogni build (i suggerimenti sono comunque rigenerati
+  // ad ogni build in base al testo digitato), quindi resta sempre
+  // coerente con quello che l'utente vede a schermo in quel momento.
+  final Map<String, String> _cartSuggestionOrigin = {};
+
+  // Id dell'articolo del carrello da cui proviene il suggerimento
+  // attualmente selezionato (null se non è stato selezionato nessun
+  // suggerimento, o se il suggerimento selezionato veniva dalla
+  // dispensa invece che dal carrello).
+  String? _sourceCartItemId;
+
   @override
   void initState() {
     super.initState();
@@ -57,8 +82,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       final p = widget.existingProduct!;
       _nomeController = TextEditingController(text: p.nome);
       _marcaController = TextEditingController(text: p.marca ?? '');
+      // Converte la quantità del prodotto esistente in intero per il controller
       _quantitaController = TextEditingController(
-        text: p.quantita % 1 == 0 ? p.quantita.toInt().toString() : p.quantita.toString(),
+        text: p.quantita.toInt().toString(),
       );
       _imagePath = p.imagePath;
       _categoria = p.categoria.isNotEmpty ? p.categoria : ProductCategories.defaultLabel;
@@ -69,7 +95,12 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     } else {
       _nomeController = TextEditingController(text: widget.prefilledNome ?? '');
       _marcaController = TextEditingController(text: widget.prefilledMarca ?? '');
-      _quantitaController = TextEditingController(text: '1');
+
+      // Usa la quantità precompilata (se arriva dallo scanner/carrello), altrimenti imposta '1' di default
+      _quantitaController = TextEditingController(
+        text: (widget.prefilledQuantita ?? 1).toString(),
+      );
+
       _imagePath = widget.prefilledImageUrl;
       _dataAcquisto = DateTime.now();
       if (widget.prefilledCategoria != null && widget.prefilledCategoria!.isNotEmpty) {
@@ -86,8 +117,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     super.dispose();
   }
 
-  /// Combina i suggerimenti di autocomplete presi dalla dispensa e dagli
-  /// articoli già "presi" nella lista della spesa.
+  /// Suggerimenti di autocomplete presi dagli articoli ancora presenti nel
+  /// carrello della lista della spesa.
   ///
   /// PRIMA: [shoppingItems] era tipizzato `List<dynamic>` e ogni accesso
   /// ai campi (`item.nome`, `item.marca`, `item.imagePath`) era avvolto
@@ -96,8 +127,20 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   /// che ritorna `List<ShoppingItem>`): usare `dynamic` non aggiungeva
   /// flessibilità reale, toglieva solo il controllo del compilatore e
   /// nascondeva silenziosamente eventuali bug veri.
+  ///
+  /// FIX: prima i suggerimenti includevano anche i prodotti già presenti
+  /// in dispensa (`pantryProducts`), con priorità sulla dispensa quando
+  /// lo stesso nome+marca esisteva in entrambi. Risultato: un prodotto
+  /// appena inserito in dispensa (e correttamente rimosso dal carrello)
+  /// continuava a "ricomparire" come suggerimento — non più come articolo
+  /// del carrello, ma come voce già esistente in dispensa, con la sua
+  /// quantità attuale precompilata. Per l'utente sembrava lo stesso
+  /// identico problema di prima, solo con una causa diversa.
+  /// Ora i suggerimenti vengono SOLO dal carrello: un prodotto smette di
+  /// essere suggerito nel momento stesso in cui non c'è (più) nulla che
+  /// lo riguarda nel carrello, indipendentemente dal fatto che esista già
+  /// in dispensa.
   List<Product> _getCombinedSuggestions(
-      List<Product> pantryProducts,
       List<ShoppingItem> shoppingItems,
       String query,
       ) {
@@ -105,15 +148,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     if (cleanQuery.isEmpty) return [];
 
     final Map<String, Product> uniqueMatches = {};
-
-    for (var p in pantryProducts) {
-      final nome = p.nome.toLowerCase();
-      final marca = p.marca?.toLowerCase() ?? '';
-      if (nome.contains(cleanQuery) || marca.contains(cleanQuery)) {
-        final key = '${nome}_$marca';
-        uniqueMatches[key] = p;
-      }
-    }
 
     for (final item in shoppingItems) {
       final nomeStr = item.nome;
@@ -128,20 +162,32 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       if (nomeClean.contains(cleanQuery) || marcaClean.contains(cleanQuery)) {
         final key = '${nomeClean}_$marcaClean';
         if (!uniqueMatches.containsKey(key)) {
+          final suggestionId = const Uuid().v4();
           uniqueMatches[key] = Product(
             // Id generato con uuid solo per identità interna: questo
             // oggetto è "sintetico" (serve solo a popolare il suggerimento
             // in UI) e non viene mai salvato così com'è in Hive.
-            id: const Uuid().v4(),
+            id: suggestionId,
             nome: nomeStr,
             marca: marcaStr,
-            quantita: 1.0,
+            // FIX: prima qui c'era `quantita: 1` fisso, che ignorava la
+            // quantità reale impostata sull'articolo della lista spesa
+            // (`item.quantita`). Siccome il campo quantità del form parte
+            // già da "1" di default, il risultato era indistinguibile da
+            // "non si compila": selezionando un suggerimento dal
+            // carrello, la quantità restava sempre "1" anche se
+            // l'articolo ne aveva un'altra.
+            quantita: item.quantita,
             unita: 'pz',
             categoria: ProductCategories.defaultLabel,
             posizione: 'Dispensa',
             dataAcquisto: DateTime.now(),
             imagePath: img,
           );
+          // Ricorda da quale articolo del carrello (id reale, non
+          // rigenerato) proviene questo suggerimento: vedi commento su
+          // `_cartSuggestionOrigin` più sopra.
+          _cartSuggestionOrigin[suggestionId] = item.id;
         }
       }
     }
@@ -154,6 +200,14 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       _nomeController.text = suggestion.nome;
       _marcaController.text = suggestion.marca ?? '';
       _imagePath = suggestion.imagePath;
+      _quantitaController.text = suggestion.quantita.toInt().toString();
+      // Se questo suggerimento veniva dal carrello, ricordiamo l'id
+      // esatto dell'articolo di origine per poterlo rimuovere in modo
+      // affidabile al salvataggio (vedi _saveProduct). Se invece veniva
+      // dalla dispensa, `_cartSuggestionOrigin` non contiene la sua
+      // chiave e questo resta `null`: non c'è nessun articolo del
+      // carrello da rimuovere in quel caso.
+      _sourceCartItemId = _cartSuggestionOrigin[suggestion.id];
       if (suggestion.categoria.isNotEmpty) _categoria = suggestion.categoria;
       if (suggestion.posizione.isNotEmpty) _posizione = suggestion.posizione;
       if (suggestion.unita.isNotEmpty) _unita = suggestion.unita;
@@ -181,13 +235,13 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     }
   }
 
-  void _saveProduct() {
+  Future<void> _saveProduct() async {
     final nomeInserito = _nomeController.text.trim();
     if (nomeInserito.isEmpty) return;
 
     final marcaInserita = _marcaController.text.trim();
     final pantryProvider = context.read<PantryProvider>();
-    final quantitaNum = double.tryParse(_quantitaController.text.trim().replaceAll(',', '.')) ?? 1.0;
+    final quantitaNum = int.tryParse(_quantitaController.text.trim()) ?? 1;
 
     if (widget.existingProduct != null) {
       final p = widget.existingProduct!;
@@ -209,7 +263,14 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       p.dataScadenza = _dataScadenza;
       p.imagePath = _imagePath;
 
-      pantryProvider.updateProduct(p, previousImagePath: previousImagePath);
+      // FIX: prima questa chiamata non veniva aspettata (`await`), quindi
+      // `Navigator.pop` più sotto poteva eseguire PRIMA che il
+      // salvataggio su Hive (e l'eventuale programmazione della notifica
+      // di scadenza) fosse davvero completato. Risultato: tornando sulla
+      // dispensa, il prodotto poteva non comparire subito, perché
+      // `notifyListeners()` scattava con un istante di ritardo rispetto
+      // alla chiusura dello schermo.
+      await pantryProvider.updateProduct(p, previousImagePath: previousImagePath);
     } else {
       final newProduct = Product(
         // Uuid invece di millisecondsSinceEpoch: uniforme con Location,
@@ -225,23 +286,44 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         dataScadenza: _dataScadenza,
         imagePath: _imagePath,
       );
-      pantryProvider.addProduct(newProduct);
+      // FIX: vedi commento analogo nel ramo di update qui sopra — senza
+      // `await`, il prodotto poteva non comparire subito in dispensa
+      // dopo il salvataggio.
+      await pantryProvider.addProduct(newProduct);
 
-      // Se il prodotto appena salvato in dispensa era anche nel
-      // carrello della lista spesa (es. scansionato e comprato), lo
-      // rimuoviamo automaticamente da lì. ShoppingListProvider è sempre
-      // disponibile (registrato in main.dart), quindi non serve un
-      // try/catch difensivo attorno a context.read qui.
+      // Rimuoviamo dal carrello l'articolo che ha dato origine a questo
+      // prodotto, così non ricompare più come suggerimento la volta
+      // successiva che si digita lo stesso nome.
       final shoppingProvider = context.read<ShoppingListProvider>();
-      final cartItems = shoppingProvider.giaPreso;
-      for (final item in cartItems) {
-        if (item.nome.trim().toLowerCase() == nomeInserito.toLowerCase()) {
-          shoppingProvider.deleteItem(item.id);
-          break;
+
+      if (_sourceCartItemId != null) {
+        // Via primaria e affidabile: sappiamo esattamente da quale
+        // articolo del carrello proveniva il suggerimento selezionato
+        // (id reale, non un confronto di stringhe). Corregge il bug per
+        // cui, con due articoli dello stesso nome ma marca diversa in
+        // carrello, poteva venire cancellato quello sbagliato lasciando
+        // l'altro a "ricomparire" come suggerimento.
+        await shoppingProvider.deleteItem(_sourceCartItemId!);
+      } else {
+        // Fallback: l'utente ha digitato il nome a mano (senza
+        // selezionare un suggerimento) e questo combacia comunque con
+        // qualcosa già presente in carrello. Confronto per nome, unica
+        // informazione disponibile in questo caso.
+        final cartItems = shoppingProvider.giaPreso;
+        for (final item in cartItems) {
+          if (item.nome.trim().toLowerCase() == nomeInserito.toLowerCase()) {
+            await shoppingProvider.deleteItem(item.id);
+            break;
+          }
         }
       }
     }
 
+    // Controllo di sicurezza dopo gli `await` qui sopra: se per qualche
+    // motivo lo schermo fosse già stato smontato nel frattempo (es.
+    // l'utente ha navigato via in altro modo), `context` non sarebbe più
+    // valido da usare.
+    if (!mounted) return;
     Navigator.pop(context, true);
   }
 
@@ -253,7 +335,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   @override
   Widget build(BuildContext context) {
     final locationProvider = context.watch<LocationProvider>();
-    final pantryProducts = context.watch<PantryProvider>().products;
 
     // ShoppingListProvider è sempre disponibile: è registrato nel
     // MultiProvider di main.dart insieme a tutti gli altri provider
@@ -265,11 +346,27 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     final isEditing = widget.existingProduct != null;
     final suggestions = isEditing
         ? <Product>[]
-        : _getCombinedSuggestions(pantryProducts, shoppingItems, _nomeController.text);
+        : _getCombinedSuggestions(shoppingItems, _nomeController.text);
 
     final locations = locationProvider.locations.map((l) => l.nome).toList();
     if (!locations.contains('Dispensa')) locations.add('Dispensa');
     if (!locations.contains(_posizione)) locations.add(_posizione);
+
+    // FIX: le categorie disponibili sono state riorganizzate (es.
+    // 'Carne/Pesce' è diventata 'Carne' + 'Pesce' separate). Un prodotto
+    // salvato PRIMA di quella riorganizzazione può avere `categoria`
+    // valorizzata con un'etichetta che oggi non esiste più tra
+    // `ProductCategories.labels`. `DropdownButton` richiede che `value`
+    // corrisponda esattamente a uno degli `items`, altrimenti lancia
+    // un'eccezione di assert appena si apre lo screen: crashava
+    // l'editing di qualsiasi prodotto con una categoria "vecchio stile".
+    // Stesso pattern già usato sopra per `locations`: se il valore
+    // corrente non è tra quelli noti, lo aggiungiamo comunque alla lista
+    // (l'utente lo vedrà come opzione, potendo scegliere consapevolmente
+    // una categoria aggiornata, invece di un crash o di una sostituzione
+    // silenziosa).
+    final categorie = List<String>.from(ProductCategories.labels);
+    if (!categorie.contains(_categoria)) categorie.add(_categoria);
 
     return Scaffold(
       backgroundColor: AppColors.pannaWarm,
@@ -306,7 +403,12 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                 ),
-                onChanged: (_) => setState(() {}),
+                onChanged: (_) => setState(() {
+                  // L'utente sta digitando/modificando a mano: qualsiasi
+                  // collegamento con un articolo del carrello selezionato
+                  // in precedenza non è più valido.
+                  _sourceCartItemId = null;
+                }),
               ),
             ),
 
@@ -395,7 +497,18 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                       ),
                       child: TextField(
                         controller: _quantitaController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        // FIX: `quantita` sul modello è `int`, e più sotto
+                        // viene fatto `int.tryParse(...)`. Prima qui la
+                        // tastiera era `numberWithOptions(decimal: true)`:
+                        // mostrava il tasto virgola/punto invitando a
+                        // scrivere quantità come "0,5" (per unità come
+                        // g/kg/ml/l), ma quel valore veniva scartato in
+                        // silenzio dal parsing intero e sostituito con 1,
+                        // senza nessun avviso per l'utente. Usare una
+                        // tastiera solo numerica intera rende impossibile
+                        // scrivere qualcosa che poi verrebbe comunque
+                        // ignorato.
+                        keyboardType: TextInputType.number,
                         textAlign: TextAlign.center,
                         style: const TextStyle(fontWeight: FontWeight.bold),
                         decoration: const InputDecoration(
@@ -443,11 +556,10 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                     child: DropdownButton<String>(
                       value: _categoria,
                       // Lista generata da ProductCategory (vedi
-                      // models/product_category.dart): prima era una lista
-                      // di stringhe hardcoded, duplicata identicamente in
-                      // pantry_filter_bottom_sheet.dart, con il rischio che
-                      // le due liste si disallineassero nel tempo.
-                      items: ProductCategories.labels.map((c) {
+                      // models/product_category.dart) più, se presente,
+                      // il valore "orfano" del prodotto corrente (vedi
+                      // commento sopra su `categorie`).
+                      items: categorie.map((c) {
                         return DropdownMenuItem(value: c, child: Text(c));
                       }).toList(),
                       onChanged: (val) {
