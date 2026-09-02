@@ -22,8 +22,7 @@ class ShoppingItemAdapter extends TypeAdapter<ShoppingItem> {
       preso: fields[2] as bool,
       imagePath: fields[3] as String?,
       marca: fields[4] as String?,
-      quantita: fields[5] as int,
-    );
+    )..quantitaRaw = fields[5] as int?;
   }
 
   @override
@@ -41,7 +40,7 @@ class ShoppingItemAdapter extends TypeAdapter<ShoppingItem> {
       ..writeByte(4)
       ..write(obj.marca)
       ..writeByte(5)
-      ..write(obj.quantita);
+      ..write(obj.quantitaRaw);
   }
 
   @override
