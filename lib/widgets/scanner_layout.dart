@@ -3,7 +3,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import '../theme/app_theme.dart';
 import 'scanner_chrome.dart';
 
-/// Layout base per le schermate di scansione (MobileScanner v7.4.0).
+/// Layout base per le schermate di scansione
 /// Gestisce nativamente il ciclo di vita e le autorizzazioni della fotocamera.
 class ScannerLayout extends StatefulWidget {
   final Function(BarcodeCapture) onDetect;

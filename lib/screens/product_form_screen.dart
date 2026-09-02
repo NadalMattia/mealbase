@@ -45,14 +45,10 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   late DateTime _dataAcquisto;
   DateTime? _dataScadenza;
 
-  // FIX: quando un suggerimento nasce da un articolo del carrello
-  // (ShoppingItem), qui teniamo traccia di QUALE articolo esatto è
+  // quando un suggerimento nasce da un articolo del carrello
+  // (ShoppingItem), teniamo traccia di QUALE articolo esatto è
   // (il suo `id`), così al salvataggio possiamo rimuoverlo dal carrello
-  // in modo affidabile. Prima la rimozione avveniva cercando di nuovo
-  // nel carrello un articolo con lo stesso *nome* del prodotto salvato:
-  // se in carrello c'erano due articoli con lo stesso nome ma marca
-  // diversa, poteva cancellare quello sbagliato, lasciando l'altro
-  // "a ricomparire" come suggerimento la volta successiva.
+  // in modo affidabile.
   //
   // `_cartSuggestionOrigin` mappa l'id (sintetico, generato in
   // `_getCombinedSuggestions`) di ogni suggerimento-da-carrello all'id
@@ -117,29 +113,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     super.dispose();
   }
 
-  /// Suggerimenti di autocomplete presi dagli articoli ancora presenti nel
-  /// carrello della lista della spesa.
-  ///
-  /// PRIMA: [shoppingItems] era tipizzato `List<dynamic>` e ogni accesso
-  /// ai campi (`item.nome`, `item.marca`, `item.imagePath`) era avvolto
-  /// in un try/catch silenzioso "per sicurezza". In realtà l'oggetto è
-  /// sempre un `ShoppingItem` (viene da `ShoppingListProvider.giaPreso`,
-  /// che ritorna `List<ShoppingItem>`): usare `dynamic` non aggiungeva
-  /// flessibilità reale, toglieva solo il controllo del compilatore e
-  /// nascondeva silenziosamente eventuali bug veri.
-  ///
-  /// FIX: prima i suggerimenti includevano anche i prodotti già presenti
-  /// in dispensa (`pantryProducts`), con priorità sulla dispensa quando
-  /// lo stesso nome+marca esisteva in entrambi. Risultato: un prodotto
-  /// appena inserito in dispensa (e correttamente rimosso dal carrello)
-  /// continuava a "ricomparire" come suggerimento — non più come articolo
-  /// del carrello, ma come voce già esistente in dispensa, con la sua
-  /// quantità attuale precompilata. Per l'utente sembrava lo stesso
-  /// identico problema di prima, solo con una causa diversa.
-  /// Ora i suggerimenti vengono SOLO dal carrello: un prodotto smette di
-  /// essere suggerito nel momento stesso in cui non c'è (più) nulla che
-  /// lo riguarda nel carrello, indipendentemente dal fatto che esista già
-  /// in dispensa.
   List<Product> _getCombinedSuggestions(
       List<ShoppingItem> shoppingItems,
       String query,

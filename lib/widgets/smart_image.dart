@@ -1,27 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 
-/// Mostra un'immagine che può essere:
-/// - un path di file locale (foto scattata/scelta dall'utente,
-///   eventualmente resa persistente da `ImageStorageService`);
-/// - un URL remoto (foto di Open Food Facts trovata scansionando un
-///   barcode, che inizia sempre con "http");
-/// - assente (path nullo/vuoto).
-///
-/// PRIMA: questa stessa distinzione ("il path inizia con http?") e i
-/// relativi `Image.network`/`Image.file` con gestione errori erano
-/// duplicati, con leggere variazioni, in tre punti diversi:
-/// `ProductImagePicker._buildImage()`, `ProductCard._buildImage()` e
-/// `house_list_screen.dart` (`_buildHouseImage`, che tra l'altro usava
-/// `File(...).existsSync()` — una chiamata sincrona al filesystem dentro
-/// `build()`, non ideale). Tre implementazioni della stessa logica
-/// significavano tre punti da tenere allineati se in futuro si voleva
-/// cambiare comportamento (es. aggiungere caching, un loader, ecc.).
-///
-/// ORA: un solo widget centralizza "che tipo di path è" e come mostrarlo.
-/// Ogni chiamante resta libero di personalizzare l'aspetto del
-/// placeholder/errore passando [placeholderBuilder], così l'aspetto
-/// visivo di ogni schermata resta invariato rispetto a prima.
 class SmartImage extends StatelessWidget {
   /// Path locale o URL remoto dell'immagine. Se nullo/vuoto viene
   /// mostrato direttamente il placeholder.
@@ -88,12 +67,6 @@ class SmartImage extends StatelessWidget {
       );
     }
 
-    // File locale: usiamo errorBuilder invece di controllare
-    // `File(path).existsSync()` prima di costruire il widget. Un controllo
-    // sincrono sul filesystem dentro build() (come faceva in precedenza
-    // house_list_screen.dart) può causare micro-scatti sulla UI; lasciare
-    // che sia Image.file a segnalare l'errore è sia più corretto che più
-    // performante.
     return Image.file(
       File(path!),
       fit: fit,

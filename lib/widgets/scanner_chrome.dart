@@ -3,13 +3,6 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../theme/app_theme.dart';
 
-/// Mostrata al posto del feed camera quando il permesso fotocamera è
-/// negato (definitivamente o meno).
-///
-/// Prima, senza `errorBuilder`, se il permesso mancava `MobileScanner`
-/// restituiva semplicemente uno schermo nero senza alcun messaggio:
-/// l'utente non capiva se l'app fosse bloccata o se mancasse qualcosa.
-/// Con questo widget l'errore diventa visibile e azionabile.
 class ScannerPermissionDenied extends StatelessWidget {
   final VoidCallback onClose;
 
@@ -139,17 +132,6 @@ class _Corner extends StatelessWidget {
   }
 }
 
-/// Riga di controlli in alto (flash / chiudi), comune alle due schermate
-/// scanner.
-///
-/// Prima l'icona del flash rifletteva una variabile locale (`_isFlashOn`)
-/// tenuta manualmente in sync dalla schermata chiamante: la versione di
-/// `mobile_scanner` in uso ha un bug noto per cui lo stato della torcia
-/// risulta invertito subito dopo `toggleTorch()`, quindi quella variabile
-/// poteva disallinearsi da cosa stava facendo davvero la fotocamera (icona
-/// "accesa" col flash spento o viceversa). Ora l'icona legge lo stato vero
-/// direttamente dal controller (`controller.value.torchState`), che è
-/// sempre la fonte di verità.
 class ScannerTopControls extends StatelessWidget {
   final MobileScannerController controller;
   final VoidCallback onCloseTap;

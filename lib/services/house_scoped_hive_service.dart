@@ -1,14 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
-/// Base comune per tutti i servizi Hive "per casa" dell'app.
-///
-/// Prima `HiveService`, `LocationService` e `ShoppingListService`
-/// duplicavano ciascuno la stessa identica logica: un box con nome
-/// dinamico `'<base>_<nomeCasa>'`, apertura lazy, getter di comodo e le
-/// stesse operazioni CRUD generiche. Ora quella logica vive in un solo
-/// posto e ogni servizio implementa solo ciò che gli è specifico (es. i
-/// valori di default delle location).
 abstract class HouseScopedHiveService<T extends HiveObject> {
   final String baseBoxName;
 

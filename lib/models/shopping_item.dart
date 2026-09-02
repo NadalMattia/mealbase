@@ -19,23 +19,6 @@ class ShoppingItem extends HiveObject {
   @HiveField(4)
   String? marca;
 
-  // FIX STRUTTURALE: `quantita` è un campo aggiunto DOPO che l'app era già
-  // in uso. Gli articoli salvati prima di questa aggiunta non hanno
-  // affatto il campo scritto su disco. Un campo Hive dichiarato `int`
-  // (non nullable) genera sempre, ad ogni rigenerazione con build_runner,
-  // un adapter che legge `fields[5] as int` — che lancia un'eccezione a
-  // runtime quando il campo è assente (`fields[5]` vale `null` in quel
-  // caso, e `null as int` fallisce). Come per `Product.quantita`
-  // (vedi il commento lì per i dettagli), la volta scorsa questo era
-  // stato corretto solo nel file generato `shopping_item.g.dart`, che
-  // può essere sovrascritto da una rigenerazione futura.
-  //
-  // Ora il campo Hive-annotato (`quantitaRaw`) è nullable (`int?`):
-  // qualunque adapter generato da qui in avanti leggerà sempre
-  // `as int?`, che per un campo assente vale semplicemente `null` invece
-  // di lanciare un'eccezione. Il resto dell'app continua a vedere
-  // `quantita` come un normale `int` con default 1 (getter/setter qui
-  // sotto): nessun altro file del progetto necessita modifiche.
   @HiveField(5)
   int? quantitaRaw;
 
