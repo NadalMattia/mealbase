@@ -5,4 +5,4 @@ MealBase è un'applicazione Android progettata per aiutare gli utenti a tracciar
 proprie provviste alimentari in modo semplice, pulito e minimale.
 
 L'app funziona come una "centrale di controllo" per la gestione casalinga dei cibi, permettendo 
-di registrare acquisti, monitorare le scadenze e tenere sotto controllo i costi.
+di registrare acquisti, monitorare le scadenze.
