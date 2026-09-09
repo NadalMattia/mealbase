@@ -3,6 +3,10 @@ import 'package:hive/hive.dart';
 part 'shopping_item.g.dart';
 
 @HiveType(typeId: 1)
+/// Un articolo della lista della spesa.
+///
+/// Il flag [preso] decide in quale delle due sezioni compare: da
+/// acquistare o già nel carrello.
 class ShoppingItem extends HiveObject {
   @HiveField(0)
   String id;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/coming_soon_screen.dart';
 
+/// Suggerimento ricette. Non ancora sviluppata.
 class RecipesScreen extends StatelessWidget {
   const RecipesScreen({super.key});
 

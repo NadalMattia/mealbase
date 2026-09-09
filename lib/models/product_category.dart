@@ -4,7 +4,7 @@
 /// dell'elenco delle etichette da mostrare in UI usa [ProductCategory.labels].
 ///
 /// NOTA IMPORTANTE SULLA COMPATIBILITÀ DATI: il campo `Product.categoria`
-/// resta un `String` esattamente come prima (nessuna modifica al modello
+/// resta un `String` (nessuna modifica al modello
 /// Hive, quindi nessuna necessità di rigenerare gli adapter o migrare i
 /// dati già salvati).
 ///

@@ -4,6 +4,9 @@ import 'shopping_list_screen.dart';
 import 'recipes_screen.dart';
 import '../widgets/app_bottom_nav.dart';
 
+/// Contenitore delle tre sezioni di una casa: spesa, dispensa e ricette.
+///
+/// Parte dalla dispensa, la sezione centrale e principale dell'app.
 class MainScreen extends StatefulWidget {
   final String houseName;
   const MainScreen({super.key, required this.houseName});

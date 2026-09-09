@@ -6,6 +6,8 @@ import '../theme/app_theme.dart';
 import '../utils/app_snackbar.dart';
 import '../widgets/product_image_picker.dart';
 
+/// Modifica di un articolo della lista della spesa: nome, marca, quantità
+/// e immagine.
 class ShoppingItemEditScreen extends StatefulWidget {
   final ShoppingItem item;
 
@@ -20,6 +22,10 @@ class _ShoppingItemEditScreenState extends State<ShoppingItemEditScreen> {
   late TextEditingController _marcaController;
   late TextEditingController _quantitaController;
   late String? _imagePath;
+  final FocusNode _nomeFocusNode = FocusNode();
+
+  /// Segnala che si è tentato un salvataggio con il nome vuoto.
+  bool _nomeError = false;
 
   @override
   void initState() {
@@ -35,25 +41,41 @@ class _ShoppingItemEditScreenState extends State<ShoppingItemEditScreen> {
     _nomeController.dispose();
     _marcaController.dispose();
     _quantitaController.dispose();
+    _nomeFocusNode.dispose();
     super.dispose();
   }
 
-  void _save() {
-    if (_nomeController.text.trim().isEmpty) return;
+  /// Persiste le modifiche e chiude la schermata.
+  Future<void> _save() async {
+    final nome = _nomeController.text.trim();
+    if (nome.isEmpty) {
+      setState(() => _nomeError = true);
+      _nomeFocusNode.requestFocus();
+      AppSnackbar.show(
+        context,
+        message: 'Inserisci il nome del prodotto',
+        icon: Icons.error_outline,
+      );
+      return;
+    }
 
     final provider = context.read<ShoppingListProvider>();
     final marcaText = _marcaController.text.trim();
     final quantitaText = _quantitaController.text.trim();
 
+    // Va letto prima di sovrascrivere i campi: l'articolo è mutato
+    // in-place e il provider ha bisogno del path precedente per
+    // cancellare l'eventuale immagine sostituita.
     final previousImagePath = widget.item.imagePath;
 
-    widget.item.nome = _nomeController.text.trim();
+    widget.item.nome = nome;
     widget.item.marca = marcaText.isEmpty ? null : marcaText;
     widget.item.quantita = int.tryParse(quantitaText) ?? 1;
     widget.item.imagePath = _imagePath;
 
-    provider.updateItem(widget.item, previousImagePath: previousImagePath);
+    await provider.updateItem(widget.item, previousImagePath: previousImagePath);
 
+    if (!mounted) return;
     AppSnackbar.show(context, message: 'Prodotto aggiornato');
     Navigator.pop(context);
   }
@@ -91,11 +113,18 @@ class _ShoppingItemEditScreenState extends State<ShoppingItemEditScreen> {
               decoration: BoxDecoration(
                 color: AppColors.white,
                 borderRadius: BorderRadius.circular(AppRadius.lg),
-                border: Border.all(color: AppColors.grey300, width: 1),
+                border: Border.all(
+                  color: _nomeError ? Colors.red : AppColors.grey300,
+                  width: _nomeError ? 1.5 : 1,
+                ),
               ),
               child: TextField(
                 controller: _nomeController,
+                focusNode: _nomeFocusNode,
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                onChanged: (_) {
+                  if (_nomeError) setState(() => _nomeError = false);
+                },
                 decoration: const InputDecoration(
                   hintText: 'Nome prodotto',
                   hintStyle: AppTextStyles.hint,

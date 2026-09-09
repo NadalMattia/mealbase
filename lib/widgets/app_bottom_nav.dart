@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
+/// Barra di navigazione inferiore, usata sia dai due tab di HomeScreen sia
+/// dai tre di MainScreen.
+/// Barra di navigazione inferiore, usata sia dai due tab di HomeScreen sia
+/// dai tre di MainScreen.
 class AppBottomNavItem {
   final IconData icon;
   final String label;

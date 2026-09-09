@@ -12,6 +12,11 @@ import '../services/image_storage_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/smart_image.dart';
 
+/// Elenco delle case e punto in cui si sceglie quale aprire.
+///
+/// È qui che cambia il contesto dati dell'app: selezionando una casa i tre
+/// provider scoperti per casa vengono fatti puntare ai box corrispondenti
+/// prima che MainScreen venga costruita.
 class HouseListScreen extends StatefulWidget {
   const HouseListScreen({super.key});
 
@@ -20,6 +25,12 @@ class HouseListScreen extends StatefulWidget {
 }
 
 class _HouseListScreenState extends State<HouseListScreen> {
+  /// Blocca i tap sulle card mentre è in corso il passaggio a una casa.
+  ///
+  /// L'apertura dei box è asincrona: senza questo guardiano un doppio tap
+  /// rapido avvierebbe due navigazioni, impilando due MainScreen.
+  bool _isNavigating = false;
+
   void _showAddHouseDialog() {
     showDialog(
       context: context,
@@ -59,18 +70,28 @@ class _HouseListScreenState extends State<HouseListScreen> {
                 name: house.nome,
                 imagePath: house.imagePath,
                 onTap: () async {
-                  await context.read<PantryProvider>().switchHouse(house.nome);
-                  await context.read<LocationProvider>().switchHouse(house.nome);
-                  await context.read<ShoppingListProvider>().switchHouse(house.nome);
+                  if (_isNavigating) return;
+                  setState(() => _isNavigating = true);
 
-                  if (context.mounted) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => MainScreen(houseName: house.nome),
-                      ),
-                    );
-                  }
+                  // I tre provider caricano i box della casa scelta prima
+                  // che MainScreen venga costruita, così le schermate
+                  // trovano già i dati giusti al primo build.
+                  await context.read<PantryProvider>().switchHouse(house);
+                  await context.read<LocationProvider>().switchHouse(house);
+                  await context.read<ShoppingListProvider>().switchHouse(house);
+
+                  if (!context.mounted) return;
+
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => MainScreen(houseName: house.nome),
+                    ),
+                  );
+
+                  // Il push si risolve al ritorno da MainScreen: è quello
+                  // il momento in cui le card tornano attive.
+                  if (mounted) setState(() => _isNavigating = false);
                 },
               ),
             ),

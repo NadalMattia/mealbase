@@ -1,6 +1,10 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/house.dart';
 
+/// Accesso all'elenco delle case, in un box Hive globale.
+///
+/// A differenza degli altri servizi non è scoperto per casa: le case sono
+/// il livello che sta sopra.
 class HouseService {
   static const String _boxName = 'houses';
 

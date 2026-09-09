@@ -1,13 +1,27 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
+/// Messaggi temporanei di conferma ed errore, con stile uniforme in tutta
+/// l'app.
+///
+/// Ogni metodo chiude la snackbar corrente prima di mostrarne una nuova:
+/// senza, i messaggi si accoderebbero e l'utente ne vedrebbe di vecchi
+/// comparire dopo azioni nuove.
+///
+/// Classe di soli membri statici, non istanziabile: non ha stato da
+/// conservare.
 class AppSnackbar {
   AppSnackbar._();
 
+  /// Chiude immediatamente la snackbar visibile, se presente.
   static void hide(BuildContext context) {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
   }
 
+  /// Mostra un messaggio con icona.
+  ///
+  /// Restituisce il controller della snackbar, il cui future `closed`
+  /// riporta il motivo della chiusura.
   static ScaffoldFeatureController<SnackBar, SnackBarClosedReason> show(
       BuildContext context, {
         required String message,
@@ -35,6 +49,15 @@ class AppSnackbar {
     );
   }
 
+  /// Mostra la conferma di un'eliminazione, con l'azione di annullamento
+  /// se [onUndo] è fornita.
+  ///
+  /// Il margine inferiore è più ampio di quello di [show] per non finire
+  /// sotto la barra di azioni della dispensa.
+  ///
+  /// Il controller restituito permette al chiamante di attendere
+  /// `closed` e decidere in base al [SnackBarClosedReason] se rendere
+  /// definitiva l'eliminazione.
   static ScaffoldFeatureController<SnackBar, SnackBarClosedReason> showDeleted(
       BuildContext context, {
         required String message,
@@ -68,6 +91,7 @@ class AppSnackbar {
     );
   }
 
+  /// Segnala che [feature] non è ancora disponibile.
   static void showComingSoon(BuildContext context, String feature) {
     show(context, message: '$feature in arrivo!', icon: Icons.access_time);
   }

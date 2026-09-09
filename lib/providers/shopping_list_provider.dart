@@ -1,30 +1,19 @@
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
+import '../models/house.dart';
 import '../models/shopping_item.dart';
 import '../services/shopping_list_service.dart';
 import '../services/image_storage_service.dart';
 
-/// Provider per la lista della spesa.
+/// Stato della lista della spesa della casa attualmente selezionata.
 ///
-/// PRIMA: questo provider non usava `ShoppingListService` (che pure esiste
-/// nel progetto): apriva e gestiva da solo un `Box<ShoppingItem>` di Hive,
-/// con una convenzione di naming del box diversa da quella usata da
-/// `HouseScopedHiveService` (la base comune già condivisa da `HiveService`
-/// e `LocationService`). Questo creava due problemi:
-///   1. Duplicazione della stessa logica CRUD "per casa" già scritta altrove.
-///   2. Un servizio (`ShoppingListService`) presente nel codice ma "morto":
-///      chiunque in futuro l'avesse usato per errore avrebbe letto un box
-///      vuoto, perché i dati reali stavano nel box aperto qui.
+/// La lista è divisa in due sezioni mostrate sulla stessa schermata:
+/// [daAcquistare] e [giaPreso], distinte dal flag `preso` di ogni
+/// articolo. [toggleItem] sposta un articolo dall'una all'altra.
 ///
-/// ORA: il provider delega tutto a `ShoppingListService`, esattamente come
-/// fanno `PantryProvider` (-> `HiveService`) e `LocationProvider` (->
-/// `LocationService`). La migrazione dei dati già salvati dagli utenti nel
-/// vecchio box è gestita in `ShoppingListService._migrateFromLegacyBoxIfNeeded()`,
-/// quindi non deve essere gestita qui.
-///
-/// L'API pubblica (nomi dei metodi, getter, comportamento visibile) è
-/// rimasta identica: gli screen che usano questo provider non richiedono
-/// modifiche per continuare a funzionare come prima.
+/// L'eliminazione usa lo stesso flusso in due tempi di `PantryProvider`:
+/// [hideItem] nasconde, [confirmDeleteItem] rende definitivo,
+/// [cancelDeleteItem] annulla.
 class ShoppingListProvider extends ChangeNotifier {
   final ShoppingListService _service = ShoppingListService();
 
@@ -33,21 +22,23 @@ class ShoppingListProvider extends ChangeNotifier {
 
   ShoppingListProvider();
 
-  /// Passa alla lista della spesa di un'altra casa, aprendo (o migrando,
-  /// se necessario) il box Hive dedicato.
-  Future<void> switchHouse(String houseName) async {
-    await _service.switchHouse(houseName);
+  /// Carica la lista della spesa di [house].
+  ///
+  /// Il box viene aperto per [House.id]; il nome serve solo alla migrazione
+  /// di eventuali dati salvati con schemi di naming precedenti.
+  Future<void> switchHouse(House house) async {
+    await _service.switchHouse(house.id, legacyName: house.nome);
     loadItems();
   }
 
-  /// Ricarica la lista dalla sorgente dati e notifica la UI.
+  /// Rilegge gli articoli da Hive e notifica la UI.
   void loadItems() {
     _items = _service.getAll();
     notifyListeners();
   }
 
-  /// Elementi visibili, cioè non in attesa di conferma di eliminazione
-  /// (pattern "swipe to delete con annulla", vedi [hideItem]).
+  /// Articoli da mostrare, esclusi quelli in attesa di conferma di
+  /// eliminazione.
   List<ShoppingItem> get items =>
       _items.where((item) => !_pendingDeleteIds.contains(item.id)).toList();
 
@@ -57,12 +48,7 @@ class ShoppingListProvider extends ChangeNotifier {
   List<ShoppingItem> get giaPreso =>
       items.where((item) => item.preso).toList();
 
-  /// Aggiunge un nuovo articolo alla lista della spesa.
-  ///
-  /// L'id viene generato con `uuid` invece che con
-  /// `DateTime.now().millisecondsSinceEpoch`, per uniformità con `Location`
-  /// (che già usava `uuid`) e per eliminare il rischio, seppur remoto, di
-  /// collisioni tra id generati nello stesso millisecondo.
+  /// Crea un articolo nella sezione "da acquistare".
   Future<void> addItem(String nome, {String? marca, String? imagePath, int quantita = 1}) async {
     final newItem = ShoppingItem(
       id: const Uuid().v4(),
@@ -77,23 +63,21 @@ class ShoppingListProvider extends ChangeNotifier {
     loadItems();
   }
 
-  /// Nasconde temporaneamente l'elemento (usato per l'animazione di
-  /// eliminazione con snackbar "Annulla").
+  /// Nasconde un articolo dalla lista senza eliminarlo, in attesa che
+  /// l'utente confermi o annulli.
   void hideItem(String id) {
     _pendingDeleteIds.add(id);
     notifyListeners();
   }
 
-  /// Annulla l'eliminazione rendendo di nuovo visibile l'elemento.
+  /// Annulla un'eliminazione in sospeso e rimette l'articolo in lista.
   void cancelDeleteItem(String id) {
     _pendingDeleteIds.remove(id);
     notifyListeners();
   }
 
-  /// Elimina definitivamente l'articolo da Hive, dopo che la finestra per
-  /// annullare l'operazione è scaduta. Se l'articolo aveva un'immagine
-  /// locale (foto scattata dall'utente), viene ripulita anche quella per
-  /// non lasciare file orfani sullo storage del device.
+  /// Rende definitiva un'eliminazione messa in sospeso da [hideItem],
+  /// rimuovendo anche l'eventuale immagine associata.
   Future<void> confirmDeleteItem(String id) async {
     _pendingDeleteIds.remove(id);
     final item = _findById(id);
@@ -105,12 +89,10 @@ class ShoppingListProvider extends ChangeNotifier {
     loadItems();
   }
 
-  /// Aggiorna un articolo esistente (es. da `ShoppingItemEditScreen`).
+  /// Persiste le modifiche a un articolo.
   ///
-  /// [previousImagePath] è opzionale: se lo screen chiamante passa il path
-  /// dell'immagine precedente e questa è stata sostituita con una nuova,
-  /// il vecchio file locale viene cancellato per evitare di accumulare
-  /// immagini non più referenziate.
+  /// [previousImagePath] è il path dell'immagine prima della modifica: se
+  /// è cambiata, il vecchio file viene rimosso dallo storage.
   Future<void> updateItem(ShoppingItem item, {String? previousImagePath}) async {
     await _service.updateItem(item);
 
@@ -120,20 +102,20 @@ class ShoppingListProvider extends ChangeNotifier {
     loadItems();
   }
 
-  /// Segna/desegna un articolo come "preso" (spostandolo tra le due
-  /// sezioni della lista spesa). Non serve ricaricare l'intera lista da
-  /// Hive: l'oggetto [item] è lo stesso riferimento già presente in
-  /// [_items], quindi basta salvarlo e notificare la UI.
+  /// Sposta un articolo tra "da acquistare" e "nel carrello".
+  ///
+  /// [item] è lo stesso riferimento già presente in memoria, quindi basta
+  /// salvarlo e notificare: non serve rileggere la lista da Hive.
   Future<void> toggleItem(ShoppingItem item) async {
     item.preso = !item.preso;
     await _service.updateItem(item);
     notifyListeners();
   }
 
-  /// Elimina un articolo senza passare dal flusso "nascondi + conferma"
-  /// (usato per l'eliminazione multipla in `shopping_list_screen.dart` e
-  /// per la rimozione automatica dal carrello quando un prodotto scansionato
-  /// viene salvato in dispensa).
+  /// Elimina subito un articolo, senza passare dal flusso di conferma.
+  ///
+  /// Usato dalla selezione multipla e dalla rimozione automatica dal
+  /// carrello quando l'articolo diventa un prodotto in dispensa.
   Future<void> deleteItem(String id) async {
     final item = _findById(id);
 
@@ -144,13 +126,25 @@ class ShoppingListProvider extends ChangeNotifier {
     loadItems();
   }
 
-  /// Cerca un articolo per id nella lista in memoria, usato per recuperare
-  /// il vecchio `imagePath` prima di eliminare/aggiornare un elemento.
-  ShoppingItem? _findById(String id) {
-    try {
-      return _items.firstWhere((item) => item.id == id);
-    } catch (_) {
-      return null;
+  /// Elimina in sequenza gli articoli indicati, per la selezione multipla.
+  ///
+  /// Come in `PantryProvider.deleteProducts`, la sequenzialità evita che
+  /// più cancellazioni concorrenti rendano imprevedibile l'ordine di
+  /// completamento.
+  Future<void> deleteItems(Iterable<String> ids) async {
+    for (final id in ids) {
+      await deleteItem(id);
     }
+  }
+
+  /// Cerca un articolo per id tra quelli in memoria, o `null`.
+  ///
+  /// Serve a leggere `imagePath` prima che l'articolo venga rimosso da
+  /// Hive, per poter cancellare anche il file associato.
+  ShoppingItem? _findById(String id) {
+    for (final item in _items) {
+      if (item.id == id) return item;
+    }
+    return null;
   }
 }

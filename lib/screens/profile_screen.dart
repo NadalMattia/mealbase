@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
+import '../utils/app_snackbar.dart';
 
+/// Profilo utente. Le voci non ancora disponibili si limitano a segnalarlo
+/// tramite snackbar.
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
-
-  void _showComingSoon(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Funzionalità in arrivo')),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,27 +77,27 @@ class ProfileScreen extends StatelessWidget {
           _ProfileTile(
             icon: Icons.person_outline,
             label: 'Dati personali',
-            onTap: () => _showComingSoon(context),
+            onTap: () => AppSnackbar.showComingSoon(context, 'Dati personali'),
           ),
           _ProfileTile(
             icon: Icons.home_outlined,
             label: 'Gestione case',
-            onTap: () => _showComingSoon(context),
+            onTap: () => AppSnackbar.showComingSoon(context, 'Gestione case'),
           ),
           _ProfileTile(
             icon: Icons.notifications_none,
             label: 'Notifiche',
-            onTap: () => _showComingSoon(context),
+            onTap: () => AppSnackbar.showComingSoon(context, 'Notifiche'),
           ),
           _ProfileTile(
             icon: Icons.shield_outlined,
             label: 'Privacy e sicurezza',
-            onTap: () => _showComingSoon(context),
+            onTap: () => AppSnackbar.showComingSoon(context, 'Privacy e sicurezza'),
           ),
           _ProfileTile(
             icon: Icons.logout,
             label: 'Logout',
-            onTap: () => _showComingSoon(context),
+            onTap: () => AppSnackbar.showComingSoon(context, 'Logout'),
           ),
           const SizedBox(height: 24),
         ],

@@ -115,7 +115,7 @@ class ProductImagePicker extends StatelessWidget {
                 border: Border.all(color: AppColors.white, width: 2.5),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
+                    color: Colors.black.withValues(alpha: 0.15),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),

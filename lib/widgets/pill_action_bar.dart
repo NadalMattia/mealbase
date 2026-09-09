@@ -19,13 +19,10 @@ class PillBarAction {
   });
 }
 
-/// Barra nera, pillola, con 2 (o più) azioni separate da un divisore.
+/// Barra di azioni a pillola, ancorata in fondo alla schermata.
 ///
-/// Prima questo stesso widget esisteva duplicato (con nomi diversi ma
-/// codice identico) come `_ScanInsertBar`/`_BarButton` in pantry_screen.dart
-/// e come `_DeleteSelectionBar` sia in pantry_screen.dart che in
-/// shopping_list_screen.dart. Ora è un solo widget riusabile ovunque serva
-/// una barra di azioni in stile "pillola".
+/// Le azioni sono separate da un divisore verticale e si dividono lo
+/// spazio in parti uguali.
 class PillActionBar extends StatelessWidget {
   final List<PillBarAction> actions;
 

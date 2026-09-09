@@ -1,40 +1,98 @@
 # MealBase — Smart Food & Inventory Manager
 
-MealBase è un'applicazione mobile (Flutter, Android) per la gestione della dispensa domestica: tracciamento di prodotti, quantità e scadenze, lista della spesa integrata con carrello, scanner barcode con correzione manuale del match e notifiche di scadenza.
+Applicazione mobile Flutter (Android) per la gestione della dispensa domestica: tracciamento di prodotti, quantità e scadenze, lista della spesa con carrello integrato, scanner barcode con correzione manuale e notifiche di scadenza.
 
 Progetto realizzato per il corso di **Sviluppo Applicazioni Mobile** — Università degli Studi di Udine, A.A. 2025/2026.
 
-> La relazione completa del progetto (System Concept Statement, Competitive Assessment, Requirements Brief, Sketching, Wireframe, Evaluation) è disponibile in [`relazione/relazione.pdf`](relazione/relazione.pdf).
+> La relazione completa (System Concept Statement, Competitive Assessment, Requirements Brief, Sketching, Wireframe, Evaluation) è in [`relazione/relazione.pdf`](relazione/relazione.pdf).
 
 ---
 
 ## Indice
 
 - [Funzionalità](#funzionalità)
+- [Architettura](#architettura)
 - [Struttura del progetto](#struttura-del-progetto)
+- [Persistenza dei dati](#persistenza-dei-dati)
+- [Notifiche di scadenza](#notifiche-di-scadenza)
 - [Requisiti](#requisiti)
-- [Come avviare l'app](#come-avviare-lapp)
+- [Avviare l'app](#avviare-lapp)
 - [APK pronto all'uso](#apk-pronto-alluso)
-- [Generazione dell'icona](#generazione-dellicona)
+- [Icona dell'app](#icona-dellapp)
 - [Scraper recensioni concorrenti](#scraper-recensioni-concorrenti)
-- [Roadmap / cosa manca](#roadmap--cosa-manca)
+- [Qualità del codice](#qualità-del-codice)
+- [Limiti noti e roadmap](#limiti-noti-e-roadmap)
 
 ---
 
 ## Funzionalità
 
-**Implementate:**
-- Gestione multi-casa (dispense separate, es. "Casa 1", "Casa 2")
-- Dispensa digitale con vista a tab (Tutto / Frigo / Dispensa / posizioni personalizzate)
-- Scanner barcode (integrazione [Open Food Facts](https://world.openfoodfacts.org/)) con form di correzione manuale del prodotto riconosciuto prima del salvataggio
-- Inserimento manuale/fotografico del prodotto (per articoli sfusi o senza barcode leggibile)
-- Ricerca e filtro prodotti per categoria, posizione e prossimità alla scadenza
-- Lista della spesa con sezioni "da acquistare" / "carrello" sulla stessa schermata, spostamento diretto degli articoli
-- Notifiche push locali per i prodotti in scadenza
-- Modifica manuale di categoria e posizione, sempre persistente
-- Onboarding leggero (invito persistente sulla dispensa/lista vuota, tip contestuale sullo scanner e sul carrello, mostrati una sola volta)
+- **Multi-casa** — dispense, liste e spazi separati per ogni casa (es. "Casa", "Casa al mare")
+- **Dispensa a tab** — Tutto / Frigo / Dispensa / Freezer, più spazi personalizzati riordinabili
+- **Scanner barcode** — integrazione [Open Food Facts](https://world.openfoodfacts.org/), con form di correzione manuale prima del salvataggio
+- **Inserimento manuale o fotografico** — per prodotti sfusi o con barcode illeggibile
+- **Ricerca e filtri** — per nome, categoria, posizione e prossimità alla scadenza
+- **Lista della spesa** — sezioni "da acquistare" e "nel carrello" sulla stessa schermata, un tocco sposta l'articolo
+- **Passaggio spesa → dispensa** — salvando un prodotto suggerito dal carrello, l'articolo di origine viene rimosso automaticamente
+- **Notifiche locali** — promemoria il giorno prima della scadenza
+- **Eliminazione con annullamento** — snackbar con "ANNULLA", niente scritture su disco finché la scelta non è definitiva
+- **Onboarding leggero** — inviti sulle schermate vuote e due suggerimenti contestuali, mostrati una volta sola
 
-**Non ancora implementate** (vedi [Roadmap](#roadmap--cosa-manca)): autenticazione/account, sincronizzazione multi-dispositivo, condivisione familiare, suggerimento ricette, dark mode.
+---
+
+## Architettura
+
+**Provider** per lo stato, **Hive** per la persistenza locale. Nessun backend: tutti i dati restano sul device.
+
+La separazione è a quattro livelli e le dipendenze scendono in una sola direzione — nessun servizio conosce un provider, nessun provider conosce una schermata.
+
+```
+   Schermate          leggono i provider, non toccano mai Hive
+       │
+       ▼
+   Provider           ChangeNotifier: stato in memoria + notifiche alla UI
+       │
+       ▼
+   Servizi            accesso a Hive, rete, notifiche, file
+       │
+       ▼
+   Modelli            HiveObject: quello che finisce su disco
+```
+
+Ogni dominio ha la propria catena verticale:
+
+| Provider | Servizio | Modello |
+|---|---|---|
+| `PantryProvider` | `HiveService` | `Product` |
+| `ShoppingListProvider` | `ShoppingListService` | `ShoppingItem` |
+| `LocationProvider` | `LocationService` | `Location` |
+| `HouseProvider` | `HouseService` | `House` |
+
+I primi tre servizi ereditano da **`HouseScopedHiveService`**, la classe base astratta che incapsula il concetto di "dato scoperto per casa": apre il box giusto, gestisce le migrazioni, espone il CRUD. Le sottoclassi aggiungono solo la logica del proprio dominio tramite l'hook `onHouseSwitched()` — `LocationService` lo usa per creare Frigo/Dispensa/Freezer in una casa nuova, `ShoppingListService` per migrare dati da schemi precedenti.
+
+Quattro servizi sono trasversali e non hanno un provider dedicato, perché non producono stato applicativo: `NotificationService`, `ImageStorageService`, `BarcodeService`, `OnboardingService`.
+
+### Navigazione
+
+Entrambi i contenitori usano `IndexedStack`, che mantiene vivo lo stato delle schermate sorelle: scroll, ricerca e tab selezionata sopravvivono al cambio di scheda.
+
+```
+HomeScreen                          IndexedStack, 2 tab
+├── HouseListScreen                 seleziona la casa → switchHouse sui 3 provider
+│   └── MainScreen                  IndexedStack, 3 tab
+│       ├── ShoppingListScreen
+│       │   ├── ShoppingItemEditScreen
+│       │   └── ShoppingScannerScreen
+│       ├── PantryScreen            tab iniziale
+│       │   ├── ProductFormScreen
+│       │   ├── ScannerScreen → ProductFormScreen
+│       │   ├── ManageLocationsScreen
+│       │   └── HouseSettingsScreen        segnaposto
+│       └── RecipesScreen                  segnaposto
+└── ProfileScreen                          in gran parte segnaposto
+```
+
+> Una mappa completa delle dipendenze file per file, con i diagrammi dei quattro livelli e la tabella di tutti gli import interni, è in [`ARCHITETTURA.html`](ARCHITETTURA.html) — apribile nel browser.
 
 ---
 
@@ -43,79 +101,124 @@ Progetto realizzato per il corso di **Sviluppo Applicazioni Mobile** — Univers
 ```
 mealbase/
 ├── lib/
-│   ├── main.dart                 # Entry point, inizializzazione Hive/servizi
-│   ├── models/                   # Modelli dati (Hive) + adapter generati (*.g.dart)
-│   ├── providers/                # State management (Provider): PantryProvider,
-│   │                              # ShoppingListProvider, HouseProvider, LocationProvider
-│   ├── services/                 # Logica di business e accesso ai dati:
-│   │                              # Hive, barcode/Open Food Facts, notifiche,
-│   │                              # storage immagini, onboarding
-│   ├── screens/                  # Schermate dell'app
-│   ├── widgets/                  # Componenti UI riutilizzabili
-│   ├── theme/                    # Palette colori, stili testo, radius condivisi
-│   └── utils/                    # Helper vari (es. snackbar)
-├── assets/icon/                  # Icona sorgente dell'app
-├── android/                      # Progetto nativo Android (Gradle)
-├── test/                         # Test Flutter
-├── APK/                          # APK già compilato, pronto da installare
-├── scraperApp/                   # Script Python per l'analisi dei concorrenti
-├── relazione/                    # Relazione del progetto (LaTeX + PDF)
-├── requirements.txt              # Dipendenze Python per lo scraper
-└── pubspec.yaml                  # Dipendenze e configurazione Flutter/Dart
+│   ├── main.dart               Entry point: adapter Hive, apertura box, MultiProvider
+│   ├── models/                 6 modelli + 4 adapter generati (*.g.dart)
+│   ├── providers/              4 ChangeNotifier
+│   ├── services/               9 servizi (dati, barcode, notifiche, immagini, onboarding)
+│   ├── screens/                13 schermate
+│   ├── widgets/                14 componenti riusabili
+│   ├── theme/                  Design system: palette, stili testo, radius, spacing
+│   └── utils/                  Helper senza stato (snackbar centralizzate)
+├── android/                    Progetto nativo Android (Gradle)
+├── assets/icon/                Icona sorgente
+├── APK/                        APK già compilato
+├── scraperApp/                 Script Python per la Competitive Assessment
+├── relazione/                  Relazione del progetto (LaTeX + PDF)
+├── analysis_options.yaml       Regole dell'analyzer Dart
+├── requirements.txt            Dipendenze Python dello scraper
+└── pubspec.yaml                Dipendenze e configurazione Flutter
 ```
 
-**Pattern architetturale:** Provider (state management) + Hive (persistenza locale NoSQL, nessun backend/cloud). Ogni "casa" ha i propri box Hive scoperti per nome, tramite una classe base comune (`HouseScopedHiveService`) condivisa da tutti i servizi che gestiscono dati per-casa (prodotti, articoli spesa, posizioni).
+I widget seguono una regola precisa: **dodici su quattordici importano soltanto il tema**. Ricevono dati e callback dal chiamante, quindi funzionerebbero identici in un altro progetto. Fanno eccezione `pantry_product_list` (usa `PantryProvider` e naviga; è di fatto una porzione di `PantryScreen` estratta per accorciarla) e `product_image_picker` (chiama `ImageStorageService` direttamente, perché copiare un file non genera stato che un provider debba notificare).
+
+---
+
+## Persistenza dei dati
+
+Un box Hive globale per le case, più tre box **per ogni casa**, identificati dall'UUID della casa:
+
+```
+houses                       elenco delle case
+onboarding_flags             suggerimenti già visti
+products_<houseId>           dispensa
+locations_<houseId>          spazi
+shopping_items_<houseId>     lista della spesa
+```
+
+La chiave è `House.id` e non il nome: il nome è testo libero che l'utente può cambiare o duplicare, quindi usarlo come nome del box significherebbe rendere i dati irraggiungibili a ogni rinomina e far condividere la stessa dispensa a due case omonime. `HouseScopedHiveService` migra automaticamente, alla prima apertura, i box creati dagli schemi di naming precedenti e poi li cancella dal disco.
+
+Nota per chi legge il codice: un `HiveObject` è legato al box in cui si trova, quindi la migrazione **non può** riusare la stessa istanza in un box diverso. Da qui il parametro `cloneForMigration` che ogni servizio passa alla classe base.
+
+---
+
+## Notifiche di scadenza
+
+Il promemoria è programmato per il giorno prima della scadenza alle 9:00. Se quel momento è già passato ma il prodotto non è ancora scaduto, la notifica viene comunque programmata a breve, invece di essere scartata.
+
+Viene usata la modalità **inesatta** (`inexactAllowWhileIdle`): la modalità esatta richiede `SCHEDULE_EXACT_ALARM`, che Google concede solo a sveglie, timer e calendari. Il prezzo è che in Doze la consegna può ritardare.
+
+⚠️ **Le notifiche pianificate richiedono configurazione nativa.** Dalla versione 16, `flutter_local_notifications` dichiara nel proprio manifest solo il minimo: i due receiver vanno dichiarati dall'app. Senza, l'allarme viene registrato ma non raggiunge nessun componente — nessuna notifica e nessun errore lato Dart. In `android/app/src/main/AndroidManifest.xml` devono essere presenti:
+
+```xml
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+
+<receiver android:exported="false"
+    android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
+<receiver android:exported="false"
+    android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+    <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED"/>
+        <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+        <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
+        <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
+    </intent-filter>
+</receiver>
+```
+
+`RECEIVE_BOOT_COMPLETED` e il secondo receiver servono a riprogrammare le notifiche dopo un riavvio del telefono, che altrimenti le azzera tutte.
+
+Per diagnosticare, `NotificationService` espone `debugStato()`, `isEnabled()`, `pendingCount()` e `showTestNotification()`.
 
 ---
 
 ## Requisiti
 
-- **Flutter SDK** — canale `stable` (progetto creato con la revision `058e0af2c2b`; consigliata una versione recente del canale stable)
+- **Flutter SDK**, canale `stable` (progetto creato con la revision `058e0af2c2b`)
 - **Dart SDK** `^3.12.2` (vincolo in `pubspec.yaml`)
-- Un device Android o un emulatore (il progetto è configurato solo per Android: `ios: false` nella generazione icone, nessuna cartella `ios/` mantenuta attiva)
-- Per lo scanner barcode: permesso fotocamera (già dichiarato in `AndroidManifest.xml`)
-- Per le notifiche: permesso `POST_NOTIFICATIONS` (Android 13+, già dichiarato)
+- Un device Android o un emulatore — il progetto è configurato solo per Android
+- **Java 17** e **core library desugaring** abilitato in `android/app/build.gradle`, richiesti da `flutter_local_notifications` 22.x; `minSdk` 24 o superiore
+- Permessi già dichiarati nel manifest: fotocamera (scanner) e `POST_NOTIFICATIONS` (Android 13+)
 
 ---
 
-## Come avviare l'app
+## Avviare l'app
 
 ```bash
-# 1. Clona la repository
 git clone https://github.com/NadalMattia/mealbase.git
 cd mealbase/mealbase
 
-# 2. Scarica le dipendenze
 flutter pub get
 
-# 3. (Se necessario) rigenera gli adapter Hive dai modelli
+# Solo se hai modificato i modelli: rigenera gli adapter Hive
 dart run build_runner build --delete-conflicting-outputs
 
-# 4. Avvia l'app su un device/emulatore collegato
 flutter run
 ```
 
-Per generare un APK installabile:
+Per un APK installabile:
 
 ```bash
 flutter build apk --release
 ```
 
-L'APK compilato sarà in `build/app/outputs/flutter-apk/app-release.apk` (cartella `build/` non versionata, si rigenera ad ogni build — vedi sotto).
+L'output è in `build/app/outputs/flutter-apk/app-release.apk`.
 
-> ℹ️ **Nota su `build/`, `.dart_tool/` e `venv/`**: queste cartelle contengono solo output generato automaticamente (build Flutter/Gradle, cache Dart, ambiente virtuale Python) e sono escluse da `.gitignore`. Non serve scaricarle: si rigenerano da sole con i comandi sopra (per Flutter) o con `pip install -r requirements.txt` (per lo scraper, vedi sotto).
+> ℹ️ Le cartelle `build/`, `.dart_tool/` e `venv/` contengono solo output generato e sono in `.gitignore`. Si rigenerano con i comandi qui sopra, o con `pip install -r requirements.txt` per lo scraper.
+
+⚠️ **Attenzione se rigeneri gli adapter.** `models/product.g.dart` e `models/shopping_item.g.dart` contengono una modifica manuale, segnalata da un commento nel punto esatto: la lettura della quantità accetta sia `int` sia `double` (`(fields[x] as num).toInt()`), così i prodotti salvati da versioni precedenti non fanno fallire l'apertura dell'intera dispensa. Rigenerare con `build_runner` sovrascrive la correzione: va riapplicata a mano, o sostituita con un adapter scritto su misura.
 
 ---
 
 ## APK pronto all'uso
 
-Se non vuoi compilare il progetto, in `APK/mealbase.apk` trovi un APK già pronto: scaricalo e installalo direttamente su un device Android (potrebbe essere necessario abilitare "Installa da fonti sconosciute" nelle impostazioni di sicurezza del device).
+In `APK/mealbase.apk` c'è un APK già compilato: scaricalo e installalo su un device Android. Potrebbe servire abilitare "Installa da fonti sconosciute" nelle impostazioni di sicurezza.
 
 ---
 
-## Generazione dell'icona
+## Icona dell'app
 
-L'icona dell'app viene generata a partire da `assets/icon/iconApp.jpg` tramite il pacchetto [`flutter_launcher_icons`](https://pub.dev/packages/flutter_launcher_icons) (configurazione in fondo a `pubspec.yaml`). Per rigenerarla dopo aver sostituito l'immagine sorgente:
+Generata da `assets/icon/iconApp.jpg` con [`flutter_launcher_icons`](https://pub.dev/packages/flutter_launcher_icons) (configurazione in fondo a `pubspec.yaml`). Per rigenerarla dopo aver sostituito l'immagine:
 
 ```bash
 flutter pub get
@@ -126,57 +229,72 @@ dart run flutter_launcher_icons
 
 ## Scraper recensioni concorrenti
 
-Lo script [`scraperApp/scraper.py`](scraperApp/scraper.py) è lo strumento usato per la **Competitive Assessment** della relazione: scarica da Google Play, per i tre concorrenti diretti analizzati (KitchenPal, NoWaste, BestBefore), i metadati dell'app (sviluppatore, download, rating) e fino a 1000 recensioni per lingua (italiano + inglese), salvando tutto in due CSV dentro `scraperApp/`.
+[`scraperApp/scraper.py`](scraperApp/scraper.py) è lo strumento usato per la **Competitive Assessment** della relazione. Scarica da Google Play, per i tre concorrenti diretti analizzati (KitchenPal, NoWaste, BestBefore), i metadati dell'app e fino a 1000 recensioni per lingua (italiano e inglese).
 
-### Setup ambiente virtuale
-
-Lo script richiede un **virtual environment Python** separato dal resto del progetto (non è codice Flutter/Dart). Da terminale, nella root del progetto:
+È codice Python, indipendente dal resto del progetto, e richiede un virtual environment separato.
 
 ```bash
-# Crea il virtual environment
+# Dalla root del progetto
 python -m venv venv
 
-# Attivalo
-# Windows (PowerShell):
-venv\Scripts\Activate.ps1
-# macOS / Linux:
-source venv/bin/activate
+# Attiva l'ambiente
+venv\Scripts\Activate.ps1      # Windows (PowerShell)
+source venv/bin/activate       # macOS / Linux
 
-# Installa le dipendenze
 pip install -r requirements.txt
-```
 
-### Esecuzione
-
-```bash
 python scraperApp/scraper.py
 ```
 
-Al termine troverai in `scraperApp/`:
-- `app_metadata.csv` — metadati delle tre app (sviluppatore, download, rating, ecc.)
-- `dataset_3_apps.csv` — dataset delle recensioni raccolte (deduplicate), con colonne `App`, `Lingua`, `Valutazione`, `Utente`, `Data`, `Recensione`
+Al termine, in `scraperApp/`:
 
-Per disattivare il virtual environment al termine: `deactivate`.
+- `app_metadata.csv` — sviluppatore, download, rating delle tre app
+- `dataset_3_apps.csv` — recensioni deduplicate, con colonne `App`, `Lingua`, `Valutazione`, `Utente`, `Data`, `Recensione`
 
-> ⚠️ Lo script interroga le API pubbliche di Google Play tramite [`google-play-scraper`](https://pypi.org/project/google-play-scraper/): tempi di esecuzione e disponibilità dei dati dipendono dalla risposta di Google Play in quel momento.
+Per uscire dall'ambiente virtuale: `deactivate`.
+
+> ⚠️ Lo script usa le API pubbliche di Google Play tramite [`google-play-scraper`](https://pypi.org/project/google-play-scraper/): tempi e disponibilità dei dati dipendono dalla risposta di Google Play in quel momento.
 
 ---
 
-## Roadmap / cosa manca
+## Qualità del codice
 
-L'app copre i requisiti a priorità **ALTA** individuati nel Requirements Brief della relazione, ma resta un MVP volutamente estendibile. Non ancora implementati:
+```bash
+flutter analyze
+```
 
-- **Autenticazione e account utente** — le case sono attualmente locali al device, nessun login/registrazione
-- **Sincronizzazione multi-dispositivo** — nessun backend cloud, i dati restano su Hive locale
-- **Condivisione familiare della dispensa/lista** — la schermata Impostazioni Casa esiste come placeholder ("in arrivo")
-- **Suggerimento ricette** — voce presente in navigazione per continuità visiva, non ancora sviluppata
+`analysis_options.yaml` estende il set raccomandato di `flutter_lints` con alcune regole mirate ai problemi effettivamente incontrati nel progetto, tra cui `use_build_context_synchronously` e `unawaited_futures`.
+
+**Non ci sono test automatici.** È la lacuna principale. I tre punti da cui varrebbe la pena partire, in ordine di valore: il calcolo della data di notifica (logica pura con casi limite interessanti), la migrazione dei box Hive, e l'ordinamento della dispensa con la gestione dei `null` nelle date di scadenza.
+
+---
+
+## Limiti noti e roadmap
+
+L'app copre i requisiti a priorità **ALTA** del Requirements Brief, ma resta un MVP.
+
+**Non implementato:**
+
+- **Autenticazione e account** — le case sono locali al device
+- **Sincronizzazione multi-dispositivo** — nessun backend, tutto su Hive locale
+- **Condivisione familiare** — `HouseSettingsScreen` è un segnaposto
+- **Rinomina ed eliminazione di una casa** — l'architettura per-id la rende ora sicura da implementare, ma la schermata non esiste ancora
+- **Suggerimento ricette** — voce in navigazione per continuità visiva
 - **Dark mode**
 
-Il progetto è stato strutturato fin dall'inizio per poter accogliere queste funzionalità senza stravolgimenti architetturali — vedi la sezione *Conclusione* della relazione per il dettaglio.
+**Limiti dell'implementazione attuale:**
+
+- Filtri e ordinamenti della dispensa sono calcolati in memoria: con qualche migliaio di prodotti per casa servirebbe un database con supporto a query
+- Le immagini remote di Open Food Facts non sono cacheate su disco (`Image.network`): offline le card scansionate restano vuote e ogni apertura riscarica. `cached_network_image` risolverebbe entrambe le cose
+- Tutte le stringhe dell'interfaccia sono in italiano, scritte direttamente nei widget
+- Su OEM aggressivi (Xiaomi, Huawei) le notifiche pianificate possono non arrivare per restrizioni di sistema indipendenti dal codice
+
+Il progetto è strutturato per accogliere queste funzionalità senza stravolgimenti architetturali — vedi la sezione *Conclusione* della relazione.
 
 ---
 
 ## Autore
 
 **Mattia Nadal**
-Dipartimento di Scienze Matematiche, Informatiche e Fisiche, Università degli Studi di Udine
+Dipartimento di Scienze Matematiche, Informatiche e Fisiche
+Università degli Studi di Udine

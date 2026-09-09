@@ -15,6 +15,10 @@ import 'house_settings_screen.dart';
 import '../services/onboarding_service.dart';
 import '../widgets/scan_tip_bubble.dart';
 
+/// Dispensa della casa selezionata, con una tab per ogni spazio.
+///
+/// Le tab sono ricostruite quando gli spazi cambiano, e la schermata
+/// gestisce anche ricerca, filtri, ordinamento e selezione multipla.
 class PantryScreen extends StatefulWidget {
   final String houseName;
   const PantryScreen({super.key, required this.houseName});
@@ -84,18 +88,25 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
     });
   }
 
-  void _deleteSelected() {
+  /// Elimina i prodotti selezionati e chiude la modalità selezione.
+  Future<void> _deleteSelected() async {
     if (_selectedProducts.isEmpty) return;
 
     final count = _selectedProducts.length;
     final provider = context.read<PantryProvider>();
-
-    for (final id in _selectedProducts) {
-      provider.deleteProduct(id);
-    }
+    final ids = List<String>.from(_selectedProducts);
 
     _toggleSelectionMode();
-    AppSnackbar.showDeleted(context, message: '$count prodotti eliminati');
+
+    // La modalità selezione viene chiusa prima dell'attesa, così
+    // l'interfaccia resta reattiva durante le cancellazioni.
+    await provider.deleteProducts(ids);
+
+    if (!mounted) return;
+    AppSnackbar.showDeleted(
+      context,
+      message: count == 1 ? '1 prodotto eliminato' : '$count prodotti eliminati',
+    );
   }
 
   void _openFilterBottomSheet() {
@@ -177,27 +188,13 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
                           isScrollable: true,
                           tabAlignment: TabAlignment.start,
                           dividerColor: Colors.transparent,
-                          // FIX: prima il TabBar disegnava un proprio
-                          // "indicator" (il box grigio di selezione),
-                          // dimensionato su tutta l'area del Tab
-                          // (`indicatorSize.tab`, che include anche
-                          // `labelPadding`). Il `Container` interno di
-                          // ogni Tab, invece, aveva la sua decorazione
-                          // separata (con padding orizzontale 16) e
-                          // diventava trasparente da selezionato per
-                          // "lasciar vedere" l'indicator sotto. I due box
-                          // avevano dimensioni leggermente diverse (il
-                          // `labelPadding: only(right: 8)` allargava
-                          // l'indicator 8px in più a destra rispetto al
-                          // Container interno), quindi il testo appariva
-                          // spostato a sinistra rispetto al pill grigio
-                          // quando il tab era selezionato.
-                          //
-                          // Ora l'indicator è completamente trasparente:
-                          // è sempre e solo il Container interno di ogni
-                          // Tab (identico nei due stati, cambia solo il
-                          // colore) a disegnare lo sfondo, quindi il testo
-                          // resta sempre centrato nello stesso identico box.
+                          // L'indicatore nativo è reso trasparente: lo
+                          // sfondo del tab selezionato è disegnato dal
+                          // Container interno di ogni Tab, identico nei due
+                          // stati salvo il colore. Sono due box con
+                          // padding diversi, e lasciarli disegnare
+                          // entrambi scentrerebbe il testo rispetto allo
+                          // sfondo.
                           indicatorSize: TabBarIndicatorSize.tab,
                           indicator: const BoxDecoration(),
                           labelColor: AppColors.verdeBosco,

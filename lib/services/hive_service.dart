@@ -2,36 +2,42 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../models/product.dart';
 import 'house_scoped_hive_service.dart';
 
-/// Servizio Hive per i prodotti della dispensa, scoperto "per casa" tramite
-/// [HouseScopedHiveService].
+/// Accesso ai prodotti della dispensa, uno box Hive per casa.
 ///
-/// NOTA STORICA: questa classe conteneva in precedenza anche `getAllHouses()`
-/// e `addHouse()`, una copia identica (codice morto, mai chiamato da
-/// nessuno screen/provider) dei metodi già presenti in [HouseService], che
-/// è l'unico punto reale usato dall'app per gestire le case (box globale
-/// 'houses', non scoperto per casa). Duplicare quella logica qui era
-/// fonte di confusione e rischio di bug futuri (le due copie avrebbero
-/// potuto divergere), quindi è stata rimossa: per tutto ciò che riguarda
-/// le case, fare riferimento a [HouseService]/[HouseProvider].
+/// Le case in quanto tali sono gestite da [HouseService], che lavora su un
+/// box globale non scoperto per casa.
 class HiveService extends HouseScopedHiveService<Product> {
-  HiveService() : super('products');
+  HiveService()
+      : super(
+          'products',
+          cloneForMigration: (p) => Product(
+            id: p.id,
+            nome: p.nome,
+            quantita: p.quantita,
+            unita: p.unita,
+            categoria: p.categoria,
+            posizione: p.posizione,
+            dataAcquisto: p.dataAcquisto,
+            dataScadenza: p.dataScadenza,
+            imagePath: p.imagePath,
+            marca: p.marca,
+          ),
+        );
 
-  /// Registra l'adapter Hive del modello [Product].
-  ///
-  /// L'adapter di [House] viene registrato separatamente da
-  /// `HouseService.registerAdapter()` (chiamato in `main.dart`): prima
-  /// veniva registrato anche qui, in modo ridondante.
+  /// Registra l'adapter del modello [Product]. Va chiamata una volta in
+  /// `main.dart`, prima di aprire qualsiasi box che contenga prodotti.
   static void registerAdapter() {
     if (!Hive.isAdapterRegistered(0)) {
       Hive.registerAdapter(ProductAdapter());
     }
   }
 
-  // --- PRODOTTI (Per-Casa) ---
   List<Product> getAllProducts() => getAll();
 
   Future<void> addProduct(Product product) async => await put(product.id, product);
 
+  /// Persiste le modifiche fatte in-place su [product], che è lo stesso
+  /// riferimento restituito da [getAllProducts].
   Future<void> updateProduct(Product product) async => await product.save();
 
   Future<void> deleteProduct(String id) async => await delete(id);

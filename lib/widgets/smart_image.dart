@@ -1,6 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 
+/// Immagine che sceglie da sola come caricarsi.
+///
+/// Un percorso che inizia con `http` è un'immagine remota di Open Food
+/// Facts, tutto il resto è un file locale. Placeholder ed errore sono
+/// forniti dal chiamante, così ogni contesto può renderli con le proprie
+/// dimensioni e il proprio stile.
 class SmartImage extends StatelessWidget {
   /// Path locale o URL remoto dell'immagine. Se nullo/vuoto viene
   /// mostrato direttamente il placeholder.

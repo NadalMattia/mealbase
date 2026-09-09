@@ -2,10 +2,23 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'smart_image.dart';
 
+/// Card di un prodotto, usata sia in dispensa sia nella lista della spesa.
+///
+/// Il colore di sfondo comunica lo stato di scadenza: rosso per un
+/// prodotto scaduto, arancione entro tre giorni, verde altrimenti, grigio
+/// in assenza di data. Gli articoli della spesa usano una variante neutra,
+/// non avendo scadenza.
+/// Card di un prodotto, usata sia in dispensa sia nella lista della spesa.
+///
+/// Il colore di sfondo comunica lo stato di scadenza: rosso per un
+/// prodotto scaduto, arancione entro tre giorni, verde altrimenti, grigio
+/// in assenza di data. Gli articoli della spesa usano una variante neutra,
+/// non avendo scadenza.
 class ProductCard extends StatelessWidget {
   final String name;
   final String? brand;
   final String? imageUrl;
+  final String? marca;
   final DateTime? expirationDate;
   final int? quantity;
   final bool isShoppingCard;
@@ -20,6 +33,7 @@ class ProductCard extends StatelessWidget {
     required this.name,
     this.brand,
     this.imageUrl,
+    this.marca,
     this.expirationDate,
     this.quantity,
     this.isShoppingCard = false,
@@ -131,17 +145,9 @@ class ProductCard extends StatelessWidget {
               ],
             ),
           ),
-          // FIX: il badge "xN" della quantità DEVE essere figlio diretto
-          // dello Stack esterno. Prima era annidato dentro due Column
-          // (quello dell'immagine+info, e quello del testo nome/marca):
-          // Positioned funziona solo se il suo genitore immediato è uno
-          // Stack, quindi in quella posizione Flutter lanciava un errore
-          // di layout ("Incorrect use of ParentDataWidget") ogni volta
-          // che un prodotto aveva quantity > 1 — la card si rompeva del
-          // tutto (il rettangolo grigio senza contenuto negli screenshot),
-          // mostrando solo il pulsante di chiusura, che essendo un altro
-          // Positioned diretto dello Stack continuava a renderizzare
-          // correttamente.
+          // Il badge della quantità è figlio diretto dello Stack: un
+          // Positioned annidato in una Column solleverebbe "Incorrect use
+          // of ParentDataWidget" e la card non verrebbe disegnata.
           if (quantity != null && quantity! > 1)
             Positioned(
               bottom: 46,
@@ -149,7 +155,7 @@ class ProductCard extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.black.withOpacity(0.85),
+                  color: AppColors.black.withValues(alpha: 0.85),
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                   border: Border.all(color: AppColors.white, width: 1),
                 ),

@@ -3,6 +3,10 @@ import '../models/pantry_sort_option.dart';
 import '../models/product_category.dart';
 import '../theme/app_theme.dart';
 
+/// Foglio inferiore con i criteri di ordinamento e il filtro per categoria
+/// della dispensa.
+/// Foglio inferiore con i criteri di ordinamento e il filtro per categoria
+/// della dispensa.
 class PantryFilterBottomSheet extends StatefulWidget {
   final PantrySortOption currentSort;
   final String? currentCategory;
@@ -23,12 +27,10 @@ class _PantryFilterBottomSheetState extends State<PantryFilterBottomSheet> {
   late PantrySortOption _selectedSort;
   late String? _selectedCategory;
 
-  // 'Tutte' è un valore "sentinella" solo per la UI del filtro (nessun
-  // prodotto ha davvero categoria 'Tutte'), quindi resta una stringa a sé
-  // e non fa parte dell'enum ProductCategory. Le categorie vere vengono
-  // da ProductCategories.labels: prima questa lista era hardcoded qui e
-  // duplicata identicamente in product_form_screen.dart, con il rischio
-  // che le due si disallineassero nel tempo.
+  // 'Tutte' è un valore sentinella della sola UI del filtro: nessun
+  // prodotto ha davvero questa categoria, quindi non fa parte dell'enum
+  // ProductCategory. Le categorie reali arrivano da
+  // ProductCategories.labels, unica fonte per tutta l'app.
   final List<String> _categories = ['Tutte', ...ProductCategories.labels];
 
   @override

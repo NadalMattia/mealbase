@@ -3,6 +3,11 @@ import 'package:hive/hive.dart';
 part 'product.g.dart';
 
 @HiveType(typeId: 0)
+/// Un prodotto in dispensa.
+///
+/// [posizione] referenzia uno spazio per nome anziché per id: eliminando
+/// uno spazio i prodotti vanno quindi riassegnati, altrimenti restano
+/// visibili solo nella tab "Tutto".
 class Product extends HiveObject {
   @HiveField(0)
   String id;

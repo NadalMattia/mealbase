@@ -12,6 +12,10 @@ import '../services/onboarding_service.dart';
 import '../widgets/shopping_empty_state.dart';
 import '../widgets/cart_tip_banner.dart';
 
+/// Lista della spesa divisa in "da acquistare" e "nel carrello".
+///
+/// Un tocco su un articolo lo sposta tra le due sezioni, una pressione
+/// prolungata ne apre la modifica.
 class ShoppingListScreen extends StatefulWidget {
   const ShoppingListScreen({super.key});
 
@@ -23,8 +27,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   bool _isSelectionMode = false;
   final Set<String> _selectedItems = {};
 
-  // Tip "tocca per spostare nel carrello", mostrato una sola volta
-  // nella vita dell'app (stesso pattern del tip scanner in dispensa).
+  /// Suggerimento sul passaggio al carrello, mostrato una volta sola.
   bool _showCartTip = !OnboardingService.hasSeenCartTip;
 
   void _dismissCartTip() {
@@ -49,18 +52,25 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     });
   }
 
-  void _deleteSelected() {
+  /// Elimina gli articoli selezionati e chiude la modalità selezione.
+  Future<void> _deleteSelected() async {
     if (_selectedItems.isEmpty) return;
 
     final count = _selectedItems.length;
     final provider = context.read<ShoppingListProvider>();
-
-    for (final id in _selectedItems) {
-      provider.deleteItem(id);
-    }
+    final ids = List<String>.from(_selectedItems);
 
     _toggleSelectionMode();
-    AppSnackbar.showDeleted(context, message: '$count elementi eliminati');
+
+    // La modalità selezione viene chiusa prima dell'attesa, così
+    // l'interfaccia resta reattiva durante le cancellazioni.
+    await provider.deleteItems(ids);
+
+    if (!mounted) return;
+    AppSnackbar.showDeleted(
+      context,
+      message: count == 1 ? '1 elemento eliminato' : '$count elementi eliminati',
+    );
   }
 
   @override
@@ -130,6 +140,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     );
   }
 
+  /// Intestazione di sezione, con il pulsante che attiva la selezione
+  /// multipla.
   Widget _buildSectionHeader(String title) {
     return SliverToBoxAdapter(
       child: Padding(
@@ -160,6 +172,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     );
   }
 
+  /// Griglia di una delle due sezioni della lista.
   Widget _buildGrid(List<ShoppingItem> items, ShoppingListProvider provider) {
     if (items.isEmpty) {
       return SliverToBoxAdapter(
@@ -219,8 +232,20 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 );
 
                 final reason = await snackbarController.closed;
-                if (reason != SnackBarClosedReason.action) {
-                  provider.confirmDeleteItem(itemId);
+
+                // L'eliminazione diventa definitiva solo se l'utente ha
+                // lasciato scadere la snackbar o l'ha scartata con uno
+                // swipe. Ogni altra chiusura (`hide`, causata da un tocco
+                // sullo sfondo o dall'arrivo di un'altra snackbar) non è
+                // un consenso: in quel caso l'articolo viene ripristinato
+                // invece di sparire senza che l'utente lo abbia scelto.
+                final isExplicitDismissal = reason == SnackBarClosedReason.timeout ||
+                    reason == SnackBarClosedReason.swipe;
+
+                if (isExplicitDismissal) {
+                  await provider.confirmDeleteItem(itemId);
+                } else if (reason != SnackBarClosedReason.action) {
+                  provider.cancelDeleteItem(itemId);
                 }
               },
             );

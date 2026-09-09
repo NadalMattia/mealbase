@@ -3,6 +3,9 @@ import 'package:hive/hive.dart';
 part 'location.g.dart';
 
 @HiveType(typeId: 2)
+/// Uno spazio della dispensa (Frigo, Freezer, ...).
+///
+/// [ordine] conserva la disposizione scelta a mano dall'utente.
 class Location extends HiveObject {
   @HiveField(0)
   String id;

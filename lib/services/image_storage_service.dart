@@ -43,15 +43,28 @@ class ImageStorageService {
         await targetDir.create(recursive: true);
       }
 
-      // Manteniamo l'estensione originale (jpg/png/heic/...) così il
-      // sistema operativo continua a riconoscere correttamente il tipo di
-      // file; se per qualche motivo non c'è un'estensione, ripieghiamo su
-      // 'jpg' che è il formato più comune restituito da image_picker.
-      final hasExtension = pickedPath.contains('.');
-      final extension = hasExtension ? pickedPath.split('.').last : 'jpg';
+      // L'estensione va cercata nel solo nome del file, non nell'intero
+      // path: una cartella che contiene un punto produrrebbe altrimenti
+      // un'estensione priva di senso. Va preservata perché è ciò da cui il
+      // sistema operativo riconosce il tipo di immagine; in sua assenza si
+      // ripiega su jpg, il formato più comune restituito da image_picker.
+      final fileName = pickedPath.split('/').last;
+      final dotIndex = fileName.lastIndexOf('.');
+      final hasExtension = dotIndex > 0 && dotIndex < fileName.length - 1;
+      final extension = hasExtension ? fileName.substring(dotIndex + 1) : 'jpg';
       final newPath = '${targetDir.path}/${const Uuid().v4()}.$extension';
 
       await sourceFile.copy(newPath);
+
+      // Il file temporaneo di image_picker resta nella cache dell'app e
+      // nessun altro lo ripulisce: senza questa cancellazione la cache
+      // cresce di una copia a ogni foto. La rimozione è best effort, dato
+      // che rientra nel try/catch del metodo: un errore qui non deve
+      // invalidare la copia persistente appena creata.
+      if (await sourceFile.exists()) {
+        await sourceFile.delete();
+      }
+
       return newPath;
     } catch (_) {
       return pickedPath;
@@ -60,11 +73,8 @@ class ImageStorageService {
 
   /// Elimina il file locale puntato da [imagePath], se esiste.
   ///
-  /// Ignora silenziosamente:
-  /// - i path nulli o vuoti (niente da cancellare);
-  /// - i path remoti che iniziano con "http" (immagini Open Food Facts:
-  ///   non sono file nostri, non vanno toccati).
-
+  /// Non fa nulla per i path vuoti e per gli URL remoti di Open Food
+  /// Facts, che non sono file dell'app.
   static Future<void> deleteImage(String? imagePath) async {
     if (imagePath == null || imagePath.isEmpty) return;
     if (imagePath.startsWith('http')) return;

@@ -8,6 +8,8 @@ import '../utils/app_snackbar.dart';
 import '../widgets/product_image_picker.dart';
 import '../widgets/scanner_layout.dart';
 
+/// Scansione di un codice a barre per aggiungere un articolo alla lista
+/// della spesa, con form di conferma nel foglio inferiore.
 class ShoppingScannerScreen extends StatefulWidget {
   const ShoppingScannerScreen({super.key});
 
@@ -19,33 +21,42 @@ class _ShoppingScannerScreenState extends State<ShoppingScannerScreen> {
   final BarcodeService _barcodeService = BarcodeService();
   final TextEditingController _nomeController = TextEditingController();
   final TextEditingController _marcaController = TextEditingController();
-  // FIX: prima il controller partiva con testo REALE '1' (non un
-  // placeholder), identico all'hintText '1' del campo qui sotto. Cancellando
-  // la cifra digitata, il campo tornava vuoto ma l'hintText mostrava lo
-  // stesso identico "1" al suo posto: sembrava che la cancellazione non
-  // avesse avuto alcun effetto. Ora il controller parte vuoto e "1" si vede
-  // solo come vero placeholder grigio quando il campo è vuoto; il fallback
-  // a 1 se l'utente non scrive nulla resta gestito dal parsing in _save()
-  // (`int.tryParse(quantitaText) ?? 1`).
+  /// Parte vuoto di proposito: "1" compare come placeholder grigio e il
+  /// valore predefinito è applicato dal parsing in [_save].
   final TextEditingController _quantitaController = TextEditingController();
+  final FocusNode _nomeFocusNode = FocusNode();
+
+  /// Ultimo codice a barre elaborato.
+  ///
+  /// La fotocamera invoca il callback a ogni frame: confrontare il codice
+  /// evita di ripetere la stessa ricerca finché resta inquadrato, senza
+  /// impedire la scansione di un prodotto diverso.
+  String? _lastScannedCode;
 
   bool _isLookingUp = false;
   String? _imagePath;
+
+  /// Segnala che si è tentato un salvataggio con il nome vuoto.
+  bool _nomeError = false;
 
   @override
   void dispose() {
     _nomeController.dispose();
     _marcaController.dispose();
     _quantitaController.dispose();
+    _nomeFocusNode.dispose();
     super.dispose();
   }
 
+  /// Cerca su Open Food Facts il codice inquadrato e precompila il form.
   Future<void> _onDetect(BarcodeCapture capture) async {
-    if (_isLookingUp || _nomeController.text.trim().isNotEmpty) return;
+    if (_isLookingUp) return;
 
     final code = capture.barcodes.isNotEmpty ? capture.barcodes.first.rawValue : null;
     if (code == null || code.isEmpty) return;
+    if (code == _lastScannedCode) return;
 
+    _lastScannedCode = code;
     setState(() => _isLookingUp = true);
 
     final result = await _barcodeService.lookup(code);
@@ -59,8 +70,12 @@ class _ShoppingScannerScreenState extends State<ShoppingScannerScreen> {
         }
         _imagePath ??= result.imageUrl;
         _isLookingUp = false;
+        _nomeError = false;
       });
     } else {
+      // Azzerando il codice si può ritentare subito lo stesso prodotto,
+      // per esempio dopo aver ripristinato la connessione.
+      _lastScannedCode = null;
       AppSnackbar.show(
         context,
         message: result.networkError
@@ -74,21 +89,32 @@ class _ShoppingScannerScreenState extends State<ShoppingScannerScreen> {
     }
   }
 
-  void _save() {
+  /// Aggiunge l'articolo alla lista della spesa e chiude la schermata.
+  Future<void> _save() async {
     final nome = _nomeController.text.trim();
-    if (nome.isEmpty) return;
+    if (nome.isEmpty) {
+      setState(() => _nomeError = true);
+      _nomeFocusNode.requestFocus();
+      AppSnackbar.show(
+        context,
+        message: 'Inserisci il nome del prodotto',
+        icon: Icons.error_outline,
+      );
+      return;
+    }
 
     final marcaText = _marcaController.text.trim();
     final quantitaText = _quantitaController.text.trim();
     final quantita = int.tryParse(quantitaText) ?? 1;
 
-    context.read<ShoppingListProvider>().addItem(
+    await context.read<ShoppingListProvider>().addItem(
       nome,
       marca: marcaText.isEmpty ? null : marcaText,
       imagePath: _imagePath,
       quantita: quantita,
     );
 
+    if (!mounted) return;
     AppSnackbar.show(context, message: 'Prodotto aggiunto alla spesa');
     Navigator.pop(context);
   }
@@ -144,12 +170,20 @@ class _ShoppingScannerScreenState extends State<ShoppingScannerScreen> {
                   Expanded(
                     child: Container(
                       height: 44,
-                      decoration: BoxDecoration(color: AppColors.grey50, borderRadius: BorderRadius.circular(AppRadius.xl)),
+                      decoration: BoxDecoration(
+                        color: AppColors.grey50,
+                        borderRadius: BorderRadius.circular(AppRadius.xl),
+                        border: _nomeError ? Border.all(color: Colors.red, width: 1.5) : null,
+                      ),
                       child: Row(
                         children: [
                           Expanded(
                             child: TextField(
                               controller: _nomeController,
+                              focusNode: _nomeFocusNode,
+                              onChanged: (_) {
+                                if (_nomeError) setState(() => _nomeError = false);
+                              },
                               decoration: const InputDecoration(
                                 hintText: 'Nome',
                                 border: InputBorder.none,
@@ -207,10 +241,6 @@ class _ShoppingScannerScreenState extends State<ShoppingScannerScreen> {
                       ),
                       child: TextField(
                         controller: _quantitaController,
-                        // Vedi commento analogo in product_form_screen.dart:
-                        // il parsing qui sotto è `int.tryParse`, quindi la
-                        // tastiera non deve invitare a scrivere decimali
-                        // che verrebbero comunque scartati in silenzio.
                         keyboardType: TextInputType.number,
                         decoration: const InputDecoration(
                           hintText: '1',

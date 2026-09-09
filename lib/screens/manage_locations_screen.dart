@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/location_provider.dart';
+import '../providers/pantry_provider.dart';
 import '../models/location.dart';
 import '../theme/app_theme.dart';
 
+/// Gestione degli spazi della dispensa: creazione, riordino manuale ed
+/// eliminazione con riassegnazione dei prodotti contenuti.
 class ManageLocationsScreen extends StatefulWidget {
   const ManageLocationsScreen({super.key});
 
@@ -20,35 +23,130 @@ class _ManageLocationsScreenState extends State<ManageLocationsScreen> {
     super.dispose();
   }
 
+  /// Chiede il nome di un nuovo spazio.
+  ///
+  /// Lo StatefulBuilder permette al dialog di mostrare il messaggio di
+  /// nome duplicato aggiornando solo se stesso.
   void _showAddDialog() {
+    String? errorText;
+
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Nuovo spazio'),
-        content: TextField(
-          controller: _newLocationController,
-          autofocus: true,
-          decoration: const InputDecoration(hintText: 'Es. Spezie, Bevande...'),
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: const Text('Nuovo spazio'),
+          content: TextField(
+            controller: _newLocationController,
+            autofocus: true,
+            decoration: InputDecoration(
+              hintText: 'Es. Spezie, Bevande...',
+              errorText: errorText,
+            ),
+            onChanged: (_) {
+              if (errorText != null) setDialogState(() => errorText = null);
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                _newLocationController.clear();
+                Navigator.pop(dialogContext);
+              },
+              child: const Text('Annulla'),
+            ),
+            TextButton(
+              onPressed: () async {
+                final added =
+                    await context.read<LocationProvider>().addLocation(_newLocationController.text);
+                if (!dialogContext.mounted) return;
+                if (added) {
+                  _newLocationController.clear();
+                  Navigator.pop(dialogContext);
+                } else {
+                  setDialogState(() => errorText = 'Esiste già uno spazio con questo nome');
+                }
+              },
+              child: const Text('Aggiungi'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              _newLocationController.clear();
-              Navigator.pop(context);
-            },
-            child: const Text('Annulla'),
-          ),
-          TextButton(
-            onPressed: () {
-              context.read<LocationProvider>().addLocation(_newLocationController.text);
-              _newLocationController.clear();
-              Navigator.pop(context);
-            },
-            child: const Text('Aggiungi'),
-          ),
-        ],
       ),
     );
+  }
+
+  /// Chiede conferma prima di eliminare uno spazio.
+  ///
+  /// Se lo spazio contiene prodotti, il dialog ne indica il numero e fa
+  /// scegliere la destinazione: [Product.posizione] referenzia lo spazio
+  /// per nome, quindi senza riassegnazione i prodotti resterebbero
+  /// visibili solo nella tab "Tutto".
+  Future<void> _confirmDelete(BuildContext context, Location location) async {
+    final pantryProvider = context.read<PantryProvider>();
+    final locationProvider = context.read<LocationProvider>();
+
+    final affectedCount =
+        pantryProvider.products.where((p) => p.posizione == location.nome).length;
+    final otherLocations =
+        locationProvider.locations.where((l) => l.id != location.id).toList();
+
+    String? targetName = otherLocations.isNotEmpty ? otherLocations.first.nome : null;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: Text('Eliminare "${location.nome}"?'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (affectedCount == 0)
+                const Text('Questo spazio non contiene prodotti.')
+              else ...[
+                Text(
+                  affectedCount == 1
+                      ? '1 prodotto è allocato qui.'
+                      : '$affectedCount prodotti sono allocati qui.',
+                ),
+                const SizedBox(height: 12),
+                if (otherLocations.isNotEmpty) ...[
+                  const Text('Verranno spostati in:'),
+                  const SizedBox(height: 4),
+                  DropdownButton<String>(
+                    value: targetName,
+                    isExpanded: true,
+                    items: otherLocations
+                        .map((l) => DropdownMenuItem(value: l.nome, child: Text(l.nome)))
+                        .toList(),
+                    onChanged: (val) => setDialogState(() => targetName = val),
+                  ),
+                ] else
+                  const Text(
+                    'Non ci sono altri spazi: resteranno visibili solo nella tab "Tutto".',
+                  ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('ANNULLA'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('ELIMINA', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    if (affectedCount > 0 && targetName != null) {
+      await pantryProvider.reassignPosizione(location.nome, targetName!);
+    }
+    await locationProvider.deleteLocation(location.id);
   }
 
   @override
@@ -84,7 +182,7 @@ class _ManageLocationsScreenState extends State<ManageLocationsScreen> {
                         key: ValueKey(loc.id),
                         index: index,
                         location: loc,
-                        onDelete: () => context.read<LocationProvider>().deleteLocation(loc.id),
+                        onDelete: () => _confirmDelete(context, loc),
                       );
                     },
                   ),
@@ -102,10 +200,8 @@ class _ManageLocationsScreenState extends State<ManageLocationsScreen> {
   }
 }
 
-/// Tile di uno spazio, restilizzata secondo il design system minimale
-/// dell'app (bordo sottile, angoli arrotondati coerenti) al posto della
-/// `Card` + `ListTile` Material di default usate in precedenza, che
-/// stonavano rispetto al resto delle schermate.
+/// Riga di un singolo spazio, con maniglia di trascinamento a sinistra e
+/// azione di eliminazione a destra.
 class _LocationTile extends StatelessWidget {
   final int index;
   final Location location;

@@ -9,6 +9,11 @@ import '../widgets/product_card.dart';
 import '../widgets/scanner_layout.dart';
 import 'product_form_screen.dart';
 
+/// Scansione di un codice a barre per aggiungere un prodotto alla
+/// dispensa.
+///
+/// Il foglio inferiore mostra il carrello, così un articolo già in lista
+/// può essere inserito senza scansionarlo.
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key});
 
@@ -20,6 +25,12 @@ class _ScannerScreenState extends State<ScannerScreen> {
   final BarcodeService _barcodeService = BarcodeService();
   final DraggableScrollableController _sheetController = DraggableScrollableController();
   bool _isProcessing = false;
+
+  @override
+  void dispose() {
+    _sheetController.dispose();
+    super.dispose();
+  }
 
   Future<void> _onDetect(BarcodeCapture capture) async {
     if (_isProcessing) return;
@@ -141,16 +152,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
                   itemCount: cartItems.length,
                   itemBuilder: (context, index) {
                     final item = cartItems[index];
-                    // `item` è tipizzato `ShoppingItem` (viene da
-                    // `provider.giaPreso`): prima si passava per una
-                    // funzione `_getItemMarca(dynamic item)` con
-                    // try/catch "difensivo" che non serviva a nulla, dato
-                    // che il tipo è già garantito dal compilatore.
-                    final itemMarca = item.marca;
 
                     return ProductCard(
                       name: item.nome,
-                      brand: itemMarca,
+                      brand: item.marca,
                       imageUrl: item.imagePath,
                       quantity: item.quantita,
                       onTap: () async {
@@ -160,7 +165,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                             fullscreenDialog: true,
                             builder: (_) => ProductFormScreen(
                               prefilledNome: item.nome,
-                              prefilledMarca: itemMarca,
+                              prefilledMarca: item.marca,
                               prefilledImageUrl: item.imagePath,
                               prefilledQuantita: item.quantita,
                             ),

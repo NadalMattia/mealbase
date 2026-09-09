@@ -78,7 +78,7 @@ class _ScannerLayoutState extends State<ScannerLayout> {
           // 2. OVERLAY E MIRINO GRAFICO
           Positioned.fill(
             child: IgnorePointer(
-              child: Container(color: Colors.black.withOpacity(0.35)),
+              child: Container(color: Colors.black.withValues(alpha: 0.35)),
             ),
           ),
           const IgnorePointer(

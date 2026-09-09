@@ -9,6 +9,26 @@ import '../utils/app_snackbar.dart';
 import 'product_card.dart';
 import 'pantry_empty_state.dart';
 
+/// Griglia dei prodotti di uno spazio della dispensa.
+///
+/// Applica in sequenza filtro per posizione, ricerca testuale, filtro per
+/// categoria e ordinamento, poi sceglie fra griglia, invito a popolare la
+/// dispensa e messaggio di ricerca senza risultati.
+///
+/// A differenza degli altri widget legge direttamente PantryProvider e
+/// gestisce la navigazione alla modifica: è una porzione di PantryScreen
+/// estratta per contenerne la dimensione, non un componente pensato per
+/// essere riusato altrove.
+/// Griglia dei prodotti di uno spazio della dispensa.
+///
+/// Applica in sequenza filtro per posizione, ricerca testuale, filtro per
+/// categoria e ordinamento, poi sceglie fra griglia, invito a popolare la
+/// dispensa e messaggio di ricerca senza risultati.
+///
+/// A differenza degli altri widget legge direttamente PantryProvider e
+/// gestisce la navigazione alla modifica: è una porzione di PantryScreen
+/// estratta per contenerne la dimensione, non un componente pensato per
+/// essere riusato altrove.
 class PantryProductList extends StatelessWidget {
   final String posizione;
   final String searchQuery;
@@ -131,8 +151,19 @@ class PantryProductList extends StatelessWidget {
             );
 
             final reason = await snackbarController.closed;
-            if (reason != SnackBarClosedReason.action) {
+
+            // L'eliminazione diventa definitiva solo se l'utente ha
+            // lasciato scadere la snackbar o l'ha scartata con uno swipe.
+            // Ogni altra chiusura (`hide`, causata da un tocco sullo
+            // sfondo o dall'arrivo di un'altra snackbar) non è un
+            // consenso: in quel caso il prodotto viene ripristinato.
+            final isExplicitDismissal = reason == SnackBarClosedReason.timeout ||
+                reason == SnackBarClosedReason.swipe;
+
+            if (isExplicitDismissal) {
               await pantryProvider.confirmDeleteProduct(productId);
+            } else if (reason != SnackBarClosedReason.action) {
+              pantryProvider.cancelDeleteProduct(productId);
             }
           },
         );

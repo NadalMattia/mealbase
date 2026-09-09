@@ -20,7 +20,8 @@ import 'theme/app_theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Configurazione Open Food Facts
+  // Identifica l'app verso Open Food Facts e imposta lingua e paese usati
+  // per la ricerca dei prodotti.
   OpenFoodAPIConfiguration.userAgent = UserAgent(
     name: 'MealBase',
     url: 'https://github.com/NadalMattia/mealbase',
@@ -28,23 +29,20 @@ void main() async {
   OpenFoodAPIConfiguration.globalLanguages = [OpenFoodFactsLanguage.ITALIAN];
   OpenFoodAPIConfiguration.globalCountry = OpenFoodFactsCountry.ITALY;
 
-  // Inizializza Hive
   await Hive.initFlutter();
 
-  // Registra gli adapter di Hive
+  // Gli adapter vanno registrati prima di aprire qualsiasi box.
   HiveService.registerAdapter();
   LocationService.registerAdapter();
   ShoppingListService.registerAdapter();
   HouseService.registerAdapter();
 
-  // Inizializza il servizio di notifiche locali per le scadenze
-  await NotificationService().init();
-
-  // Apre il box delle case
+  // I box vanno aperti prima delle notifiche: la sincronizzazione dei
+  // promemoria innescata al cambio casa legge i dati da Hive.
   await HouseService.openBox();
-
-  // Apre il box dei flag di onboarding (es. "tip scanner già visto")
   await OnboardingService.openBox();
+
+  await NotificationService().init();
 
   runApp(const MyApp());
 }
@@ -59,7 +57,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => PantryProvider()),
         ChangeNotifierProvider(create: (_) => LocationProvider()),
         ChangeNotifierProvider(create: (_) => ShoppingListProvider()),
-        ChangeNotifierProvider(create: (_) => HouseProvider()..loadHouses()),
+        // HouseProvider carica già le case nel proprio costruttore.
+        ChangeNotifierProvider(create: (_) => HouseProvider()),
       ],
       child: MaterialApp(
         title: 'MealBase',

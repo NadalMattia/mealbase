@@ -3,6 +3,8 @@ import 'package:hive/hive.dart';
 part 'house.g.dart';
 
 @HiveType(typeId: 3)
+/// Una casa dell'utente. Il suo [id] è la chiave con cui vengono nominati
+/// i box Hive di dispensa, spazi e lista della spesa.
 class House extends HiveObject {
   @HiveField(0)
   String id;

@@ -3,6 +3,8 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../theme/app_theme.dart';
 
+/// Schermata mostrata quando il permesso fotocamera è negato, con
+/// scorciatoia alle impostazioni di sistema.
 class ScannerPermissionDenied extends StatelessWidget {
   final VoidCallback onClose;
 
@@ -63,10 +65,8 @@ class ScannerPermissionDenied extends StatelessWidget {
     );
   }
 }
-///
-/// Prima `scanner_screen.dart` e `shopping_scanner_screen.dart`
-/// duplicavano identici `_buildViewfinder`, `_buildCorner` e
-/// `_buildControlButton`. Ora sono due widget riusabili.
+/// Mirino di inquadratura dello scanner: quattro angoli che delimitano
+/// l'area utile senza coprire il flusso della fotocamera.
 class ScannerViewfinder extends StatelessWidget {
   const ScannerViewfinder({super.key});
 
@@ -86,10 +86,10 @@ class ScannerViewfinder extends StatelessWidget {
               width: double.infinity,
               height: 2,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.5),
+                color: Colors.white.withValues(alpha: 0.5),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.white.withOpacity(0.6),
+                    color: Colors.white.withValues(alpha: 0.6),
                     blurRadius: 8,
                     spreadRadius: 2,
                   ),
@@ -132,6 +132,8 @@ class _Corner extends StatelessWidget {
   }
 }
 
+/// Controlli sovrapposti al flusso della fotocamera: torcia, cambio
+/// obiettivo e chiusura.
 class ScannerTopControls extends StatelessWidget {
   final MobileScannerController controller;
   final VoidCallback onCloseTap;
@@ -188,7 +190,7 @@ class _ControlButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(disabled ? 0.06 : 0.15),
+          color: Colors.white.withValues(alpha: disabled ? 0.06 : 0.15),
           shape: BoxShape.circle,
         ),
         child: Icon(icon, color: disabled ? Colors.white38 : Colors.white, size: 24),

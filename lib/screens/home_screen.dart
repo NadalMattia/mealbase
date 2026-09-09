@@ -3,6 +3,7 @@ import '../widgets/app_bottom_nav.dart';
 import 'house_list_screen.dart';
 import 'profile_screen.dart';
 
+/// Radice della navigazione: elenco delle case e profilo utente.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
