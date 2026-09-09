@@ -290,11 +290,3 @@ L'app copre i requisiti a priorità **ALTA** del Requirements Brief, ma resta un
 - Su OEM aggressivi (Xiaomi, Huawei) le notifiche pianificate possono non arrivare per restrizioni di sistema indipendenti dal codice
 
 Il progetto è strutturato per accogliere queste funzionalità senza stravolgimenti architetturali — vedi la sezione *Conclusione* della relazione.
-
----
-
-## Autore
-
-**Mattia Nadal**
-Dipartimento di Scienze Matematiche, Informatiche e Fisiche
-Università degli Studi di Udine

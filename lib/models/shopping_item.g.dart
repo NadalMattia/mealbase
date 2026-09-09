@@ -22,9 +22,7 @@ class ShoppingItemAdapter extends TypeAdapter<ShoppingItem> {
       preso: fields[2] as bool,
       imagePath: fields[3] as String?,
       marca: fields[4] as String?,
-      // Modifica manuale, come in product.g.dart: `num` tollera i valori
-      // salvati quando il campo era `double`.
-    )..quantitaRaw = (fields[5] as num?)?.toInt();
+    )..quantitaRaw = fields[5] as int?;
   }
 
   @override
