@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 /// Immagine che sceglie da sola come caricarsi.
@@ -7,6 +8,10 @@ import 'package:flutter/material.dart';
 /// Facts, tutto il resto è un file locale. Placeholder ed errore sono
 /// forniti dal chiamante, così ogni contesto può renderli con le proprie
 /// dimensioni e il proprio stile.
+///
+/// Le immagini remote passano da [CachedNetworkImage], che le conserva su
+/// disco: senza cache ogni apertura della dispensa le riscaricherebbe e
+/// senza rete le card dei prodotti scansionati resterebbero vuote.
 class SmartImage extends StatelessWidget {
   /// Path locale o URL remoto dell'immagine. Se nullo/vuoto viene
   /// mostrato direttamente il placeholder.
@@ -54,22 +59,23 @@ class SmartImage extends StatelessWidget {
     final onError = errorBuilder ?? placeholderBuilder;
 
     if (isRemote(path)) {
-      return Image.network(
-        path!,
+      return CachedNetworkImage(
+        imageUrl: path!,
         fit: fit,
-        loadingBuilder: !showNetworkLoadingIndicator
+        // Con l'indicatore disattivato si lascia lo spazio vuoto durante il
+        // download: nelle griglie di card, dove le immagini sono piccole e
+        // numerose, una manciata di rotelle darebbe più disturbo che
+        // informazione.
+        placeholder: !showNetworkLoadingIndicator
             ? null
-            : (context, child, progress) {
-                if (progress == null) return child;
-                return const Center(
+            : (context, url) => const Center(
                   child: SizedBox(
                     width: 24,
                     height: 24,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
-                );
-              },
-        errorBuilder: (context, error, stackTrace) => onError(context),
+                ),
+        errorWidget: (context, url, error) => onError(context),
       );
     }
 

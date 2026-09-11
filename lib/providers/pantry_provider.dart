@@ -34,6 +34,12 @@ class PantryProvider extends ChangeNotifier {
   /// Il box viene aperto per [House.id]; il nome serve solo alla migrazione
   /// di eventuali dati salvati con schemi di naming precedenti.
   Future<void> switchHouse(House house) async {
+    // Un'eliminazione in sospeso appartiene alla casa che si sta
+    // lasciando: senza azzerare il set, il suo id sopravvivrebbe al cambio
+    // e una conferma in arrivo in ritardo - la snackbar che si chiude dopo
+    // che l'utente ha già cambiato casa - finirebbe su un box diverso.
+    _pendingDeleteIds.clear();
+
     await _hiveService.switchHouse(house.id, legacyName: house.nome);
     loadProducts();
     await _syncNotifications();

@@ -114,6 +114,7 @@ mealbase/
 ├── APK/                        APK già compilato
 ├── scraperApp/                 Script Python per la Competitive Assessment
 ├── relazione/                  Relazione del progetto (LaTeX + PDF)
+├── test/                       Test unitari (3 file)
 ├── analysis_options.yaml       Regole dell'analyzer Dart
 ├── requirements.txt            Dipendenze Python dello scraper
 └── pubspec.yaml                Dipendenze e configurazione Flutter
@@ -168,7 +169,14 @@ Viene usata la modalità **inesatta** (`inexactAllowWhileIdle`): la modalità es
 
 `RECEIVE_BOOT_COMPLETED` e il secondo receiver servono a riprogrammare le notifiche dopo un riavvio del telefono, che altrimenti le azzera tutte.
 
-Per diagnosticare, `NotificationService` espone `debugStato()`, `isEnabled()`, `pendingCount()` e `showTestNotification()`.
+Il fuso orario del dispositivo viene letto con `flutter_timezone` e impostato
+su `tz.local` all'avvio. Non è indispensabile per le schedulazioni attuali,
+dato che `TZDateTime.from` preserva l'istante assoluto, ma lo diventa per
+qualunque logica basata sull'ora di parete.
+
+Per diagnosticare, `NotificationService` espone `debugStato()`, `isEnabled()`, `pendingCount()` e `showTestNotification()`. La voce "Notifiche" nel profilo apre le impostazioni di sistema dell'app.
+
+Il file `android/app/src/main/res/raw/keep.xml` impedisce a R8 di scartare l'icona della notifica in release: viene risolta per nome a runtime, quindi il compilatore non ne vede alcun riferimento statico.
 
 ---
 
@@ -212,8 +220,9 @@ L'output è in `build/app/outputs/flutter-apk/app-release.apk`.
 
 ## APK pronto all'uso
 
-In `APK/mealbase.apk` c'è un APK già compilato: scaricalo e installalo su un device Android. Potrebbe servire abilitare "Installa da fonti sconosciute" nelle impostazioni di sicurezza.
-
+L'APK viene compilato automaticamente a ogni versione taggata ed è
+scaricabile dalla pagina delle
+[Release](https://github.com/NadalMattia/mealbase/releases/latest).
 ---
 
 ## Icona dell'app
@@ -265,7 +274,28 @@ flutter analyze
 
 `analysis_options.yaml` estende il set raccomandato di `flutter_lints` con alcune regole mirate ai problemi effettivamente incontrati nel progetto, tra cui `use_build_context_synchronously` e `unawaited_futures`.
 
-**Non ci sono test automatici.** È la lacuna principale. I tre punti da cui varrebbe la pena partire, in ordine di valore: il calcolo della data di notifica (logica pura con casi limite interessanti), la migrazione dei box Hive, e l'ordinamento della dispensa con la gestione dei `null` nelle date di scadenza.
+```bash
+flutter test
+```
+
+Ventidue test unitari in tre file:
+
+- `test/notification_schedule_test.dart` — il calcolo dell'istante di
+  notifica, compresi i casi limite che facevano sembrare le notifiche non
+  funzionanti (prodotto in scadenza entro 24 ore, prodotto già scaduto)
+- `test/pantry_sort_test.dart` — i quattro criteri di ordinamento e la
+  gestione dei prodotti senza data di scadenza
+- `test/models_test.dart` — i valori predefiniti dei modelli e la coerenza
+  delle categorie
+
+Due di questi file **replicano** logica che nel codice di produzione vive
+dentro un metodo privato o dentro il `build` di un widget, e lo dichiarano
+in testa. È un compromesso: rende la logica verificabile subito, ma va
+tenuta allineata a mano. Estrarla in funzioni pure è il passo successivo, e
+renderebbe i test veri test di regressione invece che verifiche di una
+copia.
+
+Non ci sono test di integrazione né widget test.
 
 ---
 
@@ -278,15 +308,17 @@ L'app copre i requisiti a priorità **ALTA** del Requirements Brief, ma resta un
 - **Autenticazione e account** — le case sono locali al device
 - **Sincronizzazione multi-dispositivo** — nessun backend, tutto su Hive locale
 - **Condivisione familiare** — `HouseSettingsScreen` è un segnaposto
-- **Rinomina ed eliminazione di una casa** — l'architettura per-id la rende ora sicura da implementare, ma la schermata non esiste ancora
+- **Rinomina ed eliminazione di una casa** — la schermata non esiste ancora
 - **Suggerimento ricette** — voce in navigazione per continuità visiva
 - **Dark mode**
 
 **Limiti dell'implementazione attuale:**
 
 - Filtri e ordinamenti della dispensa sono calcolati in memoria: con qualche migliaio di prodotti per casa servirebbe un database con supporto a query
-- Le immagini remote di Open Food Facts non sono cacheate su disco (`Image.network`): offline le card scansionate restano vuote e ogni apertura riscarica. `cached_network_image` risolverebbe entrambe le cose
 - Tutte le stringhe dell'interfaccia sono in italiano, scritte direttamente nei widget
+- L'id delle notifiche deriva dall'hash dell'id prodotto: funziona ed è coerente fra programmazione e cancellazione, ma non è garantito stabile fra versioni di Dart
+- Rinomina ed eliminazione di una casa non sono implementate, pur essendo ora sicure da realizzare grazie ai box chiavati per id
 - Su OEM aggressivi (Xiaomi, Huawei) le notifiche pianificate possono non arrivare per restrizioni di sistema indipendenti dal codice
 
 Il progetto è strutturato per accogliere queste funzionalità senza stravolgimenti architetturali — vedi la sezione *Conclusione* della relazione.
+

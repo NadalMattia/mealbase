@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/notification_service.dart';
 import '../utils/app_snackbar.dart';
 
 /// Profilo utente. Le voci non ancora disponibili si limitano a segnalarlo
@@ -87,7 +88,10 @@ class ProfileScreen extends StatelessWidget {
           _ProfileTile(
             icon: Icons.notifications_none,
             label: 'Notifiche',
-            onTap: () => AppSnackbar.showComingSoon(context, 'Notifiche'),
+            // Unica voce già funzionante: apre le impostazioni di sistema
+            // dell'app, da cui l'utente può concedere o revocare il
+            // permesso per i promemoria di scadenza.
+            onTap: () => NotificationService().openNotificationSettings(),
           ),
           _ProfileTile(
             icon: Icons.shield_outlined,

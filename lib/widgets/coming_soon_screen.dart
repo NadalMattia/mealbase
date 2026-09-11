@@ -3,8 +3,6 @@ import '../theme/app_theme.dart';
 
 /// Segnaposto per una sezione non ancora sviluppata, con icona, titolo e
 /// messaggio forniti dal chiamante.
-/// Segnaposto per una sezione non ancora sviluppata, con icona, titolo e
-/// messaggio forniti dal chiamante.
 class ComingSoonScreen extends StatelessWidget {
   final String appBarTitle;
   final IconData icon;

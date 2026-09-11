@@ -44,7 +44,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
     if (!mounted) return;
 
     if (result.found) {
-      await Navigator.push<bool>(
+      final saved = await Navigator.push<bool>(
         context,
         MaterialPageRoute(
           fullscreenDialog: true,
@@ -58,16 +58,24 @@ class _ScannerScreenState extends State<ScannerScreen> {
         ),
       );
 
-      if (mounted) {
-        setState(() => _isProcessing = false);
+      if (!mounted) return;
+
+      // Il form restituisce true solo se il prodotto è stato salvato: in
+      // quel caso si chiude anche lo scanner, riportando l'utente alla
+      // dispensa dove il prodotto appena inserito è già visibile.
+      // Annullando il form si resta invece qui, pronti per una nuova
+      // scansione.
+      if (saved == true) {
+        Navigator.pop(context);
+        return;
       }
+
+      setState(() => _isProcessing = false);
     } else {
-      // Messaggio diverso a seconda che il barcode non sia stato trovato
-      // nel database Open Food Facts (result.networkError == false) o che
-      // la ricerca sia fallita per un problema di connessione
-      // (result.networkError == true): prima i due casi mostravano lo
-      // stesso messaggio "Prodotto non trovato", fuorviante quando in
-      // realtà il problema era la rete.
+      // Un codice assente dal database di Open Food Facts e una ricerca
+      // fallita per mancanza di rete richiedono messaggi diversi: nel
+      // secondo caso il prodotto potrebbe esistere e vale la pena
+      // riprovare.
       AppSnackbar.show(
         context,
         message: result.networkError
@@ -172,8 +180,17 @@ class _ScannerScreenState extends State<ScannerScreen> {
                           ),
                         );
 
-                        if (saved == true && context.mounted) {
-                          context.read<ShoppingListProvider>().deleteItem(item.id);
+                        if (!context.mounted) return;
+
+                        if (saved == true) {
+                          // L'articolo esce dal carrello solo a prodotto
+                          // salvato, poi si chiude lo scanner come dopo una
+                          // scansione riuscita.
+                          final provider = context.read<ShoppingListProvider>();
+                          await provider.deleteItem(item.id);
+
+                          if (!context.mounted) return;
+                          Navigator.pop(context);
                         }
                       },
                     );

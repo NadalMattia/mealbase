@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../models/shopping_item.dart';
 import '../providers/shopping_list_provider.dart';
@@ -169,6 +170,11 @@ class _ShoppingItemEditScreenState extends State<ShoppingItemEditScreen> {
               child: TextField(
                 controller: _quantitaController,
                 keyboardType: TextInputType.number,
+                // Vedi product_form_screen: solo cifre, massimo quattro.
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(4),
+                ],
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                 decoration: const InputDecoration(
                   hintText: '1',

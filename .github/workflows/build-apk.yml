@@ -1,0 +1,65 @@
+name: Build APK
+
+# Tre modi di avviarlo:
+# - push su main: verifica che il progetto compili e che i test passino
+# - tag v*: pubblica una Release con l'APK allegato
+# - avvio manuale dalla scheda Actions
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Scarica il codice
+        uses: actions/checkout@v6
+
+      # flutter_local_notifications 22.x richiede Java 17: senza, Gradle
+      # fallisce con un errore sulla versione del bytecode.
+      - name: Configura Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Configura Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Scarica le dipendenze
+        run: flutter pub get
+
+      - name: Analisi statica
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Compila l'APK
+        run: flutter build apk --release
+
+      # Disponibile per 90 giorni nella pagina dell'esecuzione, per chi ha
+      # accesso alla repository.
+      - name: Allega l'APK all'esecuzione
+        uses: actions/upload-artifact@v4
+        with:
+          name: mealbase-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 90
+
+      # Solo sui tag: crea una Release pubblica, con un link stabile che
+      # funziona anche senza account GitHub.
+      - name: Pubblica la Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/app/outputs/flutter-apk/app-release.apk
+          generate_release_notes: true

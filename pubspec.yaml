@@ -41,6 +41,9 @@ dependencies:
   # Notifiche locali e gestione fusi orari
   flutter_local_notifications: ^22.3.0
   timezone: ^0.11.1
+  # Legge il fuso orario del dispositivo, necessario a timezone per
+  # impostare tz.local (vedi NotificationService.init)
+  flutter_timezone: ^4.1.1
 
   # Id Univoco Prodotto
   uuid: ^4.5.1
@@ -56,6 +59,10 @@ dependencies:
 
   # Bordo tratteggiato
   dotted_border: ^2.1.0
+
+  # Cache su disco per le immagini remote di Open Food Facts: senza, ogni
+  # apertura della dispensa le riscarica e offline le card restano vuote
+  cached_network_image: ^3.4.1
 
 
   path_provider: ^2.1.6

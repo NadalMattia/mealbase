@@ -1,30 +1,77 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mealbase/theme/app_theme.dart';
+import 'package:mealbase/widgets/coming_soon_screen.dart';
+import 'package:mealbase/widgets/pantry_empty_state.dart';
+import 'package:mealbase/widgets/shopping_empty_state.dart';
 
-import 'package:mealbase/main.dart';
-
+/// Widget test sui componenti privi di dipendenze esterne.
+///
+/// Non viene montata l'intera app: `MyApp` richiede Hive inizializzato, i
+/// box aperti e i quattro provider registrati, quindi servirebbe un setup
+/// di integrazione. Questi test coprono invece i widget che ricevono tutto
+/// dal costruttore e non leggono provider né persistenza — la maggior
+/// parte di quelli in `lib/widgets`.
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MealBaseApp());
+  /// Monta [child] dentro il minimo indispensabile perché i widget
+  /// Material funzionino.
+  Widget wrap(Widget child) => MaterialApp(
+        theme: buildAppTheme(),
+        home: Scaffold(body: child),
+      );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  group('PantryEmptyState', () {
+    testWidgets('mostra l\'invito a popolare la dispensa', (tester) async {
+      await tester.pumpWidget(wrap(const PantryEmptyState()));
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+      expect(find.text('La tua dispensa è vuota'), findsOneWidget);
+      expect(find.byIcon(Icons.kitchen_outlined), findsOneWidget);
+    });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    testWidgets('cita entrambe le azioni disponibili', (tester) async {
+      // Il sottotitolo nomina i due pulsanti della barra. Se le etichette
+      // cambiano, questo test lo segnala: sono stringhe indipendenti e
+      // niente altro le tiene allineate.
+      await tester.pumpWidget(wrap(const PantryEmptyState()));
+
+      final testo = tester
+          .widgetList<Text>(find.byType(Text))
+          .map((t) => t.data ?? '')
+          .join(' ');
+
+      expect(testo, contains('Inserisci'));
+      expect(testo, contains('Scansiona'));
+    });
+  });
+
+  group('ShoppingEmptyState', () {
+    testWidgets('viene renderizzato senza errori', (tester) async {
+      await tester.pumpWidget(wrap(const ShoppingEmptyState()));
+
+      expect(find.byType(ShoppingEmptyState), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('ComingSoonScreen', () {
+    testWidgets('mostra titolo, messaggio e icona ricevuti', (tester) async {
+      // ComingSoonScreen fornisce già il proprio Scaffold, quindi va
+      // montata come home e non dentro wrap().
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(),
+          home: const ComingSoonScreen(
+            appBarTitle: 'Ricette',
+            icon: Icons.restaurant_menu,
+            title: 'Funzionalità in arrivo',
+            message: 'Un messaggio di prova.',
+          ),
+        ),
+      );
+
+      expect(find.text('Funzionalità in arrivo'), findsOneWidget);
+      expect(find.text('Un messaggio di prova.'), findsOneWidget);
+      expect(find.byIcon(Icons.restaurant_menu), findsOneWidget);
+    });
   });
 }

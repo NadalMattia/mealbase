@@ -76,8 +76,17 @@ class _HouseListScreenState extends State<HouseListScreen> {
                   // I tre provider caricano i box della casa scelta prima
                   // che MainScreen venga costruita, così le schermate
                   // trovano già i dati giusti al primo build.
+                  //
+                  // Il context va riconvalidato prima di ogni lettura
+                  // successiva alla prima: ciascuna switchHouse apre box su
+                  // disco e nel frattempo la schermata può essere stata
+                  // smontata.
                   await context.read<PantryProvider>().switchHouse(house);
+
+                  if (!context.mounted) return;
                   await context.read<LocationProvider>().switchHouse(house);
+
+                  if (!context.mounted) return;
                   await context.read<ShoppingListProvider>().switchHouse(house);
 
                   if (!context.mounted) return;

@@ -46,11 +46,38 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
     OnboardingService.markScanTipSeen();
   }
 
-  void _rebuildTabController(List<String> tabs) {
+  /// Le tab dipendono dagli spazi, che possono cambiare mentre la
+  /// schermata è viva.
+  ///
+  /// La sincronizzazione avviene qui e non in `build` perché distrugge e
+  /// ricrea un [TabController]: farlo durante la costruzione dell'albero
+  /// significherebbe eliminare un controller che i widget stanno usando in
+  /// quel momento.
+  ///
+  /// Il metodo viene invocato dopo `initState` e ogni volta che cambia una
+  /// dipendenza ereditata. La dipendenza da [LocationProvider] è dichiarata
+  /// dal `context.watch` in `build`, quindi una modifica agli spazi porta
+  /// qui prima del `build` successivo. La lettura usa `read` perché
+  /// `watch` è ammesso solo durante la costruzione.
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncTabController(_buildTabLabels(context.read<LocationProvider>()));
+  }
+
+  /// Etichette delle tab: "Tutto" più uno spazio per ciascuno di quelli
+  /// definiti nella casa corrente.
+  List<String> _buildTabLabels(LocationProvider provider) =>
+      ['Tutto', ...provider.locations.map((l) => l.nome)];
+
+  void _syncTabController(List<String> tabs) {
     if (_tabController != null && _listEquals(_currentTabs, tabs)) return;
+
     _currentTabs = tabs;
     _tabController?.dispose();
-    _tabController = TabController(length: tabs.length, vsync: this);
+    // `length` non scende mai sotto 1: la tab "Tutto" è sempre presente,
+    // ma un TabBar con zero tab solleverebbe un assert.
+    _tabController = TabController(length: tabs.isEmpty ? 1 : tabs.length, vsync: this);
     _tabController!.addListener(() {
       if (mounted) setState(() {});
     });
@@ -129,9 +156,10 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
 
   @override
   Widget build(BuildContext context) {
-    final locationProvider = context.watch<LocationProvider>();
-    final tabs = ['Tutto', ...locationProvider.locations.map((l) => l.nome)];
-    _rebuildTabController(tabs);
+    // `watch` stabilisce la dipendenza da LocationProvider: è ciò che fa
+    // scattare didChangeDependencies, dove il TabController viene
+    // riallineato, prima che questo build venga rieseguito.
+    final tabs = _buildTabLabels(context.watch<LocationProvider>());
 
     final isFilterActive = _selectedCategory != null || _selectedSort != PantrySortOption.insertionDesc;
 

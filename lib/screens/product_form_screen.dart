@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import '../models/product.dart';
@@ -47,7 +48,12 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
   String? _imagePath;
   String _categoria = ProductCategories.defaultLabel;
-  String _posizione = 'Dispensa';
+  /// Spazio in cui allocare il prodotto.
+  ///
+  /// Resta vuoto finché [didChangeDependencies] non legge gli spazi
+  /// esistenti: non esiste uno spazio predefinito garantito, dato che
+  /// l'utente può rinominare o eliminare anche quelli creati con la casa.
+  String _posizione = '';
   String _unita = 'pz';
   late DateTime _dataAcquisto;
   DateTime? _dataScadenza;
@@ -81,7 +87,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       _quantitaController = TextEditingController(text: p.quantita.toString());
       _imagePath = p.imagePath;
       _categoria = p.categoria.isNotEmpty ? p.categoria : ProductCategories.defaultLabel;
-      _posizione = p.posizione.isNotEmpty ? p.posizione : 'Dispensa';
+      _posizione = p.posizione;
       _unita = p.unita.isNotEmpty ? p.unita : 'pz';
       _dataAcquisto = p.dataAcquisto;
       _dataScadenza = p.dataScadenza;
@@ -100,6 +106,19 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         _categoria = widget.prefilledCategoria!;
       }
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_posizione.isNotEmpty) return;
+
+    // Il primo spazio dell'elenco è il default: rispetta l'ordine scelto
+    // dall'utente e, a differenza di un nome fisso, esiste sempre. Se non
+    // ci sono spazi si ripiega su 'Dispensa', che verrà comunque aggiunto
+    // alla tendina dal build.
+    final locations = context.read<LocationProvider>().locations;
+    _posizione = locations.isNotEmpty ? locations.first.nome : 'Dispensa';
   }
 
   @override
@@ -150,7 +169,10 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
             quantita: item.quantita,
             unita: 'pz',
             categoria: ProductCategories.defaultLabel,
-            posizione: 'Dispensa',
+            // Un articolo del carrello non ha uno spazio: lasciandolo
+            // vuoto, selezionare il suggerimento non sovrascrive lo spazio
+            // già scelto nel form (vedi il controllo in _onSuggestionTap).
+            posizione: '',
             dataAcquisto: DateTime.now(),
             imagePath: img,
           );
@@ -285,6 +307,17 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     }
 
     if (!mounted) return;
+
+    // La conferma vive qui e non nei chiamanti perché questo metodo è
+    // l'unico punto attraversato da tutti i percorsi: inserimento manuale,
+    // scansione, articolo del carrello e modifica di un prodotto esistente.
+    AppSnackbar.show(
+      context,
+      message: widget.existingProduct != null
+          ? '$nomeInserito aggiornato'
+          : '$nomeInserito aggiunto alla dispensa',
+    );
+
     Navigator.pop(context, true);
   }
 
@@ -305,8 +338,13 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         : _getCombinedSuggestions(shoppingItems, _nomeController.text);
 
     final locations = locationProvider.locations.map((l) => l.nome).toList();
-    if (!locations.contains('Dispensa')) locations.add('Dispensa');
-    if (!locations.contains(_posizione)) locations.add(_posizione);
+    // Un prodotto può riferirsi a uno spazio nel frattempo eliminato o
+    // rinominato: il valore va aggiunto alla tendina, altrimenti
+    // DropdownButton solleva un assert. Resta selezionabile, così l'utente
+    // vede dov'è allocato e può spostarlo.
+    if (_posizione.isNotEmpty && !locations.contains(_posizione)) {
+      locations.add(_posizione);
+    }
 
     // DropdownButton richiede che `value` sia presente tra gli `items`,
     // altrimenti solleva un assert all'apertura. Un prodotto salvato con
@@ -453,6 +491,15 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                         // int.tryParse: una tastiera decimale inviterebbe a
                         // digitare valori che verrebbero scartati.
                         keyboardType: TextInputType.number,
+                        // Solo cifre e al massimo quattro: la tastiera
+                        // numerica su alcune varianti Android espone
+                        // comunque segno e separatore, e il parsing li
+                        // scarterebbe in silenzio riportando la quantità
+                        // a 1 senza spiegazioni.
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(4),
+                        ],
                         textAlign: TextAlign.center,
                         style: const TextStyle(fontWeight: FontWeight.bold),
                         decoration: const InputDecoration(

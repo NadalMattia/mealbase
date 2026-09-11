@@ -173,7 +173,11 @@ class _ManageLocationsScreenState extends State<ManageLocationsScreen> {
                 : ReorderableListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: locations.length,
-                    onReorder: (oldIndex, newIndex) {
+                    // onReorderItem sostituisce onReorder da Flutter 3.44:
+                    // corregge da sé l'indice di destinazione quando si
+                    // trascina verso il basso, correzione che prima
+                    // spettava al chiamante.
+                    onReorderItem: (oldIndex, newIndex) {
                       context.read<LocationProvider>().reorder(oldIndex, newIndex);
                     },
                     itemBuilder: (context, index) {

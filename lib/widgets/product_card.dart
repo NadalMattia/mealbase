@@ -18,7 +18,6 @@ class ProductCard extends StatelessWidget {
   final String name;
   final String? brand;
   final String? imageUrl;
-  final String? marca;
   final DateTime? expirationDate;
   final int? quantity;
   final bool isShoppingCard;
@@ -33,7 +32,6 @@ class ProductCard extends StatelessWidget {
     required this.name,
     this.brand,
     this.imageUrl,
-    this.marca,
     this.expirationDate,
     this.quantity,
     this.isShoppingCard = false,

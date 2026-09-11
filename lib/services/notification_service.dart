@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -55,6 +56,7 @@ class NotificationService {
   Future<void> init() async {
     try {
       tz.initializeTimeZones();
+      await _configureLocalTimeZone();
 
       const android = AndroidInitializationSettings('@mipmap/launcher_icon');
       const ios = DarwinInitializationSettings();
@@ -80,6 +82,25 @@ class NotificationService {
     } catch (e, s) {
       _initialized = false;
       debugPrint('Impossibile inizializzare le notifiche: $e\n$s');
+    }
+  }
+
+  /// Imposta `tz.local` sul fuso orario del dispositivo.
+  ///
+  /// `initializeTimeZones()` da solo lascia `tz.local` su UTC. Le
+  /// schedulazioni attuali restano corrette anche così, perché
+  /// [tz.TZDateTime.from] preserva l'istante assoluto, ma il fuso locale
+  /// serve a qualunque logica che ragioni sull'ora di parete - per esempio
+  /// `matchDateTimeComponents` per notifiche ricorrenti.
+  ///
+  /// In caso di errore si prosegue su UTC: è preferibile a un'app che non
+  /// si avvia.
+  Future<void> _configureLocalTimeZone() async {
+    try {
+      final timeZoneName = await FlutterTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(timeZoneName));
+    } catch (e) {
+      debugPrint('Impossibile leggere il fuso orario del dispositivo: $e');
     }
   }
 

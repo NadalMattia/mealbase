@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
 import '../providers/shopping_list_provider.dart';
@@ -242,6 +243,15 @@ class _ShoppingScannerScreenState extends State<ShoppingScannerScreen> {
                       child: TextField(
                         controller: _quantitaController,
                         keyboardType: TextInputType.number,
+                        // Solo cifre e al massimo quattro: la tastiera
+                        // numerica su alcune varianti Android espone
+                        // comunque segno e separatore, e il parsing li
+                        // scarterebbe in silenzio riportando la quantità
+                        // a 1 senza spiegazioni.
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(4),
+                        ],
                         decoration: const InputDecoration(
                           hintText: '1',
                           border: InputBorder.none,

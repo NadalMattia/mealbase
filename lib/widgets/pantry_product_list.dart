@@ -125,18 +125,22 @@ class PantryProductList extends StatelessWidget {
           quantity: p.quantita,
           isSelectable: isSelectionMode,
           isSelected: selectedProducts.contains(p.id),
-          onTap: () {
+          onTap: () async {
             if (isSelectionMode) {
               onToggleSelection(p.id);
-            } else {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  fullscreenDialog: true,
-                  builder: (_) => ProductFormScreen(existingProduct: p),
-                ),
-              );
+              return;
             }
+
+            // La conferma di avvenuto salvataggio la mostra il form, che è
+            // l'unico punto comune a tutti i percorsi di inserimento e
+            // modifica.
+            await Navigator.push<bool>(
+              context,
+              MaterialPageRoute(
+                fullscreenDialog: true,
+                builder: (_) => ProductFormScreen(existingProduct: p),
+              ),
+            );
           },
           onDelete: () async {
             final pantryProvider = context.read<PantryProvider>();

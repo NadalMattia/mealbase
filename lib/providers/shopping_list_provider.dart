@@ -27,6 +27,10 @@ class ShoppingListProvider extends ChangeNotifier {
   /// Il box viene aperto per [House.id]; il nome serve solo alla migrazione
   /// di eventuali dati salvati con schemi di naming precedenti.
   Future<void> switchHouse(House house) async {
+    // Vedi PantryProvider.switchHouse: le eliminazioni in sospeso non
+    // devono sopravvivere al cambio casa.
+    _pendingDeleteIds.clear();
+
     await _service.switchHouse(house.id, legacyName: house.nome);
     loadItems();
   }

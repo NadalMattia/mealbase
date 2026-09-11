@@ -45,11 +45,10 @@ class LocationProvider extends ChangeNotifier {
 
   /// Riordina gli spazi dopo un drag & drop.
   ///
-  /// [ReorderableListView] riporta [newIndex] come posizione di
-  /// inserimento calcolata prima della rimozione dell'elemento: quando si
-  /// trascina verso il basso va decrementato di uno.
+  /// [newIndex] è la posizione finale già corretta: la schermata usa
+  /// `onReorderItem`, che a differenza del deprecato `onReorder` tiene
+  /// conto da sé dell'elemento rimosso dalla lista.
   Future<void> reorder(int oldIndex, int newIndex) async {
-    if (newIndex > oldIndex) newIndex -= 1;
     final updated = List<Location>.from(_locations);
     final item = updated.removeAt(oldIndex);
     updated.insert(newIndex, item);
