@@ -81,7 +81,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     final isWhollyEmpty = provider.items.isEmpty;
 
     return GestureDetector(
-      onTap: () => AppSnackbar.hide(context),
+      // Chiude la tastiera toccando fuori dai campi. Non tocca la
+      // snackbar: mentre è visibile quella di eliminazione, un tocco
+      // qualsiasi deciderebbe la sorte del prodotto senza che l'utente lo
+      // abbia scelto.
+      onTap: () => FocusScope.of(context).unfocus(),
       behavior: HitTestBehavior.translucent,
       child: Scaffold(
         backgroundColor: AppColors.white,
@@ -233,19 +237,13 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
                 final reason = await snackbarController.closed;
 
-                // L'eliminazione diventa definitiva solo se l'utente ha
-                // lasciato scadere la snackbar o l'ha scartata con uno
-                // swipe. Ogni altra chiusura (`hide`, causata da un tocco
-                // sullo sfondo o dall'arrivo di un'altra snackbar) non è
-                // un consenso: in quel caso l'articolo viene ripristinato
-                // invece di sparire senza che l'utente lo abbia scelto.
-                final isExplicitDismissal = reason == SnackBarClosedReason.timeout ||
-                    reason == SnackBarClosedReason.swipe;
-
-                if (isExplicitDismissal) {
+                // Un solo gesto annulla: il pulsante "ANNULLA". Qualsiasi
+                // altra chiusura - tempo scaduto o swipe sulla snackbar -
+                // conferma. Nessun tocco altrove nella schermata può più
+                // chiudere questa snackbar, quindi la decisione è sempre
+                // deliberata.
+                if (reason != SnackBarClosedReason.action) {
                   await provider.confirmDeleteItem(itemId);
-                } else if (reason != SnackBarClosedReason.action) {
-                  provider.cancelDeleteItem(itemId);
                 }
               },
             );

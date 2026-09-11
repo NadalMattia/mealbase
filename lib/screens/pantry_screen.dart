@@ -166,7 +166,11 @@ class _PantryScreenState extends State<PantryScreen> with TickerProviderStateMix
     final pantryIsEmpty = context.watch<PantryProvider>().products.isEmpty;
 
     return GestureDetector(
-      onTap: () => AppSnackbar.hide(context),
+      // Chiude la tastiera toccando fuori dai campi. Non tocca la
+      // snackbar: mentre è visibile quella di eliminazione, un tocco
+      // qualsiasi deciderebbe la sorte del prodotto senza che l'utente lo
+      // abbia scelto.
+      onTap: () => FocusScope.of(context).unfocus(),
       behavior: HitTestBehavior.translucent,
       child: Scaffold(
         backgroundColor: AppColors.pannaWarm,

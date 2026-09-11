@@ -64,7 +64,6 @@ class AppSnackbar {
         VoidCallback? onUndo,
         Duration duration = const Duration(seconds: 2),
       }) {
-    hide(context);
     return ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(

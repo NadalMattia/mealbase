@@ -156,18 +156,10 @@ class PantryProductList extends StatelessWidget {
 
             final reason = await snackbarController.closed;
 
-            // L'eliminazione diventa definitiva solo se l'utente ha
-            // lasciato scadere la snackbar o l'ha scartata con uno swipe.
-            // Ogni altra chiusura (`hide`, causata da un tocco sullo
-            // sfondo o dall'arrivo di un'altra snackbar) non è un
-            // consenso: in quel caso il prodotto viene ripristinato.
-            final isExplicitDismissal = reason == SnackBarClosedReason.timeout ||
-                reason == SnackBarClosedReason.swipe;
-
-            if (isExplicitDismissal) {
+            // Vedi shopping_list_screen: annulla solo il pulsante
+            // "ANNULLA", ogni altra chiusura conferma.
+            if (reason != SnackBarClosedReason.action) {
               await pantryProvider.confirmDeleteProduct(productId);
-            } else if (reason != SnackBarClosedReason.action) {
-              pantryProvider.cancelDeleteProduct(productId);
             }
           },
         );
