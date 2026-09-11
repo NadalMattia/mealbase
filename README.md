@@ -221,6 +221,10 @@ L'output è in `build/app/outputs/flutter-apk/app-release.apk`.
 L'APK viene compilato automaticamente a ogni versione taggata ed è
 scaricabile dalla pagina delle
 [Release](https://github.com/NadalMattia/mealbase/releases/latest).
+
+Su Android potrebbe essere necessario abilitare "Installa da fonti
+sconosciute" nelle impostazioni di sicurezza.
+
 ---
 
 ## Icona dell'app
@@ -320,3 +324,10 @@ L'app copre i requisiti a priorità **ALTA** del Requirements Brief, ma resta un
 
 Il progetto è strutturato per accogliere queste funzionalità senza stravolgimenti architetturali — vedi la sezione *Conclusione* della relazione.
 
+---
+
+## Autore
+
+**Mattia Nadal**
+Dipartimento di Scienze Matematiche, Informatiche e Fisiche
+Università degli Studi di Udine

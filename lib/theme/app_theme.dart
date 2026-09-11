@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+/// Palette dell'app, inclusi i colori che comunicano lo stato di scadenza
+/// di un prodotto.
 class AppColors {
   AppColors._();
 
@@ -54,6 +56,7 @@ class AppColors {
   static const Color statusShoppingText = Color(0xFF0C4A6E);
 }
 
+/// Raggi di arrotondamento condivisi.
 class AppRadius {
   AppRadius._();
   static const double sm = 8;
@@ -64,6 +67,7 @@ class AppRadius {
   static const double pill = 32;
 }
 
+/// Spaziature condivise.
 class AppSpacing {
   AppSpacing._();
   static const double xs = 4;
@@ -74,6 +78,8 @@ class AppSpacing {
   static const double xxl = 40;
 }
 
+/// Stili di testo ricorrenti, richiamati per nome anziché ridefiniti a
+/// ogni uso.
 class AppTextStyles {
   AppTextStyles._();
 

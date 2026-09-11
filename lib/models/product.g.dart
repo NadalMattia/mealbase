@@ -19,11 +19,7 @@ class ProductAdapter extends TypeAdapter<Product> {
     return Product(
       id: fields[0] as String,
       nome: fields[1] as String,
-      // Modifica manuale: `num` accetta anche i valori salvati quando
-      // questo campo era `double`, che come `int` farebbero fallire la
-      // lettura dell'intera dispensa. Va riapplicata se si rigenera il
-      // file con build_runner.
-      quantita: (fields[2] as num).toInt(),
+      quantita: fields[2] as int,
       unita: fields[3] as String,
       categoria: fields[4] as String,
       posizione: fields[5] as String,

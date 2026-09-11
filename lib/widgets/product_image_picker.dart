@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../services/image_storage_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/app_snackbar.dart';
 import 'smart_image.dart';
 
 
@@ -63,24 +65,91 @@ class ProductImagePicker extends StatelessWidget {
     try {
       final picker = ImagePicker();
       final picked = await picker.pickImage(source: source, imageQuality: 80);
-      if (picked != null) {
-        // Copiamo subito il file in una cartella persistente dell'app
-        // (vedi ImageStorageService per i dettagli sul "perché") invece di
-        // tenere il path temporaneo restituito da image_picker, che su
-        // alcune piattaforme non è garantito nel tempo.
-        final persistedPath = await ImageStorageService.persistLocalImage(picked.path);
-        onImagePicked(persistedPath);
-      }
+      if (picked == null) return;
+
+      // Copiamo subito il file in una cartella persistente dell'app
+      // (vedi ImageStorageService per i dettagli sul "perché") invece di
+      // tenere il path temporaneo restituito da image_picker, che su
+      // alcune piattaforme non è garantito nel tempo.
+      final persistedPath = await ImageStorageService.persistLocalImage(picked.path);
+
+      // Scattare una foto può richiedere molto tempo: lo schermo potrebbe
+      // essere stato chiuso nel frattempo, e `onImagePicked` porta a un
+      // setState nel chiamante.
+      if (!context.mounted) return;
+      onImagePicked(persistedPath);
     } catch (e) {
-      // Permesso negato, fotocamera non disponibile, utente ha annullato
-      // in un modo che genera errore su alcuni dispositivi: non blocchiamo
-      // l'utente, semplicemente non cambiamo l'immagine.
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Impossibile accedere alla fotocamera/libreria')),
-        );
-      }
+      if (!context.mounted) return;
+      await _showAccessError(context, source);
     }
+  }
+
+  /// Segnala l'impossibilità di accedere a fotocamera o galleria.
+  ///
+  /// Per la fotocamera, un permesso negato in modo permanente merita un
+  /// messaggio diverso: ritentare non produrrà mai nulla, perché il
+  /// sistema non mostra più la richiesta. In quel caso si offre la
+  /// scorciatoia alle impostazioni, come già fa [ScannerPermissionDenied]
+  /// per lo scanner.
+  ///
+  /// Per la galleria si mostra sempre il messaggio generico: su Android
+  /// recenti `image_picker` usa il selettore di sistema, che non richiede
+  /// alcun permesso, quindi interrogare `Permission.photos` - non
+  /// dichiarato nel manifest - riporterebbe un diniego inesistente.
+  Future<void> _showAccessError(BuildContext context, ImageSource source) async {
+    if (source == ImageSource.gallery) {
+      AppSnackbar.show(
+        context,
+        message: 'Impossibile accedere alla galleria',
+        icon: Icons.error_outline,
+      );
+      return;
+    }
+
+    // La verifica può fallire su piattaforme che non espongono il
+    // permesso: in quel caso si ripiega sul messaggio generico.
+    var isPermanentlyDenied = false;
+    try {
+      isPermanentlyDenied = await Permission.camera.isPermanentlyDenied;
+    } catch (_) {
+      isPermanentlyDenied = false;
+    }
+
+    if (!context.mounted) return;
+
+    if (!isPermanentlyDenied) {
+      AppSnackbar.show(
+        context,
+        message: 'Impossibile accedere alla fotocamera',
+        icon: Icons.error_outline,
+      );
+      return;
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Permesso negato'),
+        content: const Text(
+          'Per scattare una foto del prodotto serve il permesso di accesso '
+          'alla fotocamera, che risulta negato. Puoi concederlo dalle '
+          'impostazioni di sistema.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('ANNULLA'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              openAppSettings();
+            },
+            child: const Text('IMPOSTAZIONI'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

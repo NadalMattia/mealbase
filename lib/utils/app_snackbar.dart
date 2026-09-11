@@ -88,6 +88,12 @@ class AppSnackbar {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
         margin: const EdgeInsets.only(bottom: 90, left: 16, right: 16),
         duration: duration,
+        // Da Flutter 3.44 una SnackBar con un'azione resta a schermo finché
+        // l'utente non interviene, e `duration` viene ignorato. Qui serve
+        // il comportamento opposto: lasciar scadere il tempo è la scelta
+        // implicita di confermare l'eliminazione, quindi la finestra di
+        // annullamento deve chiudersi da sola.
+        persist: false,
         dismissDirection: DismissDirection.horizontal,
         action: onUndo != null
             ? SnackBarAction(

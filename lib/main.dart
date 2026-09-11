@@ -47,6 +47,7 @@ void main() async {
   runApp(const MyApp());
 }
 
+/// Radice dell'app: registra i provider e applica il tema.
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 

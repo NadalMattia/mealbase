@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
-/// Barra di navigazione inferiore, usata sia dai due tab di HomeScreen sia
-/// dai tre di MainScreen.
-/// Barra di navigazione inferiore, usata sia dai due tab di HomeScreen sia
-/// dai tre di MainScreen.
+/// Una voce della barra di navigazione: icona ed etichetta.
 class AppBottomNavItem {
   final IconData icon;
   final String label;
   const AppBottomNavItem({required this.icon, required this.label});
 }
 
+/// Barra di navigazione inferiore, usata sia dai due tab di HomeScreen sia
+/// dai tre di MainScreen.
+///
+/// Non ha stato: riceve l'indice attivo e comunica al chiamante quale voce
+/// è stata toccata.
 class AppBottomNav extends StatelessWidget {
   final List<AppBottomNavItem> items;
   final int currentIndex;

@@ -29,6 +29,7 @@ class BarcodeLookupResult {
   });
 }
 
+/// Ricerca di un prodotto su Open Food Facts a partire dal codice a barre.
 class BarcodeService {
   Future<BarcodeLookupResult> lookup(String barcode) async {
     try {
