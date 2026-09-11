@@ -52,6 +52,15 @@ class AppSnackbar {
   /// Mostra la conferma di un'eliminazione, con l'azione di annullamento
   /// se [onUndo] è fornita.
   ///
+  /// Come [show], chiude la snackbar corrente prima di mostrarne una
+  /// nuova: `showSnackBar` di suo le accoda, e con più eliminazioni
+  /// ravvicinate l'utente vedrebbe una sequenza lunga quanto la somma
+  /// delle singole durate.
+  ///
+  /// La chiusura raggiunge il chiamante precedente con motivo `hide`, che
+  /// vale come conferma: chi elimina un secondo elemento ha già lasciato
+  /// indietro la decisione sul primo.
+  ///
   /// Il margine inferiore è più ampio di quello di [show] per non finire
   /// sotto la barra di azioni della dispensa.
   ///
@@ -62,8 +71,9 @@ class AppSnackbar {
       BuildContext context, {
         required String message,
         VoidCallback? onUndo,
-        Duration duration = const Duration(seconds: 2),
+        Duration duration = const Duration(seconds: 3),
       }) {
+    hide(context);
     return ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
