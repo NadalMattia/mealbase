@@ -92,8 +92,6 @@ HomeScreen                          IndexedStack, 2 tab
 └── ProfileScreen                          in gran parte segnaposto
 ```
 
-> Una mappa completa delle dipendenze file per file, con i diagrammi dei quattro livelli e la tabella di tutti gli import interni, è in [`ARCHITETTURA.html`](ARCHITETTURA.html) — apribile nel browser.
-
 ---
 
 ## Struttura del progetto
