@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Impedisce a R8 di scartare le risorse usate solo per nome a runtime.
+
+    flutter_local_notifications riceve l'icona come stringa
+    ('@mipmap/launcher_icon', vedi NotificationService.init) e la risolve
+    solo al momento di mostrare la notifica: il compilatore non vede alcun
+    riferimento statico e in una build di release può rimuoverla. La
+    notifica fallisce allora in silenzio, cercando una risorsa che non
+    esiste più - un problema che si manifesta solo in release e mai in
+    debug, dove lo shrinking è disattivato.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/*,@mipmap/launcher_icon" />

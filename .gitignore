@@ -70,7 +70,10 @@ app.*.map.json
 *.glg
 *.glo
 *.gls
-*.xml
+# File di configurazione dell'IDE, non del progetto.
+# La regola era `*.xml` senza percorso, quindi escludeva anche
+# AndroidManifest.xml, styles.xml e le risorse Android.
+.idea/**/*.xml
 
 # Indici e liste
 *.idx
