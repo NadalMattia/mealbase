@@ -16,6 +16,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    # Il token predefinito è in sola lettura nei repository recenti:
+    # senza questo permesso il passo che crea la Release fallisce con 403.
+    permissions:
+      contents: write
+
     steps:
       - name: Scarica il codice
         uses: actions/checkout@v6
