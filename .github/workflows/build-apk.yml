@@ -1,15 +1,15 @@
 name: Build APK
 
 # Tre modi di avviarlo:
-# - push su main: verifica che il progetto compili e che i test passino
+# - push su master: verifica che il progetto compili e che i test passino
 # - tag v*: pubblica una Release con l'APK allegato
 # - avvio manuale dalla scheda Actions
 on:
   push:
-    branches: [main]
+    branches: [master]
     tags: ['v*']
   pull_request:
-    branches: [main]
+    branches: [master]
   workflow_dispatch:
 
 jobs:
